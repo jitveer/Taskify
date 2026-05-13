@@ -22,7 +22,7 @@ import AdminReports from "./pages/admin/AdminReports";
 
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 import EmployeeMyTasks from "./pages/employee/EmployeeMyTasks";
-
+import EmployeeTaskStatus from "./pages/employee/EmployeeTaskStatus";
 import EmployeeReports from "./pages/employee/EmployeeReports";
 import EmployeeUpdateStatus from "./pages/employee/EmployeeUpdateStatus";
 
@@ -152,7 +152,10 @@ function App() {
           element={<EmployeeMyTasks />}
         />
 
-
+        <Route
+          path="/employee-task-status"
+          element={<EmployeeTaskStatus />}
+        />
 
         <Route
           path="/employee-reports"

@@ -2,7 +2,7 @@ import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 
 function EmployeeDashboard() {
-    
+
     const menuItems = [
 
         {
@@ -16,15 +16,18 @@ function EmployeeDashboard() {
             path: "/employee-my-tasks"
         },
 
+
         {
             name: "Task Status",
             path: "/employee-task-status"
         },
 
+
         {
             name: "Update Status",
             path: "/employee-update-status"
         },
+
 
         {
             name: "Reports",

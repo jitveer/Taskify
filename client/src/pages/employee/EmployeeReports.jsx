@@ -47,7 +47,6 @@ function EmployeeReports() {
             />
 
 
-
             <div className="flex-1 bg-gray-100 min-h-screen">
 
                 <Header title="Reports" />
