@@ -1,15 +1,14 @@
-import express from "express";
-
-import cors from 'cors';
-
-dotenv.config();
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv').config();
 const app = express();
 const port = process.env.PORT;
+
+
 
 //Middlewares
 app.use(cors());
 app.use(express.json());
-
 
 
 
@@ -23,10 +22,4 @@ app.get('/', (req, res)=>{
 
 
 
-
-app.listen(port, ()=>{
-    console.log(`Server started at port ${port}`)
-})
-
-
-export default app;
+module.exports = app;
