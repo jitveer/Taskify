@@ -24,12 +24,18 @@ function AdminEmployeeList() {
 
         {
             name: "My Tasks",
-            path: "/my-task"
+            path: "/admin-my-tasks"
         },
 
         {
             name: "Task Status",
-            path: "/task-status"
+            path: "/admin-assign-task"
+        },
+
+
+        {
+            name: "Reports",
+            path: "/admin-reports"
         }
 
     ];

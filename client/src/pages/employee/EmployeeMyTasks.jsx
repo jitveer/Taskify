@@ -1,49 +1,39 @@
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
+
 import MyTaskTable from "../../components/layout/MyTaskTable";
 
-function MyTasks() {
+function EmployeeMyTasks() {
 
     const menuItems = [
 
         {
             name: "Dashboard",
-            path: "/super-admin-dashboard"
+            path: "/employee-dashboard"
         },
 
-        {
-            name: "Admin List",
-            path: "/admin-list"
-        },
-
-        {
-            name: "Employee List",
-            path: "/employee-list"
-        },
-
-        {
-            name: "Assign Task",
-            path: "/assign-task"
-        },
 
         {
             name: "My Tasks",
-            path: "/my-tasks"
+            path: "/employee-my-tasks"
         },
 
         {
             name: "Task Status",
-            path: "/task-status"
+            path: "/employee-task-status"
+        },
+
+        {
+            name: "Update Status",
+            path: "/employee-update-status"
         },
 
         {
             name: "Reports",
-            path: "/reports"
+            path: "/employee-reports"
         }
 
-
     ];
-
 
 
 
@@ -52,9 +42,9 @@ function MyTasks() {
         <div className="flex">
 
             <Sidebar
-                role="Super Admin"
+                role="Employee"
                 menuItems={menuItems}
-                color="purple"
+                color="green"
             />
 
 
@@ -63,7 +53,7 @@ function MyTasks() {
 
                 <Header title="My Tasks" />
 
-                <MyTaskTable color="purple" />
+                <MyTaskTable color="green" />
 
             </div>
 
@@ -73,4 +63,4 @@ function MyTasks() {
 
 }
 
-export default MyTasks;
+export default EmployeeMyTasks;

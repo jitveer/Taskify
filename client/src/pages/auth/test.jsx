@@ -1,44 +1,39 @@
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 
-import ReportsDashboard from "../../components/layout/ReportsDashboard";
+import TaskStatusTable from "../../components/layout/TaskStatusTable";
 
-function AdminReports() {
+function EmployeeTaskStatus() {
 
     const menuItems = [
 
         {
             name: "Dashboard",
-            path: "/admin-dashboard"
+            path: "/employee-dashboard"
         },
 
-        {
-            name: "Employee List",
-            path: "/admin-employee-list"
-        },
-
-        {
-            name: "Assign Task",
-            path: "/admin-assign-task"
-        },
 
         {
             name: "My Tasks",
-            path: "/admin-my-tasks"
+            path: "/employee-my-tasks"
         },
 
         {
             name: "Task Status",
-            path: "/admin-task-status"
+            path: "/employee-task-status"
+        },
+
+        {
+            name: "Update Status",
+            path: "/employee-update-status"
         },
 
         {
             name: "Reports",
-            path: "/admin-reports"
+            path: "/employee-reports"
         }
 
     ];
-
 
 
     return (
@@ -46,18 +41,18 @@ function AdminReports() {
         <div className="flex">
 
             <Sidebar
-                role="Admin"
+                role="Employee"
                 menuItems={menuItems}
-                color="blue"
+                color="green"
             />
 
 
 
             <div className="flex-1 bg-gray-100 min-h-screen">
 
-                <Header title="Reports" />
+                <Header title="Task Status" />
 
-                <ReportsDashboard color="blue" />
+                <TaskStatusTable color="green" />
 
             </div>
 
@@ -67,4 +62,4 @@ function AdminReports() {
 
 }
 
-export default AdminReports;
+export default EmployeeTaskStatus;

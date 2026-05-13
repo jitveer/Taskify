@@ -2,14 +2,34 @@ import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 
 function EmployeeDashboard() {
-
+    
     const menuItems = [
 
-        "Dashboard",
-        "Task List",
-        "My Tasks",
-        "Task Status",
-        "Update Status"
+        {
+            name: "Dashboard",
+            path: "/employee-dashboard"
+        },
+
+
+        {
+            name: "My Tasks",
+            path: "/employee-my-tasks"
+        },
+
+        {
+            name: "Task Status",
+            path: "/employee-task-status"
+        },
+
+        {
+            name: "Update Status",
+            path: "/employee-update-status"
+        },
+
+        {
+            name: "Reports",
+            path: "/employee-reports"
+        }
 
     ];
 

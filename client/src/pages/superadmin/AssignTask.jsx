@@ -25,9 +25,26 @@ function AssignTask() {
         {
             name: "Assign Task",
             path: "/assign-task"
+        },
+
+        {
+            name: "My Tasks",
+            path: "/my-tasks"
+        },
+
+        {
+            name: "Task Status",
+            path: "/task-status"
+        },
+
+        {
+            name: "Reports",
+            path: "/reports"
         }
 
+
     ];
+
 
 
 

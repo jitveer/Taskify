@@ -21,6 +21,12 @@ import AdminReports from "./pages/admin/AdminReports";
 
 
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
+import EmployeeMyTasks from "./pages/employee/EmployeeMyTasks";
+
+import EmployeeReports from "./pages/employee/EmployeeReports";
+import EmployeeUpdateStatus from "./pages/employee/EmployeeUpdateStatus";
+
+
 import MyTasks from "./pages/superadmin/MyTasks";
 import TaskStatus from "./pages/superadmin/TaskStatus";
 import Reports from "./pages/superadmin/Reports";
@@ -141,9 +147,24 @@ function App() {
           element={<AdminReports />}
         />
 
-   
+        <Route
+          path="/employee-my-tasks"
+          element={<EmployeeMyTasks />}
+        />
 
-    </Routes>
+
+
+        <Route
+          path="/employee-reports"
+          element={<EmployeeReports />}
+        />
+
+        <Route
+          path="/employee-update-status"
+          element={<EmployeeUpdateStatus />}
+        />
+
+      </Routes>
 
     </BrowserRouter >
   )

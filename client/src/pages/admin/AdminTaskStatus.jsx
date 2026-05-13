@@ -14,7 +14,7 @@ function AdminTaskStatus() {
 
         {
             name: "Employee List",
-            path: "/admin-employeee-list"
+            path: "/admin-employee-list"
         },
 
         {
@@ -23,19 +23,21 @@ function AdminTaskStatus() {
         },
 
         {
-            name: "My Task",
+            name: "My Tasks",
             path: "/admin-my-tasks"
         },
 
         {
             name: "Task Status",
-            path: "/admin-tast-status"
+            path: "/admin-assign-task"
         },
+
 
         {
             name: "Reports",
             path: "/admin-reports"
         }
+
     ];
 
 

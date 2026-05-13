@@ -26,8 +26,8 @@ function AdminList() {
         },
 
         {
-            name: "My Task",
-            path: "/my-task"
+            name: "My Tasks",
+            path: "/my-tasks"
         },
 
         {
@@ -40,7 +40,9 @@ function AdminList() {
             path: "/reports"
         }
 
+
     ];
+
 
 
 

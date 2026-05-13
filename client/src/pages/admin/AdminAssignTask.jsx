@@ -29,8 +29,9 @@ function AdminAssignTask() {
 
         {
             name: "Task Status",
-            path: "/admin-task-status"
+            path: "/admin-assign-task"
         },
+
 
         {
             name: "Reports",
