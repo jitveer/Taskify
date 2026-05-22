@@ -14,7 +14,6 @@ import EmployeeList from "./pages/superadmin/EmployeeList";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEmployeeList from "./pages/admin/AdminEmployeeList";
-// import AdminEmployeeList from "./pages/admin/AdminEmployeeList";
 import AdminAssignTask from "./pages/admin/AdminAssignTask";
 import AdminMyTasks from "./pages/admin/AdminMyTasks";
 import AdminTaskStatus from "./pages/admin/AdminTaskStatus";
@@ -42,8 +41,7 @@ function App() {
 
         {/* Home Page */}
         <Route path="/" element={<Home />} />
-
-
+        
         {/*Login */}
         <Route
           path="/super-admin-login"
