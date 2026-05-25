@@ -16,17 +16,27 @@ const registerUser = async (req, res) => {
             });
         }
 
+        // Split name into first_name and last_name
+        const nameParts = name ? name.trim().split(/\s+/) : ["User"];
+        const first_name = nameParts[0];
+        const last_name = nameParts.slice(1).join(" ") || "";
+
+        // Generate user_id if not present
+        const user_id = req.body.user_id || "SA-" + Date.now();
+
         //Create new user
         const newUser = await User.create({
-            name,
+            user_id,
+            first_name,
+            last_name,
             email,
             password,
-            role
+            role: role || "superadmin"
         });
 
         res.status(201).json({
 
-            message: "User Registerd Successfully",
+            message: "User Registered Successfully",
             user: newUser
         });
     }

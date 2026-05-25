@@ -27,7 +27,7 @@ function EmployeeList() {
         try {
 
             const response = await axios.get(
-                "http://localhost:5000/api/employees"
+                `${import.meta.env.VITE_BACKEND_URL}/api/employees`
             );
 
             console.log(response.data);

@@ -21,7 +21,7 @@ function SuperAdminLogin() {
             console.log("SuperAdmin Data:", data);
 
             const response = await axios.post(
-                "http://localhost:5000/api/users/login",
+                `${import.meta.env.VITE_BACKEND_URL}/api/users/login`,
                 {
                     name: "Super Admin",
                     email: data.email,
@@ -30,9 +30,14 @@ function SuperAdminLogin() {
                 }
             );
 
-            console.log(response.data);
+            const loggedInUser = response.data.user;
 
-            alert("User Logged In Successfully");
+            if (loggedInUser.role !== "superadmin") {
+                alert(`Access Denied: You are registered as ${loggedInUser.role}, not a superadmin.`);
+                return;
+            }
+
+            alert("Super Admin Login Successful");
 
             navigate("/super-admin-dashboard");
 
@@ -40,7 +45,7 @@ function SuperAdminLogin() {
 
             console.log(error);
 
-            alert("Error while registering");
+            alert(error.response?.data?.message || "Invalid Email or Password");
         }
     };
 

@@ -7,6 +7,8 @@ function AdminList() {
 
     const [showPopup, setShowPopup] = useState(false);
     const [admins, setAdmins] = useState([]);
+    const [search, setSearch] = useState("");
+    const [editingId, setEditingId] = useState(null);
 
     const [formData, setFormData] = useState({
         admin_id: "",
@@ -14,7 +16,7 @@ function AdminList() {
         last_name: "",
         email: "",
         password: "",
-        phone: "",
+        whatsapp_number: "",
         department: ""
     });
 
@@ -38,35 +40,73 @@ function AdminList() {
     };
 
 
+
+
+    // add and delete admins 
     const addAdmin = async () => {
 
         try {
 
-            const response = await axios.post(
-                "http://localhost:5000/api/admins/add",
-                formData
-            );
+            // UPDATE EXISTING ADMIN
+            if (editingId) {
 
-            console.log(response.data);
+                await axios.put(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/admins/${editingId}`,
+                    formData
+                );
 
-            alert("Admin Added Successfully");
+                alert("Admin Updated Successfully");
 
+            }
+
+            // ADD NEW ADMIN
+            else {
+
+                await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/admins/add`,
+                    formData
+                );
+
+                alert("Admin Added Successfully");
+            }
+
+            // CLOSE POPUP
             setShowPopup(false);
+
+            // CLEAR EDIT ID
+            setEditingId(null);
+
+            // RESET FORM
+            setFormData({
+                admin_id: "",
+                first_name: "",
+                last_name: "",
+                email: "",
+                password: "",
+                whatsapp_number: "",
+                department: ""
+            });
+
+            // REFRESH TABLE
+            fetchAdmins();
 
         } catch (error) {
 
             console.log(error);
 
-            alert("Error adding admin");
+            alert(error.response?.data?.message || "Error saving admin");
         }
     };
 
+
+
+    // fetch admins 
     const fetchAdmins = async () => {
 
         try {
 
             const response = await axios.get(
-                "http://localhost:5000/api/admins"
+                `${import.meta.env.VITE_BACKEND_URL}/api/admins`
             );
 
             console.log(response.data);
@@ -85,6 +125,56 @@ function AdminList() {
         fetchAdmins();
 
     }, []);
+
+    const filteredAdmins = admins.filter((admin) =>
+        admin.first_name.toLowerCase().includes(search.toLowerCase()) ||
+        admin.email.toLowerCase().includes(search.toLowerCase()) ||
+        admin.department.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const deleteAdmin = async (id) => {
+
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this admin?"
+        );
+
+        if (!confirmDelete) return;
+
+        try {
+
+            await axios.delete(
+                `${import.meta.env.VITE_BACKEND_URL}/api/admins/${id}`
+            );
+
+            alert("Admin deleted successfully");
+
+            fetchAdmins();
+
+        } catch (error) {
+
+            console.log(error);
+
+            alert("Error deleting admin");
+        }
+    };
+
+
+    const editAdmin = (admin) => {
+
+        setFormData({
+            admin_id: admin.admin_id,
+            first_name: admin.first_name,
+            last_name: admin.last_name,
+            email: admin.email,
+            password: admin.password,
+            whatsapp_number: admin.whatsapp_number || "",
+            department: admin.department
+        });
+
+        setEditingId(admin._id);
+
+        setShowPopup(true);
+    };
 
 
     // const admins = [
@@ -111,6 +201,8 @@ function AdminList() {
                             <input
                                 type="text"
                                 placeholder="Search administrators..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
                                 className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition shadow-sm font-medium"
                             />
                         </div>
@@ -132,7 +224,7 @@ function AdminList() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {admins.map((admin, index) => (
+                                {filteredAdmins.map((admin, index) => (
                                     <tr key={index} className="border-b border-slate-50 hover:bg-slate-50/50 transition duration-150 last:border-none">
                                         <td className="py-5 px-6">
                                             <div className="flex items-center gap-4">
@@ -147,7 +239,7 @@ function AdminList() {
                                         </td>
                                         <td className="py-5 px-6">
                                             <p className="text-sm font-bold text-slate-700">{admin.email}</p>
-                                            <p className="text-xs text-slate-400 font-medium mt-1">{admin.phone}</p>
+                                            <p className="text-xs text-slate-400 font-medium mt-1">WhatsApp: {admin.whatsapp_number || "N/A"}</p>
                                         </td>
                                         <td className="py-5 px-6">
                                             <span className="px-3 py-1 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
@@ -156,8 +248,8 @@ function AdminList() {
                                         </td>
                                         <td className="py-5 px-6">
                                             <div className="flex justify-center gap-2">
-                                                <button className="bg-purple-50 hover:bg-purple-100 text-purple-600 px-4 py-2 rounded-xl text-xs font-bold transition">Edit</button>
-                                                <button className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-bold transition">Remove</button>
+                                                <button onClick={() => editAdmin(admin)} className="bg-purple-50 hover:bg-purple-100 text-purple-600 px-4 py-2 rounded-xl text-xs font-bold transition">Edit</button>
+                                                <button onClick={() => deleteAdmin(admin._id)} className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-bold transition">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -168,7 +260,7 @@ function AdminList() {
 
                     {/* Mobile/Tablet Card Layout */}
                     <div className="lg:hidden flex flex-col gap-4">
-                        {admins.map((admin, index) => (
+                        {filteredAdmins.map((admin, index) => (
                             <div key={index} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative group overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
@@ -198,7 +290,7 @@ function AdminList() {
                                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
                                             <span className="text-xs font-bold">#</span>
                                         </div>
-                                        <span className="text-sm font-bold text-slate-600">{admin.phone}</span>
+                                        <span className="text-sm font-bold text-slate-600">WhatsApp: {admin.whatsapp_number || "N/A"}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
@@ -209,8 +301,12 @@ function AdminList() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-50">
-                                    <button className="bg-purple-600 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition active:scale-[0.98] shadow-lg shadow-purple-100">Edit</button>
-                                    <button className="bg-red-50 text-red-600 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition active:scale-[0.98]">Delete</button>
+                                    <button
+                                        onClick={() => editAdmin(admin)}
+                                        className="bg-purple-600 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition active:scale-[0.98] shadow-lg shadow-purple-100">
+                                        Edit
+                                    </button>
+                                    <button onClick={() => deleteAdmin(admin._id)} className="bg-red-50 text-red-600 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition active:scale-[0.98]">Delete</button>
                                 </div>
                             </div>
                         ))}
@@ -223,7 +319,7 @@ function AdminList() {
                                 <div className="bg-white w-[95%] max-w-xl rounded-3xl p-8 shadow-2xl">
 
                                     <h2 className="text-2xl font-bold mb-6">
-                                        Add New Admin
+                                        {editingId ? "Edit Admin" : "Add New Admin"}
                                     </h2>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -275,9 +371,9 @@ function AdminList() {
 
                                         <input
                                             type="text"
-                                            name="phone"
-                                            placeholder="Phone"
-                                            value={formData.phone}
+                                            name="whatsapp_number"
+                                            placeholder="WhatsApp Number"
+                                            value={formData.whatsapp_number}
                                             onChange={handleChange}
                                             className="border p-3 rounded-xl"
                                         />
@@ -306,7 +402,7 @@ function AdminList() {
                                             onClick={addAdmin}
                                             className="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold"
                                         >
-                                            Submit
+                                            {editingId ? "Update Admin" : "Submit"}
                                         </button>
 
                                     </div>

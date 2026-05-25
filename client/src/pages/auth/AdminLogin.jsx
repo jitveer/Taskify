@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function AdminLogin() {
 
@@ -13,11 +14,33 @@ function AdminLogin() {
     const navigate = useNavigate();
 
 
-    const onSubmit = (data) => {
-        console.log("SuperAdmin Data:", data);
-        alert("Login Successful");
+    const onSubmit = async (data) => {
+        try {
+            console.log("Admin Data:", data);
 
-        navigate("/admin-dashboard");
+            const response = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/users/login`,
+                {
+                    email: data.email,
+                    password: data.password
+                }
+            );
+
+            const loggedInUser = response.data.user;
+
+            if (loggedInUser.role !== "admin") {
+                alert(`Access Denied: You are registered as ${loggedInUser.role}, not an admin.`);
+                return;
+            }
+
+            alert("Admin Login Successful");
+
+            navigate("/admin-dashboard");
+
+        } catch (error) {
+            console.log(error);
+            alert(error.response?.data?.message || "Invalid Email or Password");
+        }
     };
 
 

@@ -4,7 +4,7 @@ const onSubmit = async (data) => {
 
         const response = await axios.post(
 
-            "http://localhost:5000/api/users/register",
+            `${import.meta.env.VITE_BACKEND_URL}/api/users/register`,
 
             {
                 name: "Super Admin",
@@ -14,7 +14,6 @@ const onSubmit = async (data) => {
             }
 
         );
-
 
 
         alert(response.data.message);
@@ -32,4 +31,4 @@ const onSubmit = async (data) => {
 };
 
 
-// hello this is jeet commnet for testing jeet-backend branch 
+// Hello 

@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function EmployeeLogin() {
 
@@ -12,11 +13,33 @@ function EmployeeLogin() {
     const navigate = useNavigate();
 
 
-    const onSubmit = (data) => {
-        console.log("Employee Data:", data);
-        alert("Login Successful");
+    const onSubmit = async (data) => {
+        try {
+            console.log("Employee Data:", data);
 
-        navigate("/employee-dashboard");
+            const response = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/users/login`,
+                {
+                    email: data.email,
+                    password: data.password
+                }
+            );
+
+            const loggedInUser = response.data.user;
+
+            if (loggedInUser.role !== "employee") {
+                alert(`Access Denied: You are registered as ${loggedInUser.role}, not an employee.`);
+                return;
+            }
+
+            alert("Employee Login Successful");
+
+            navigate("/employee-dashboard");
+
+        } catch (error) {
+            console.log(error);
+            alert(error.response?.data?.message || "Invalid Email or Password");
+        }
     };
 
 
@@ -91,7 +114,7 @@ function EmployeeLogin() {
 
                             {...register("password", {
                                 required: "Password is Required",
-                                   pattern: {
+                                pattern: {
                                     value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
 
                                     message: "Password must contain uppercase, lowercase, number & special character"
