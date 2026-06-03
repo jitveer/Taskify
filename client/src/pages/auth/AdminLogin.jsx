@@ -37,7 +37,7 @@ function AdminLogin() {
                     email: data.email,
                     password: data.password
                 }
-            );
+            );            
 
             const loggedInUser = response.data.user;
 

@@ -3,35 +3,20 @@ import Sidebar from "../../components/layout/Sidebar";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import axios from "axios";
-
-
 import {
     showSuccess,
     showError,
     showWarning
 } from "../../components/layout/Alerts";
 
+
+
+
 function AdminList() {
 
     const [showPopup, setShowPopup] = useState(false);
 
     const [admins, setAdmins] = useState([
-        {
-            _id: "1",
-            admin_id: "ADM001",
-            name: "John Doe",
-            email: "john@gmail.com",
-            mobile: "9876543210",
-            department: "IT"
-        },
-        {
-            _id: "2",
-            admin_id: "ADM002",
-            name: "Sarah Smith",
-            email: "sarah@gmail.com",
-            mobile: "9876541230",
-            department: "HR"
-        }
     ]);
     const [search, setSearch] = useState("");
     const [editingId, setEditingId] = useState(null);
@@ -183,19 +168,18 @@ function AdminList() {
 
     // fetch admins 
     const fetchAdmins = async () => {
-
         try {
-
+            const token = localStorage.getItem("token");
             const response = await axios.get(
-                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/adminLists`
+                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/adminLists`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
             );
-
-            console.log(response.data);
-
-            setAdmins(response.data);
-
+            console.log(response.data.admins);
+            setAdmins(response.data.admins);
         } catch (error) {
-
             console.log(error);
         }
     };
@@ -212,6 +196,9 @@ function AdminList() {
         admin.email.toLowerCase().includes(search.toLowerCase()) ||
         admin.department.toLowerCase().includes(search.toLowerCase())
     );
+
+
+
 
     const deleteAdmin = async (id) => {
 
@@ -239,6 +226,8 @@ function AdminList() {
             showWarning("Error deleting admin");
         }
     };
+
+
 
 
     const editAdmin = (admin) => {
