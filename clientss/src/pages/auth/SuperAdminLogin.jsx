@@ -1,8 +1,18 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+import {
+    showSuccess,
+    showError,
+    showWarning
+} from "../../components/layout/Alerts";
 
 function SuperAdminLogin() {
+
+    const [showPassword, setShowPassword] = useState(false);
 
     // 2. Initialize the form tools
     const {
@@ -17,13 +27,10 @@ function SuperAdminLogin() {
     const onSubmit = async (data) => {
 
         try {
-
             console.log("SuperAdmin Data:", data);
-
             const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/users/login`,
+                `${import.meta.env.VITE_BACKEND_URL}/api/auth/super-admin/login`,
                 {
-                    name: "Super Admin",
                     email: data.email,
                     password: data.password,
                     role: "superadmin"
@@ -33,11 +40,24 @@ function SuperAdminLogin() {
             const loggedInUser = response.data.user;
 
             if (loggedInUser.role !== "superadmin") {
-                alert(`Access Denied: You are registered as ${loggedInUser.role}, not a superadmin.`);
+                showWarning(
+                    `You are registered as ${loggedInUser.role}, not a superadmin.`
+                );
                 return;
             }
 
-            alert("Super Admin Login Successful");
+
+            localStorage.setItem(
+                "user",
+                JSON.stringify(loggedInUser)
+            );
+
+            localStorage.setItem(
+                "token",
+                response.data.token
+            );
+
+            showSuccess("Super Admin Login Successful");
 
             navigate("/super-admin-dashboard");
 
@@ -45,7 +65,10 @@ function SuperAdminLogin() {
 
             console.log(error);
 
-            alert(error.response?.data?.message || "Invalid Email or Password");
+            showError(
+                error.response?.data?.message ||
+                "Invalid Email or Password"
+            );
         }
     };
 
@@ -115,23 +138,45 @@ function SuperAdminLogin() {
                             Password
                         </label>
 
-                        <input
-                            type="password"
-                            placeholder="Enter your password"
+                        <div className="relative">
 
-                            {...register("password", {
-                                required: "Password is required",
-                                pattern: {
-                                    value:
-                                        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
+                            <input
+                                type={showPassword ? "text" : "password"}
 
-                                    message:
-                                        "Password must contain uppercase, lowercase, number & special character"
+                                placeholder="Enter your password"
+
+                                {...register("password", {
+                                    required: "Password is required",
+                                    pattern: {
+                                        value:
+                                            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
+
+                                        message:
+                                            "Password must contain uppercase, lowercase, number & special character"
+                                    }
+                                })}
+
+                                className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-4 text-gray-500"
+                            >
+
+                                {
+                                    showPassword
+                                        ? <FaEyeSlash />
+
+
+
+                                        : <FaEye />
                                 }
-                            })}
 
-                            className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                            </button>
+
+                        </div>
 
                         {/* Password Error */}
                         {

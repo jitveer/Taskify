@@ -1,8 +1,12 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 import { Users, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
 
 function SuperAdminDashboard() {
+
+    const [dashboardData, setDashboardData] = useState(null);
 
     const menuItems = [
         { name: "Dashboard", path: "/super-admin-dashboard" },
@@ -13,6 +17,37 @@ function SuperAdminDashboard() {
         { name: "Task Status", path: "/task-status" },
         { name: "Reports", path: "/reports" }
     ];
+
+
+    useEffect(() => {
+        fetchDashboard();
+    }, []);
+
+    const fetchDashboard = async () => {
+        try {
+            const token = localStorage.getItem("token");
+
+            const res = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/dashboard`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            console.log("API SUCCESS");
+            console.log("DATA:", res.data);
+
+            setDashboardData(res.data);
+
+        } catch (error) {
+            console.log("API FAILED");
+            console.log("ERROR:", error);
+        }
+    };
+
+
 
     return (
         <div className="flex flex-col lg:flex-row bg-[#f8fafc] min-h-screen font-sans text-slate-800">
@@ -25,7 +60,7 @@ function SuperAdminDashboard() {
                 <Header title="Super Admin" name="Super Admin" role="Super Admin" />
 
                 <div className="p-4 lg:p-8 lg:p-10 max-w-7xl mx-auto pb-24 lg:pb-10">
-                    
+
                     {/* Welcome Section */}
                     <div className="mb-6 lg:mb-8">
                         <h2 className="text-xl lg:text-2xl font-semibold text-slate-800 font-bold tracking-tight">Super Admin Overview</h2>
@@ -34,7 +69,7 @@ function SuperAdminDashboard() {
 
                     {/* Stats Grid - 4 in a row on desktop/tablet */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-8 lg:mb-10">
-                        
+
                         {/* Card 1: Total Admins */}
                         <div className="bg-purple-600 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-purple-100 border border-purple-700 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300">
                             <div className="flex justify-between items-center mb-4">
@@ -93,7 +128,7 @@ function SuperAdminDashboard() {
                         </div>
 
                         <div className="divide-y divide-slate-100">
-                            
+
                             {/* Task 1 */}
                             <div className="p-5 lg:p-7 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50 transition-colors border-l-4 border-l-amber-500">
                                 <div className="flex items-center gap-4">

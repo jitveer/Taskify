@@ -141,6 +141,7 @@ function EmployeeTable({ color, employees = [] }) {
                         </tr>
                     </thead>
                     <tbody>
+
                         {filteredEmployees.map((employee, index) => (
                             <tr key={index} className="border-b border-slate-50 hover:bg-slate-50 transition last:border-none">
                                 <td className="py-4 px-6 text-sm text-slate-500 font-medium">{index + 1}</td>

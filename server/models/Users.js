@@ -8,19 +8,28 @@ const userSchema = new mongoose.Schema({
         unique: true
     },
 
-    first_name: {
+    // first_name: {
+    //     type: String,
+    //     required: true
+    // },
+
+    // last_name: {
+    //     type: String
+    // },
+
+    name: {
         type: String,
         required: true
-    },
-
-    last_name: {
-        type: String
     },
 
     email: {
         type: String,
         required: true,
         unique: true
+    },
+    
+    mobile: {
+        type: String
     },
 
     password: {
@@ -29,7 +38,9 @@ const userSchema = new mongoose.Schema({
     },
 
     department: {
-        type: String
+        type: String,
+        enum: ["csr", "it", "hr", "interior", "sales"],
+        required: true
     },
 
     role: {
@@ -37,10 +48,6 @@ const userSchema = new mongoose.Schema({
         enum: ["superadmin", "admin", "employee"],
         required: true
     },
-
-    whatsapp_number: {
-        type: String
-    }
 
 }, {
     timestamps: true
