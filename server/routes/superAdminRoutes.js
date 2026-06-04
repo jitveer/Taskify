@@ -14,11 +14,16 @@ router.use(authorize('superadmin'))
 
 // Dashboard Access
 router.get("/dashboard", superAdminController.adminLoginSuccess);
+
 router.post("/addadmin", addAdminValidation, superAdminController.addAdmin);
 router.get('/adminLists', superAdminController.adminLists);
 router.patch('/adminLists/:id', superAdminController.editAdmin);
 router.delete('/adminLists/:id', superAdminController.deleteAdmin);
-router.get('/addEmployee', superAdminController.addEmployee);
+
+router.post('/addEmployee', superAdminController.addEmployee);
+router.get('/employeeList', superAdminController.employeeList);
+router.patch('/employeeLists/:id', superAdminController.employeeUpdate);
+router.delete("/employeeLists/:id", superAdminController.employeeDelete);
 
 
 
