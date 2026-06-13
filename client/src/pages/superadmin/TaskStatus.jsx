@@ -8,9 +8,9 @@ function TaskStatus() {
         { name: "Dashboard", path: "/super-admin-dashboard" },
         { name: "Admin List", path: "/admin-list" },
         { name: "Employee List", path: "/employee-list" },
-        { name: "Assign Task", path: "/assign-task" },
-        { name: "My Tasks", path: "/my-tasks" },
-        { name: "Task Status", path: "/task-status" },
+        { name: "Add Task", path: "/assign-task" },
+        // { name: "Task List", path: "/my-tasks" },
+        { name: "Tasks Assigned by Me", path: "/task-status" },
         { name: "Reports", path: "/reports" }
     ];
 

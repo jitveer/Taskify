@@ -10,9 +10,9 @@ function AdminEmployeeList() {
     const menuItems = [
         { name: "Dashboard", path: "/admin-dashboard" },
         { name: "Employee List", path: "/admin-employee-list" },
-        { name: "Assign Task", path: "/admin-assign-task" },
+        { name: "Add Task", path: "/admin-assign-task" },
         { name: "My Tasks", path: "/admin-my-tasks" },
-        { name: "Task Status", path: "/admin-task-status" },
+        { name: "Tasks Assigned by Me", path: "/admin-task-status" },
         { name: "Reports", path: "/admin-reports" }
     ];
 

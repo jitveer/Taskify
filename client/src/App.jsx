@@ -32,6 +32,7 @@ import EmployeeUpdateStatus from "./pages/employee/EmployeeUpdateStatus";
 import MyTasks from "./pages/superadmin/MyTasks";
 import TaskStatus from "./pages/superadmin/TaskStatus";
 import Reports from "./pages/superadmin/Reports";
+import Notifications from "./components/layout/notification";
 
 
 function App() {
@@ -43,7 +44,7 @@ function App() {
 
         {/* Home Page */}
         <Route path="/" element={<Home />} />
-        <Route path="*" element={<NotFound />}/>
+        <Route path="*" element={<NotFound />} />
 
 
         {/* ------------------------------------------------------- */}
@@ -100,7 +101,17 @@ function App() {
           }
         />
 
-
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute
+              loginPath="/"
+              allowedRole="employee"
+            >
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
 
         {/* ------------------------------------------------------- */}
         {/*Super Admin Routes*/}

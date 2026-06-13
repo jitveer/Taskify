@@ -35,9 +35,10 @@ function AdminLogin() {
                 `${import.meta.env.VITE_BACKEND_URL}/api/auth/admin/login`,
                 {
                     email: data.email,
-                    password: data.password
+                    password: data.password,
+                    role: "admin"
                 }
-            );            
+            );
 
             const loggedInUser = response.data.user;
 
@@ -156,7 +157,7 @@ function AdminLogin() {
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-4 top-4 text-gray-500"
-                            >
+                             >
 
                                 {
                                     showPassword

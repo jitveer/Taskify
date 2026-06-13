@@ -6,7 +6,6 @@ function EmployeeDashboard() {
     const menuItems = [
         { name: "Dashboard", path: "/employee-dashboard" },
         { name: "My Tasks", path: "/employee-my-tasks" },
-        { name: "Task Status", path: "/employee-task-status" },
         { name: "Update Status", path: "/employee-update-status" },
         { name: "Reports", path: "/employee-reports" }
     ];
@@ -19,7 +18,7 @@ function EmployeeDashboard() {
                 <Header title="Employee Dashboard" name="Employee" role="Employee" />
 
                 <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto pb-24 md:pb-10">
-                    
+
                     {/* Welcome Section */}
                     <div className="mb-6 md:mb-8">
                         <h2 className="text-xl md:text-2xl font-semibold text-slate-800">Overview</h2>
@@ -28,7 +27,7 @@ function EmployeeDashboard() {
 
                     {/* Stats Grid - 3 in a row on all screens */}
                     <div className="grid grid-cols-3 gap-2 md:gap-4 lg:gap-6 mb-8 md:mb-10">
-                        
+
                         {/* Card 1 */}
                         <div className="bg-emerald-600 text-white p-3 md:p-5 lg:p-6 rounded-lg md:rounded-xl shadow-md border border-emerald-700 flex flex-col justify-between h-full">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 md:mb-4 gap-1 md:gap-0">
@@ -75,7 +74,7 @@ function EmployeeDashboard() {
                         </div>
 
                         <div className="divide-y divide-slate-100">
-                            
+
                             {/* Task 1 */}
                             <div className="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 hover:bg-slate-50 transition duration-150 border-l-4 border-l-amber-500">
                                 <div>

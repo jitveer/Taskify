@@ -33,3 +33,14 @@ export const showInfo = (message) => {
         text: message
     });
 };
+
+export const showConfirm = async (title, text) => {
+    return await Swal.fire({
+        title,
+        text,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        cancelButtonText: "Cancel"
+    });
+};

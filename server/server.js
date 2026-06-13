@@ -5,9 +5,9 @@ const dotenv = require("dotenv");
 
 const superAdminRoutes = require("./routes/superAdminRoutes");
 const authRouted = require('./routes/authRoutes');
-const adminRoutes = require("./routes/adminRoutesssssssssss.js");
 const employeeRoutes = require("./routes/employeeRoutes");
 const router = require('./routes.js')
+const path = require("path");
 
 
 // Server Port
@@ -21,7 +21,8 @@ const app = express();
 // MIDDLEWARE
 app.use(cors());
 app.use(express.json());
-
+// Serve uploads folder as static
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 
@@ -30,11 +31,9 @@ app.get("/", (req, res) => {
     res.send("Taskify Backend Running 🚀");
 });
 
+
 //MAIN ROUTES
 app.use("/api", router);
-
-
-
 
 
 connectDB();

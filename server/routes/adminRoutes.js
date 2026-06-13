@@ -1,7 +1,11 @@
 const express = require('express');
-const myRouter = express.Router();
+const authMiddleware = require("../middlewares/authMiddleware");
+const authorize = require("../middlewares/roleMiddleware");
+const router = express.Router();
 
-myRouter.get()
+
+router.use(authMiddleware);
+router.use(authorize('admin'));
 
 
-module.exports = myRoutes;
+module.exports = router;

@@ -2,11 +2,35 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { Home, Users, CheckSquare, FileText, LayoutDashboard } from "lucide-react";
+import { Home, Users, CheckSquare, FileText, LayoutDashboard, Bell } from "lucide-react";
+import { getNotifications } from "../../utils/notifications";
 
 function Sidebar({ role, menuItems, color }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
+    useEffect(() => {
+        const updateCount = () => {
+            const notifs = getNotifications();
+            setUnreadCount(notifs.filter(n => !n.read).length);
+        };
+        updateCount();
+        window.addEventListener("notificationsUpdated", updateCount);
+        return () => window.removeEventListener("notificationsUpdated", updateCount);
+    }, []);
+
+    const modifiedMenuItems = [...menuItems];
+    const dashboardIndex = modifiedMenuItems.findIndex(item => item.name.toLowerCase().includes("dashboard"));
+    const hasNotification = modifiedMenuItems.some(item => item.name.toLowerCase().includes("notification"));
+
+    if (!hasNotification) {
+        const notificationItem = { name: "Notification", path: "/notifications" };
+        if (dashboardIndex !== -1) {
+            modifiedMenuItems.splice(dashboardIndex + 1, 0, notificationItem);
+        } else {
+            modifiedMenuItems.splice(1, 0, notificationItem);
+        }
+    }
 
     {/*logout button sweet alert*/ }
     const navigate = useNavigate();
@@ -55,6 +79,7 @@ function Sidebar({ role, menuItems, color }) {
         if (n.includes("employee")) return <Users size={20} />;
         if (n.includes("task") || n.includes("status")) return <CheckSquare size={20} />;
         if (n.includes("report")) return <FileText size={20} />;
+        if (n.includes("notification")) return <Bell size={20} />;
         return <Home size={20} />;
     };
 
@@ -72,13 +97,21 @@ function Sidebar({ role, menuItems, color }) {
 
             {/* menu Items */}
             <div className="space-y-3">
-                {menuItems.map((item, index) => (
-                    <Link to={item.path} key={index} onClick={() => setIsOpen(false)}>
-                        <div className="hover:bg-white/20 px-4 py-3 rounded-xl cursor-pointer duration-300 mb-2">
-                            {item.name}
-                        </div>
-                    </Link>
-                ))}
+                {modifiedMenuItems.map((item, index) => {
+                    const isNotification = item.name === "Notification";
+                    return (
+                        <Link to={item.path} key={index} onClick={() => setIsOpen(false)}>
+                            <div className="hover:bg-white/20 px-4 py-3 rounded-xl cursor-pointer duration-300 mb-2 flex items-center justify-between">
+                                <span>{item.name}</span>
+                                {isNotification && unreadCount > 0 && (
+                                    <span className="bg-white text-slate-800 text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm shrink-0">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </div>
+                        </Link>
+                    );
+                })}
             </div>
 
             {/* Bottom Logut */}
@@ -100,14 +133,24 @@ function Sidebar({ role, menuItems, color }) {
 
                 {/* Mobile Bottom Nav */}
                 <div className={`lg:hidden fixed bottom-0 left-0 w-full bg-${color}-600 text-white flex justify-between items-center px-6 py-3 pb-safe z-50 rounded-t-2xl shadow-[0_-4px_15px_rgba(0,0,0,0.15)]`}>
-                    {menuItems.map((item, index) => {
+                    {modifiedMenuItems.map((item, index) => {
                         // Shorten names for bottom nav
                         let shortName = item.name.replace('Employee ', '').replace(' Status', '');
+                        if (item.name === "Notification") shortName = "Notify";
                         if (shortName.length > 10) shortName = shortName.substring(0, 10);
 
+                        const isNotification = item.name === "Notification";
+
                         return (
-                            <Link to={item.path} key={index} className="flex flex-col items-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity flex-1">
-                                {getIcon(item.name)}
+                            <Link to={item.path} key={index} className="flex flex-col items-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity flex-1 relative">
+                                <div className="relative">
+                                    {getIcon(item.name)}
+                                    {isNotification && unreadCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-0.5">
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </div>
                                 <span className="text-[10px] font-medium tracking-tight truncate w-full text-center">{shortName}</span>
                             </Link>
                         );

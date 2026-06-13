@@ -18,7 +18,7 @@ function AdminAssignTask() {
         },
 
         {
-            name: "Assign Task",
+            name: "Add Task",
             path: "/admin-assign-task"
         },
 
@@ -28,7 +28,7 @@ function AdminAssignTask() {
         },
 
         {
-            name: "Task Status",
+            name: "Tasks Assigned by Me",
             path: "/admin-task-status"
         },
 

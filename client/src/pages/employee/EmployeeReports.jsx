@@ -18,11 +18,6 @@ function EmployeeReports() {
         },
 
         {
-            name: "Task Status",
-            path: "/employee-task-status"
-        },
-
-        {
             name: "Update Status",
             path: "/employee-update-status"
         },

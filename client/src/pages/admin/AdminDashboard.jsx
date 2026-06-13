@@ -7,9 +7,9 @@ function AdminDashboard() {
     const menuItems = [
         { name: "Dashboard", path: "/admin-dashboard" },
         { name: "Employee List", path: "/admin-employee-list" },
-        { name: "Assign Task", path: "/admin-assign-task" },
+        { name: "Add Task", path: "/admin-assign-task" },
         { name: "My Tasks", path: "/admin-my-tasks" },
-        { name: "Task Status", path: "/admin-task-status" },
+        { name: "Tasks Assigned by Me", path: "/admin-task-status" },
         { name: "Reports", path: "/admin-reports" }
     ];
 
@@ -69,6 +69,7 @@ function AdminDashboard() {
                                 <span className="text-emerald-600 bg-white text-[9px] md:text-[10px] lg:text-xs font-bold px-1.5 py-0.5 md:px-2 md:py-1 rounded shadow-sm inline-block">All Time</span>
                             </div>
                         </div>
+
 
                     </div>
 

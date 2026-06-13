@@ -31,7 +31,8 @@ function EmployeeLogin() {
                 `${import.meta.env.VITE_BACKEND_URL}/api/employee/login`,
                 {
                     email: data.email,
-                    password: data.password
+                    password: data.password,
+                    role: "employee"
                 }
             );
 

@@ -77,7 +77,6 @@ function Home() {
                             </button>
                         </Link>
                     </div>
-
                 </div>
             </div>
         </div>

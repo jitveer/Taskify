@@ -1,6 +1,12 @@
 const express = require("express");
 const Users = require("../models/Users");
+const taskTabel = require("../models/Tasks");
 const router = express.Router();
+
+
+
+
+
 
 
 
@@ -12,6 +18,48 @@ const adminLoginSuccess = (req, res) => {
     })
 }
 
+
+
+
+// ALL USERS
+
+const allUser = async (req, res) => {
+
+    try {
+        const allUsers = await Users.find({ role: { $ne: "superadmin" } }).select("-password");
+
+        if (!allUsers) {
+            return res.status(400).json({
+                success: false,
+                message: "Did not get All Users"
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            count: allUsers.length,
+            users: allUsers
+        });
+
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+// ADD ADIMIN
 
 const addAdmin = async (req, res) => {
 
@@ -50,11 +98,12 @@ const addAdmin = async (req, res) => {
 
 
 
+
 // ADMIN LIST
 
 const adminLists = async (req, res) => {
     try {
-        const allAdmins = await Users.find({ role: 'admin' });
+        const allAdmins = await Users.find({ role: 'admin' }).select("-password");
         if (allAdmins) {
             return res.status(200).json({
                 success: true,
@@ -80,8 +129,6 @@ const editAdmin = async (req, res) => {
         const adminId = req.params.id;
         const adminNewData = req.body;
 
-        console.log(adminId, adminNewData);
-
         const updateAdmin = await Users.findByIdAndUpdate(adminId, adminNewData, { new: true });
 
 
@@ -104,7 +151,6 @@ const editAdmin = async (req, res) => {
         })
     }
 }
-
 
 
 // DELETE ADMIN
@@ -137,6 +183,22 @@ const deleteAdmin = async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ADD EMPLOYEE
 
 const addEmployee = async (req, res) => {
@@ -147,7 +209,7 @@ const addEmployee = async (req, res) => {
         // ASSIGNIG USERID BY BACKEND
 
         let nextUserId;
-        
+
         if (employeeData.role === "employee") {
             const lastUser = await Users.findOne({ role: "employee", user_id: { $gte: 2000 } }).sort({ user_id: -1 });
             nextUserId = lastUser ? Number(lastUser.user_id) + 1 : 2000;
@@ -156,7 +218,7 @@ const addEmployee = async (req, res) => {
         employeeData.user_id = nextUserId;
 
         const newEmployee = await Users.create(employeeData);
-        
+
         return res.status(200).json({
             success: true,
             message: "Employee added successfuly",
@@ -174,15 +236,14 @@ const addEmployee = async (req, res) => {
 
 
 
-
 // EMPLOYEE LIST
 
-const employeeList = async(req, res)=>{
+const employeeList = async (req, res) => {
 
     try {
-        const employeeList = await Users.find({role:"employee"});
+        const employeeList = await Users.find({ role: "employee" }).select("-password");
 
-        if(!employeeList){
+        if (!employeeList) {
             return res.status(400).json({
                 success: false,
                 message: "Emloyee list is not visible"
@@ -191,9 +252,9 @@ const employeeList = async(req, res)=>{
 
         return res.status(200).json({
             success: true,
-            employers: employeeList
+            employees: employeeList
         })
-        
+
     } catch (error) {
         return res.status(400).json({
             success: false,
@@ -203,9 +264,10 @@ const employeeList = async(req, res)=>{
 }
 
 
+
 // DELETE EMPLOYEE
 
-const employeeDelete = async(req, res)=>{
+const employeeDelete = async (req, res) => {
 
     try {
         const employeeId = req.params.id;
@@ -213,7 +275,7 @@ const employeeDelete = async(req, res)=>{
 
         const deleteEmployee = await Users.findByIdAndDelete(employeeId);
 
-        if(!deleteEmployee){
+        if (!deleteEmployee) {
             return res.status(404).json({
                 success: false,
                 message: "Employee not found"
@@ -226,14 +288,14 @@ const employeeDelete = async(req, res)=>{
         });
 
 
-        
+
     } catch (e) {
         return res.status(200).json({
             success: false,
             message: e.message
         })
     }
-    
+
 }
 
 
@@ -241,14 +303,14 @@ const employeeDelete = async(req, res)=>{
 
 // UPDATE EMPLOYEE DETAILS
 
-const employeeUpdate = async(req, res)=>{
+const employeeUpdate = async (req, res) => {
     try {
         const employeeId = req.params.id;
         const employeeUpdate = req.body;
 
-        const updateEmp = await Users.findByIdAndUpdate(employeeId, employeeUpdate, { new:true } );
+        const updateEmp = await Users.findByIdAndUpdate(employeeId, employeeUpdate, { new: true });
 
-        if(!updateEmp){
+        if (!updateEmp) {
             return res.status(400).json({
                 success: false,
                 message: "User not found"
@@ -260,7 +322,7 @@ const employeeUpdate = async(req, res)=>{
             message: "Admin Updated",
             user: updateEmp
         });
-   
+
     } catch (e) {
         return res.status(400).json({
             success: false,
@@ -276,4 +338,125 @@ const employeeUpdate = async(req, res)=>{
 
 
 
-module.exports = { adminLoginSuccess, addAdmin, adminLists, editAdmin, deleteAdmin, addEmployee, employeeList, employeeDelete , employeeUpdate};
+
+
+
+//ADD TASKS
+
+const addTask = async (req, res) => {
+    try {
+        const taskData = req.body;
+
+        // 1. Array Parsing: FormData की वजह से 'assignedTo' string बन जाता है, उसे वापस array में बदलना
+        if (taskData.assignedTo && typeof taskData.assignedTo === "string") {
+            try {
+                taskData.assignedTo = JSON.parse(taskData.assignedTo);
+            } catch (error) {
+                // अगर JSON.parse फेल हो जाता है (जैसे सिंगल ID भेजी गई हो), तो उसे एरे में रैप कर दें
+                taskData.assignedTo = [taskData.assignedTo];
+            }
+        }
+
+        // 2. Attachments Handling: अपलोडेड फ़ाइल्स को attachments array में मैप करना
+        if (req.files && req.files.length > 0) {
+            taskData.attachments = req.files.map(file => {
+                return {
+                    fileName: file.originalname, // असली नाम जैसे 'my_document.pdf'
+                    fileUrl: `/uploads/${file.filename}` // static path जैसे '/uploads/171784918239-file.pdf'
+                };
+            });
+        }
+
+        // 3. Database Entry: टास्क को सेव करना
+        const newTask = await taskTabel.create(taskData);
+
+        if (!newTask) {
+            return res.status(400).json({
+                success: false,
+                message: "Adding Task Failed"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Task Successfully Added",
+            task: newTask // रिस्पॉन्स में टास्क डेटा भेजना
+        });
+
+    } catch (e) {
+        console.error("Error adding task:", e);
+        return res.status(400).json({
+            success: false,
+            message: e.message
+        });
+    }
+};
+
+
+
+
+
+
+
+
+// const addTask = async (req, res) => {
+
+//     try {
+//         const taskData = req.body;
+//         const newTask = await taskTabel.create(taskData);
+
+//         if (!newTask) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Adding Task Failed"
+//             })
+//         }
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "Task Sccefully Added"
+//         })
+
+//     } catch (e) {
+//         return res.status(400).json({
+//             success: false,
+//             message: e.message
+//         })
+//     }
+// }
+
+
+
+
+
+
+
+
+const taskList = async (req, res) => {
+    try {
+        const loggedInUserId = req.user.id;
+        const taskLists = await taskTabel.find({ assignedBy: loggedInUserId }).populate("assignedTo", "name user_id");
+
+        if (taskLists) {
+            return res.status(200).json({
+                success: true,
+                message: "Successfully got Task List",
+                assignedTasks: taskLists
+            })
+        }
+
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: "Failed to get tasks"
+        })
+    }
+}
+
+
+
+
+
+
+
+module.exports = { adminLoginSuccess, allUser, addAdmin, adminLists, editAdmin, deleteAdmin, addEmployee, employeeList, employeeDelete, employeeUpdate, addTask, taskList };

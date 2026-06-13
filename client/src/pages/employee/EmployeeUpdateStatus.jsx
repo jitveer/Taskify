@@ -6,7 +6,6 @@ function EmployeeUpdateStatus() {
     const menuItems = [
         { name: "Dashboard", path: "/employee-dashboard" },
         { name: "My Tasks", path: "/employee-my-tasks" },
-        { name: "Task Status", path: "/employee-task-status" },
         { name: "Update Status", path: "/employee-update-status" },
         { name: "Reports", path: "/employee-reports" }
     ];
@@ -20,7 +19,7 @@ function EmployeeUpdateStatus() {
 
                 <div className="p-4 md:p-8 max-w-3xl mx-auto pb-24 md:pb-8">
                     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                        
+
                         {/* Header Banner */}
                         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 text-white flex items-center gap-4">
                             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
@@ -34,7 +33,7 @@ function EmployeeUpdateStatus() {
 
                         <div className="p-6 md:p-8">
                             <form className="space-y-6">
-                                
+
                                 {/* Task Select */}
                                 <div>
                                     <label className="block text-slate-700 font-bold mb-2 text-sm uppercase tracking-wide">
@@ -47,7 +46,7 @@ function EmployeeUpdateStatus() {
                                             <option>API Integration</option>
                                         </select>
                                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-500">
-                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                                         </div>
                                     </div>
                                 </div>
@@ -64,7 +63,7 @@ function EmployeeUpdateStatus() {
                                             <option>Completed</option>
                                         </select>
                                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-500">
-                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                                         </div>
                                     </div>
                                 </div>

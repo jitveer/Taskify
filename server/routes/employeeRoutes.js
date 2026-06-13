@@ -1,22 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const {
-    getEmployees,
-    addEmployee,
-    updateEmployee,
-    deleteEmployee
-} = require("../controllers/employeeController");
+const authMiddleware = require("../middlewares/authMiddleware");
+const authorize = require("../middlewares/roleMiddleware");
 
-// GET EMPLOYEES
-router.get("/", getEmployees);
 
-// ADD EMPLOYEE
-router.post("/add", addEmployee);
+router.use(authMiddleware);
+router.use(authorize('employee'));
 
-// UPDATE EMPLOYEE
-router.put("/:id", updateEmployee);
+// router.get("/", getEmployees);
 
-// DELETE EMPLOYEE
-router.delete("/:id", deleteEmployee);
 
 module.exports = router;

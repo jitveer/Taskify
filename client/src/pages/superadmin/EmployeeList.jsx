@@ -8,15 +8,32 @@ import axios from "axios";
 
 function EmployeeList() {
 
-    const [employees, setEmployees] = useState([]);
+    const [employees, setEmployees] = useState([
+        // {
+        //     _id: "1",
+        //     user_id: "EMP001",
+        //     name: "John Doe",
+        //     email: "john@gmail.com",
+        //     mobile: "9876543210",
+        //     department: "IT"
+        // },
+        // {
+        //     _id: "2",
+        //     user_id: "EMP002",
+        //     name: "Sarah Smith",
+        //     email: "sarah@gmail.com",
+        //     mobile: "9876541230",
+        //     department: "HR"
+        // }
+    ]);
 
     const menuItems = [
         { name: "Dashboard", path: "/super-admin-dashboard" },
         { name: "Admin List", path: "/admin-list" },
         { name: "Employee List", path: "/employee-list" },
-        { name: "Assign Task", path: "/assign-task" },
-        { name: "My Tasks", path: "/my-tasks" },
-        { name: "Task Status", path: "/task-status" },
+        { name: "Add Task", path: "/assign-task" },
+        // { name: "Task List", path: "/my-tasks" },
+        { name: "Tasks Assigned by Me", path: "/task-status" },
         { name: "Reports", path: "/reports" }
     ];
 
@@ -26,13 +43,21 @@ function EmployeeList() {
 
         try {
 
+            const token = localStorage.getItem("token");
+
             const response = await axios.get(
-                `${import.meta.env.VITE_BACKEND_URL}/api/employees`
+                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/employeeList`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
             );
 
-            console.log(response.data);
+            console.log("Employee API Response:", response.data);
+            console.log("Is Array?", Array.isArray(response.data));
 
-            setEmployees(response.data);
+            setEmployees(response.data.employees);
 
         } catch (error) {
 

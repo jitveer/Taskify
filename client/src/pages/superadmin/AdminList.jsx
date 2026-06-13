@@ -3,6 +3,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
 import {
     showSuccess,
     showError,
@@ -46,9 +47,9 @@ function AdminList() {
         { name: "Dashboard", path: "/super-admin-dashboard" },
         { name: "Admin List", path: "/admin-list" },
         { name: "Employee List", path: "/employee-list" },
-        { name: "Assign Task", path: "/assign-task" },
-        { name: "My Tasks", path: "/my-tasks" },
-        { name: "Task Status", path: "/task-status" },
+        { name: "Add Task", path: "/assign-task" },
+        // { name: "Task List", path: "/my-tasks" },
+        { name: "Tasks Assigned by Me", path: "/task-status" },
         { name: "Reports", path: "/reports" }
     ];
 
@@ -85,9 +86,11 @@ function AdminList() {
             validationErrors.mobile = "Enter valid 10 digit mobile number";
         }
 
-        if (!passwordRegex.test(formData.password)) {
-            validationErrors.password =
-                "Password must contain uppercase, lowercase, number and special character";
+        if (!editingId) {
+            if (!passwordRegex.test(formData.password)) {
+                validationErrors.password =
+                    "Password must contain uppercase, lowercase, number and special character";
+            }
         }
 
         if (!formData.department) {
@@ -110,9 +113,16 @@ function AdminList() {
             // UPDATE EXISTING ADMIN
             if (editingId) {
 
-                await axios.put(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/addadmin`,
-                    formData
+                const token = localStorage.getItem("token");
+
+                await axios.patch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/adminLists/${editingId}`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
                 );
 
                 showSuccess("Admin Updated Successfully");
@@ -160,7 +170,9 @@ function AdminList() {
 
             console.log(error);
 
-            alert(error.response?.data?.message || "Error saving admin");
+            showError(
+                error.response?.data?.message || "Error saving admin"
+            );
         }
     };
 
@@ -202,17 +214,30 @@ function AdminList() {
 
     const deleteAdmin = async (id) => {
 
-        const result = await showWarning(
-            "Delete Admin?",
-            "This action cannot be undone."
-        );
+        const result = await Swal.fire({
+            title: "Delete Admin?",
+            text: "This action cannot be undone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, Delete",
+            cancelButtonText: "Cancel"
+        });
 
         if (!result.isConfirmed) return;
 
         try {
 
+            const token = localStorage.getItem("token");
+
             await axios.delete(
-                `${import.meta.env.VITE_BACKEND_URL}/api/admins/${id}`
+                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/adminLists/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
             );
 
             showSuccess("Admin deleted successfully");
@@ -232,13 +257,17 @@ function AdminList() {
 
     const editAdmin = (admin) => {
 
+        console.log(admin._id);
+
+        setEditingId(admin._id);
+
         setFormData({
-            name: admin.name,
-            email: admin.email,
-            password: admin.password,
-            mobile: admin.mobile,
-            department: admin.department,
-            role: admin.role
+            name: admin.name || "",
+            email: admin.email || "",
+            password: "",
+            mobile: admin.mobile || "",
+            department: admin.department || "",
+            role: admin.role || ""
         });
 
         setEditingId(admin._id);
@@ -495,6 +524,7 @@ function AdminList() {
                                                 <option value="hr">HR</option>
                                                 <option value="interior">Interior</option>
                                                 <option value="sales">Sales</option>
+                                                <option value="accounts">Accounts</option>
 
                                                 {departments.map((dept) => (
                                                     <option
@@ -527,7 +557,6 @@ function AdminList() {
                                                 <option value="">Select Role</option>
                                                 <option value="superadmin">Super Admin</option>
                                                 <option value="admin">Admin</option>
-                                                <option value="employee">Employee</option>
                                             </select>
 
                                             {errors.role && (

@@ -1,37 +1,57 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Menu, Bell, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
+import { getNotifications, toggleNotificationRead, markAllNotificationsAsRead, clearAllNotifications } from "../../utils/notifications";
 
 function Header({ title, role }) {
     const showHamburger = role === "Admin" || role === "Super Admin";
     const headerRef = useRef(null);
 
     const [showNotifications, setShowNotifications] = useState(false);
-    const [notifications, setNotifications] = useState([
-        {
-            id: 1,
-            title: "New Admin Registered",
-            description: "John Doe has registered as an Admin for the HR department.",
-            time: "10 mins ago",
-            read: false,
-            type: "alert"
-        },
-        {
-            id: 2,
-            title: "Task Completed",
-            description: "Sarah Smith completed the Backend API Integration task.",
-            time: "2 hours ago",
-            read: false,
-            type: "success"
-        },
-        {
-            id: 3,
-            title: "Report Generated",
-            description: "The monthly operations report for May is ready.",
-            time: "1 day ago",
-            read: true,
-            type: "info"
-        }
-    ]);
+    const [notifications, setNotifications] = useState([]);
+    const navigate = useNavigate();
+
+    // Determine theme based on role
+    const user = JSON.parse(localStorage.getItem("user")) || {};
+    const activeRole = (role || user.role || "employee").toLowerCase().replace(/\s+/g, "");
+
+    let bellTheme = {
+        badge: "bg-emerald-100 text-emerald-600",
+        markAll: "text-emerald-600 hover:text-emerald-700",
+        unreadBorder: "bg-emerald-600",
+        unreadBg: "bg-emerald-50/10",
+        viewAll: "text-emerald-600 hover:text-emerald-700",
+        bellDot: "bg-emerald-500",
+    };
+
+    if (activeRole === "superadmin") {
+        bellTheme = {
+            badge: "bg-purple-100 text-purple-600",
+            markAll: "text-purple-600 hover:text-purple-700",
+            unreadBorder: "bg-purple-600",
+            unreadBg: "bg-purple-50/10",
+            viewAll: "text-purple-600 hover:text-purple-700",
+            bellDot: "bg-purple-500",
+        };
+    } else if (activeRole === "admin") {
+        bellTheme = {
+            badge: "bg-blue-100 text-blue-600",
+            markAll: "text-blue-600 hover:text-blue-700",
+            unreadBorder: "bg-blue-600",
+            unreadBg: "bg-blue-50/10",
+            viewAll: "text-blue-600 hover:text-blue-700",
+            bellDot: "bg-blue-500",
+        };
+    }
+
+    useEffect(() => {
+        const updateNotifications = () => {
+            setNotifications(getNotifications());
+        };
+        updateNotifications();
+        window.addEventListener("notificationsUpdated", updateNotifications);
+        return () => window.removeEventListener("notificationsUpdated", updateNotifications);
+    }, []);
 
     const getNotificationIcon = (type) => {
         switch (type) {
@@ -54,18 +74,18 @@ function Header({ title, role }) {
         }
     };
 
-    const toggleRead = (id) => {
-        setNotifications(prev =>
-            prev.map(n => (n.id === id ? { ...n, read: true } : n))
-        );
+    const handleNotificationClick = (id) => {
+        toggleNotificationRead(id);
+        navigate("/notifications");
+        setShowNotifications(false);
     };
 
     const markAllAsRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        markAllNotificationsAsRead();
     };
 
     const clearAll = () => {
-        setNotifications([]);
+        clearAllNotifications();
     };
 
     // Close notifications dropdown when clicking outside
@@ -112,7 +132,7 @@ function Header({ title, role }) {
                     >
                         <Bell size={18} />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                            <span className={`absolute top-2 right-2.5 w-2 h-2 rounded-full border-2 border-white ${bellTheme.bellDot}`}></span>
                         )}
                     </button>
 
@@ -142,7 +162,7 @@ function Header({ title, role }) {
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-bold text-slate-800 text-sm">Notifications</h3>
                                         {unreadCount > 0 && (
-                                            <span className="bg-purple-100 text-purple-600 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                                            <span className={`${bellTheme.badge} text-xs px-2.5 py-0.5 rounded-full font-bold`}>
                                                 {unreadCount} new
                                             </span>
                                         )}
@@ -150,7 +170,7 @@ function Header({ title, role }) {
                                     {notifications.length > 0 && (
                                         <button
                                             onClick={markAllAsRead}
-                                            className="text-xs font-bold text-purple-600 hover:text-purple-700 transition"
+                                            className={`text-xs font-bold transition ${bellTheme.markAll}`}
                                         >
                                             Mark all
                                         </button>
@@ -172,12 +192,12 @@ function Header({ title, role }) {
                                             return (
                                                 <div
                                                     key={notif.id}
-                                                    onClick={() => toggleRead(notif.id)}
-                                                    className={`p-4 flex gap-3.5 hover:bg-slate-50/80 transition cursor-pointer relative ${!notif.read ? "bg-purple-50/10" : ""
+                                                    onClick={() => handleNotificationClick(notif.id)}
+                                                    className={`p-4 flex gap-3.5 hover:bg-slate-50/80 transition cursor-pointer relative ${!notif.read ? bellTheme.unreadBg : ""
                                                         }`}
                                                 >
                                                     {!notif.read && (
-                                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-r-md"></div>
+                                                        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-md ${bellTheme.unreadBorder}`}></div>
                                                     )}
 
                                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${config.bg}`}>
@@ -204,16 +224,24 @@ function Header({ title, role }) {
                                 </div>
 
                                 {/* Footer */}
-                                {notifications.length > 0 && (
-                                    <div className="p-2.5 bg-slate-50/50 border-t border-slate-100 text-center">
-                                        <button
-                                            onClick={clearAll}
-                                            className="text-xs font-bold text-slate-500 hover:text-slate-600 transition"
-                                        >
-                                            Clear all
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="p-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between px-5">
+                                    <button
+                                        onClick={clearAll}
+                                        disabled={notifications.length === 0}
+                                        className="text-xs font-bold text-slate-500 hover:text-rose-600 transition disabled:opacity-40"
+                                    >
+                                        Clear all
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            navigate("/notifications");
+                                            setShowNotifications(false);
+                                        }}
+                                        className={`text-xs font-bold transition ${bellTheme.viewAll}`}
+                                    >
+                                        View All
+                                    </button>
+                                </div>
                             </div>
                         </>
                     )}
@@ -223,14 +251,15 @@ function Header({ title, role }) {
                 <div className="flex items-center gap-3 pl-2 md:pl-4 md:border-l border-slate-200">
                     <div className="hidden md:block text-right">
                         <h2 className="font-bold text-sm text-slate-800 leading-tight">
-                            User
+                            {user.name || user.employee_name || "User"}
                         </h2>
                         <p className="text-xs text-slate-500 font-medium">
-                            {role || "User"}
+                            {role || user.role || "User"}
                         </p>
                     </div>
+
                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex justify-center items-center font-bold shadow-sm border-2 border-white cursor-pointer hover:scale-105 transition">
-                        A
+                        {(user.name || user.employee_name || "U").charAt(0).toUpperCase()}
                     </div>
                 </div>
             </div>

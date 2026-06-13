@@ -1,21 +1,34 @@
 import { useState } from "react";
 import axios from "axios";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import Swal from "sweetalert2";
+
+import {
+    showSuccess,
+    showError
+} from "../../components/layout/Alerts";
+
 
 function EmployeeTable({ color, employees = [] }) {
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const [formData, setFormData] = useState({
-        employee_id: "",
-        first_name: "",
-        last_name: "",
+        name: "",
         email: "",
         password: "",
-        whatsapp_number: "",
-        department: ""
+        mobile: "",
+        department: "",
+        role: ""
     });
 
     const [search, setSearch] = useState("");
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    const mobileRegex = /^[0-9]{10}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#]).{8,}$/;
+
 
     const handleChange = (e) => {
         setFormData({
@@ -27,77 +40,163 @@ function EmployeeTable({ color, employees = [] }) {
     const handleOpenAdd = () => {
         setEditingId(null);
         setFormData({
-            employee_id: "",
-            first_name: "",
-            last_name: "",
+            name: "",
             email: "",
             password: "",
-            whatsapp_number: "",
-            department: ""
+            mobile: "",
+            department: "",
+            role: ""
         });
         setShowModal(true);
+        setErrors({});
     };
 
     const editEmployee = (employee) => {
         setFormData({
             employee_id: employee.user_id || "",
-            first_name: employee.first_name || "",
-            last_name: employee.last_name || "",
+            name: employee.name || "",
             email: employee.email || "",
             password: employee.password || "",
-            whatsapp_number: employee.whatsapp_number || "",
-            department: employee.department || ""
+            mobile: employee.mobile || "",
+            department: employee.department || "",
+            role: employee.role || ""
         });
         setEditingId(employee._id);
         setShowModal(true);
     };
 
     const deleteEmployee = async (id) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this employee?");
-        if (!confirmDelete) return;
+        const result = await Swal.fire({
+            title: "Delete Employee?",
+            text: "This action cannot be undone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc2626",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Delete",
+            cancelButtonText: "Cancel"
+        });
+
+        if (!result.isConfirmed) return;
 
         try {
-            await axios.delete(`/api/employees/${id}`);
-            alert("Employee Deleted Successfully");
+            // delete employee
+            const token = localStorage.getItem("token");
+
+            await axios.delete(
+                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/employeeLists/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            showSuccess("Employee Deleted Successfully");
             window.location.reload();
         } catch (error) {
             console.log(error);
-            alert("Error deleting employee");
+            showError("Error deleting employee");
         }
     };
 
     const saveEmployee = async () => {
+
+        const validationErrors = {};
+
+        if (!formData.name?.trim()) {
+            validationErrors.name = "Full Name is required";
+        }
+
+        if (formData.name?.trim().length < 3) {
+            validationErrors.name = "Name must be at least 3 characters";
+        }
+
+        if (!emailRegex.test(formData.email)) {
+            validationErrors.email = "Only Gmail addresses are allowed";
+        }
+
+        if (!mobileRegex.test(formData.mobile)) {
+            validationErrors.mobile = "Enter valid 10 digit mobile number";
+        }
+
+        if (!passwordRegex.test(formData.password)) {
+            validationErrors.password =
+                "Password must contain uppercase, lowercase, number and special character";
+        }
+
+        if (!formData.department) {
+            validationErrors.department = "Please select department";
+        }
+
+        if (!formData.role) {
+            validationErrors.role = "Please select role";
+        }
+
+        setErrors(validationErrors);
+
+        if (Object.keys(validationErrors).length > 0) {
+            return;
+        }
+
+
         try {
             if (editingId) {
-                // UPDATE EMPLOYEE
-                await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/employees/${editingId}`, formData);
-                alert("Employee Updated Successfully");
+                // update employee
+                const token = localStorage.getItem("token");
+
+                await axios.patch(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/employeeLists/${editingId}`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                await Swal.fire({
+                    icon: "success",
+                    title: "Employee Updated Successfully",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                
             } else {
                 // ADD NEW EMPLOYEE
-                await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/employees/add`, formData);
-                alert("Employee Added Successfully");
+                const token = localStorage.getItem("token");
+
+                await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/addEmployee`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+                showSuccess("Employee Added Successfully");
             }
 
             setShowModal(false);
             setEditingId(null);
             setFormData({
-                employee_id: "",
-                first_name: "",
-                last_name: "",
+                name: "",
                 email: "",
                 password: "",
-                whatsapp_number: "",
-                department: ""
+                mobile: "",
+                department: "",
+                role: ""
             });
             window.location.reload();
         } catch (error) {
             console.log(error);
-            alert(error.response?.data?.message || "Error saving employee");
+            showError(error.response?.data?.message || "Error saving employee");
         }
     };
 
     const filteredEmployees = employees.filter((emp) =>
-        (emp.first_name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (emp.name || "").toLowerCase().includes(search.toLowerCase()) ||
         (emp.email || "").toLowerCase().includes(search.toLowerCase()) ||
         (emp.department || "").toLowerCase().includes(search.toLowerCase()) ||
         (emp.user_id || "").toLowerCase().includes(search.toLowerCase())
@@ -146,9 +245,9 @@ function EmployeeTable({ color, employees = [] }) {
                             <tr key={index} className="border-b border-slate-50 hover:bg-slate-50 transition last:border-none">
                                 <td className="py-4 px-6 text-sm text-slate-500 font-medium">{index + 1}</td>
                                 <td className="py-4 px-6 text-sm text-slate-500">{employee.user_id}</td>
-                                <td className="py-4 px-6 text-sm font-bold text-slate-800">{employee.first_name} {employee.last_name || ""}</td>
+                                <td className="py-4 px-6 text-sm font-bold text-slate-800">{employee.name}</td>
                                 <td className="py-4 px-6 text-sm text-slate-500">{employee.email}</td>
-                                <td className="py-4 px-6 text-sm text-slate-500">WhatsApp: {employee.whatsapp_number || "N/A"}</td>
+                                <td className="py-4 px-6 text-sm text-slate-500">Mobile: {employee.mobile || "N/A"}</td>
                                 <td className="py-4 px-6 text-sm font-medium text-slate-600">{employee.department}</td>
                                 <td className="py-4 px-6">
                                     <div className="flex justify-center gap-2">
@@ -179,10 +278,10 @@ function EmployeeTable({ color, employees = [] }) {
                         <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-full bg-${color === 'blue' ? 'blue' : 'purple'}-100 text-${color === 'blue' ? 'blue' : 'purple'}-600 flex justify-center items-center font-bold text-sm`}>
-                                    {(employee.first_name || "E").charAt(0)}
+                                    {(employee.name || "E").charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 leading-tight">{employee.first_name} {employee.last_name || ""}</h3>
+                                    <h3 className="font-bold text-slate-800 leading-tight">{employee.name}</h3>
                                     <p className="text-xs text-slate-500 font-medium">{employee.user_id}</p>
                                 </div>
                             </div>
@@ -194,8 +293,8 @@ function EmployeeTable({ color, employees = [] }) {
                                 <span className="font-medium text-slate-700">{employee.department}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">WhatsApp</span>
-                                <span className="font-medium text-slate-700">{employee.whatsapp_number || "N/A"}</span>
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Mobile</span>
+                                <span className="font-medium text-slate-700">{employee.mobile || "N/A"}</span>
                             </div>
                             <div className="col-span-2">
                                 <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Email</span>
@@ -222,93 +321,227 @@ function EmployeeTable({ color, employees = [] }) {
             </div>
 
             {showModal && (
-                <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-                    <div className="bg-white w-full max-w-lg rounded-2xl p-6">
-                        <h2 className="text-2xl font-bold mb-5">
-                            {editingId ? "Edit Employee" : "Add Employee"}
-                        </h2>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
 
-                        <div className="grid gap-4">
-                            <input
-                                type="text"
-                                name="employee_id"
-                                placeholder="Employee ID"
-                                value={formData.employee_id}
-                                onChange={handleChange}
-                                className="border p-3 rounded-xl"
-                            />
+                    <div className="bg-white w-[95%] md:w-full max-w-4xl rounded-2xl md:rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
 
-                            <input
-                                type="text"
-                                name="first_name"
-                                placeholder="First Name"
-                                value={formData.first_name}
-                                onChange={handleChange}
-                                className="border p-3 rounded-xl"
-                            />
+                        {/* Top Accent Bar */}
+                        <div className="h-1.5 bg-gradient-to-r from-purple-600 to-indigo-500"></div>
 
-                            <input
-                                type="text"
-                                name="last_name"
-                                placeholder="Last Name"
-                                value={formData.last_name}
-                                onChange={handleChange}
-                                className="border p-3 rounded-xl"
-                            />
+                        {/* Header */}
+                        <div className="flex justify-between items-center px-8 pt-8 pb-4">
 
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                className="border p-3 rounded-xl"
-                            />
+                            <div>
+                                <h2 className="text-3xl font-bold text-slate-800">
+                                    {editingId ? "Edit Employee" : "Add Employee"}
+                                </h2>
 
-                            <input
-                                type="password"
-                                name="password"
-                                placeholder="Password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className="border p-3 rounded-xl"
-                            />
+                            </div>
 
-                            <input
-                                type="text"
-                                name="whatsapp_number"
-                                placeholder="WhatsApp Number"
-                                value={formData.whatsapp_number}
-                                onChange={handleChange}
-                                className="border p-3 rounded-xl"
-                            />
-
-                            <input
-                                type="text"
-                                name="department"
-                                placeholder="Department"
-                                value={formData.department}
-                                onChange={handleChange}
-                                className="border p-3 rounded-xl"
-                            />
-                        </div>
-
-                        <div className="flex justify-end gap-3 mt-6">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="bg-gray-200 px-5 py-2 rounded-xl"
+                                className="text-slate-400 hover:text-red-500 text-3xl font-bold duration-200"
                             >
-                                Cancel
+                                ×
                             </button>
 
-                            <button
-                                onClick={saveEmployee}
-                                className={`${btnBg} text-white px-5 py-2 rounded-xl`}
-                            >
-                                {editingId ? "Save" : "Add"}
-                            </button>
                         </div>
+
+                        {/* Form */}
+                        <div className="px-8 pb-6">
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                {/* Name */}
+                                <div className="relative pb-5">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Full Name
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        placeholder="Enter Full Name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        className={`w-full border bg-slate-50 p-3 rounded-xl
+                            focus:outline-none focus:ring-2 focus:ring-purple-500
+                            ${errors.name ? "border-red-500" : "border-slate-300"}`}
+                                    />
+
+                                    {errors.name && (
+                                        <p className="absolute bottom-0 left-1 text-red-500 text-xs">
+                                            {errors.name}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Email */}
+                                <div className="relative pb-5">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Email Address
+                                    </label>
+
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        placeholder="Enter Email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className={`w-full border bg-slate-50 p-3 rounded-xl
+                            focus:outline-none focus:ring-2 focus:ring-purple-500
+                            ${errors.email ? "border-red-500" : "border-slate-300"}`}
+                                    />
+
+                                    {errors.email && (
+                                        <p className="absolute bottom-0 left-1 text-red-500 text-xs">
+                                            {errors.email}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Password */}
+                                <div className="relative pb-5">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Password
+                                    </label>
+
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        placeholder="Enter Password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        className={`w-full border bg-slate-50 p-3 rounded-xl
+                            focus:outline-none focus:ring-2 focus:ring-purple-500
+                            ${errors.password ? "border-red-500" : "border-slate-300"}`}
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-[46px] text-gray-500"
+                                    >
+                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                    </button>
+
+                                    {errors.password && (
+                                        <p className="absolute bottom-0 left-1 text-red-500 text-xs">
+                                            {errors.password}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Mobile */}
+                                <div className="relative pb-5">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Mobile Number
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="mobile"
+                                        placeholder="Enter Mobile Number"
+                                        value={formData.mobile}
+                                        onChange={handleChange}
+                                        className={`w-full border bg-slate-50 p-3 rounded-xl
+                            focus:outline-none focus:ring-2 focus:ring-purple-500
+                            ${errors.mobile ? "border-red-500" : "border-slate-300"}`}
+                                    />
+
+                                    {errors.mobile && (
+                                        <p className="absolute bottom-0 left-1 text-red-500 text-xs">
+                                            {errors.mobile}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Department */}
+                                <div className="relative pb-5">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Department
+                                    </label>
+
+                                    <select
+                                        name="department"
+                                        value={formData.department}
+                                        onChange={handleChange}
+                                        className={`w-full border bg-slate-50 p-3 rounded-xl
+                            focus:outline-none focus:ring-2 focus:ring-purple-500
+                            ${errors.department ? "border-red-500" : "border-slate-300"}`}
+                                    >
+                                        <option value="">Select Department</option>
+                                        <option value="csr">CSR</option>
+                                        <option value="it">IT</option>
+                                        <option value="hr">HR</option>
+                                        <option value="interior">Interior</option>
+                                        <option value="sales">Sales</option>
+                                        <option value="accounts">Accounts</option>
+                                    </select>
+
+                                    {errors.department && (
+                                        <p className="absolute bottom-0 left-1 text-red-500 text-xs">
+                                            {errors.department}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Role */}
+                                <div className="relative pb-5">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Role
+                                    </label>
+
+                                    <select
+                                        name="role"
+                                        value={formData.role}
+                                        onChange={handleChange}
+                                        className={`w-full border bg-slate-50 p-3 rounded-xl
+                            focus:outline-none focus:ring-2 focus:ring-purple-500
+                            ${errors.role ? "border-red-500" : "border-slate-300"}`}
+                                    >
+                                        <option value="">Select Role</option>
+                                        <option value="employee">Employee</option>
+                                    </select>
+
+                                    {errors.role && (
+                                        <p className="absolute bottom-0 left-1 text-red-500 text-xs">
+                                            {errors.role}
+                                        </p>
+                                    )}
+                                </div>
+
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-slate-200">
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        setEditingId(null);
+                                        setErrors({});
+                                    }}
+                                    className="px-3 md:px-6 py-2 md:py-3 bg-slate-200 hover:bg-slate-300 rounded-xl text-xs md:text-base font-medium duration-200"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={saveEmployee}
+                                    className="px-3 md:px-6 py-2 md:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs md:text-base font-medium shadow-lg duration-200"
+                                >
+                                    {editingId ? "Update" : "Add"}
+                                </button>
+
+                            </div>
+
+                        </div>
+
                     </div>
+
                 </div>
             )}
         </div>

@@ -1,9 +1,20 @@
+import { useLocation, useNavigate } from "react-router-dom";
+
 function MyTaskTable({ color }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const queryParams = new URLSearchParams(location.search);
+    const searchFilter = queryParams.get("search") || "";
+
     const tasks = [
         { title: "UI Dashboard Design", priority: "High", dueDate: "20 May 2026", status: "Pending" },
         { title: "Backend API Integration", priority: "Medium", dueDate: "22 May 2026", status: "In Progress" },
         { title: "Attendance Module", priority: "Low", dueDate: "25 May 2026", status: "Completed" }
     ];
+
+    const filteredTasks = tasks.filter(task =>
+        task.title.toLowerCase().includes(searchFilter.toLowerCase())
+    );
 
     const getStatusColor = (status) => {
         if (status === "Completed") return "bg-green-100 text-green-700";
@@ -22,9 +33,30 @@ function MyTaskTable({ color }) {
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
 
                 {/* Header Section */}
-                <div className="p-6 border-b border-slate-100">
-                    <h2 className="text-xl font-bold text-slate-800">My Tasks</h2>
-                    <p className="text-sm text-slate-500 mt-1">Review your assigned tasks and deadlines.</p>
+                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-800">My Tasks</h2>
+                        <p className="text-sm text-slate-500 mt-1">Review your assigned tasks and deadlines.</p>
+                    </div>
+                    {searchFilter && (
+                        <div>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${
+                                color === "purple" 
+                                ? "bg-purple-50 text-purple-700 border-purple-100" 
+                                : color === "blue"
+                                ? "bg-blue-50 text-blue-700 border-blue-100"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            }`}>
+                                Filtered by notification: "{searchFilter}"
+                                <button
+                                    onClick={() => navigate(location.pathname)}
+                                    className="hover:scale-110 ml-1.5 font-bold"
+                                >
+                                    ✕
+                                </button>
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Desktop Table View */}
@@ -40,7 +72,7 @@ function MyTaskTable({ color }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {tasks.map((task, index) => (
+                            {filteredTasks.map((task, index) => (
                                 <tr key={index} className="hover:bg-slate-50 transition border-b border-slate-50 last:border-none">
                                     <td className="py-4 px-6 text-sm text-slate-500 font-medium">
                                         {index + 1}
@@ -69,7 +101,7 @@ function MyTaskTable({ color }) {
 
                 {/* Mobile Card View */}
                 <div className="lg:hidden flex flex-col gap-4 p-4 bg-slate-50/50">
-                    {tasks.map((task, index) => (
+                    {filteredTasks.map((task, index) => (
                         <div key={index} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3 relative">
                             <div className="flex justify-between items-start mb-1">
                                 <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Task #{index + 1}</span>
