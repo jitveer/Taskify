@@ -9,7 +9,8 @@ import {
 } from "../../components/layout/Alerts";
 
 
-function EmployeeTable({ color, employees = [] }) {
+function EmployeeTable({ color, employees = [], apiPrefix }) {
+    const loggedInUser = JSON.parse(localStorage.getItem("user"));
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
@@ -44,8 +45,14 @@ function EmployeeTable({ color, employees = [] }) {
             email: "",
             password: "",
             mobile: "",
-            department: "",
-            role: ""
+            department:
+                apiPrefix === "/api/admin"
+                    ? loggedInUser.department
+                    : "",
+            role:
+                apiPrefix === "/api/admin"
+                    ? "employee"
+                    : ""
         });
         setShowModal(true);
         setErrors({});
@@ -84,7 +91,7 @@ function EmployeeTable({ color, employees = [] }) {
             const token = localStorage.getItem("token");
 
             await axios.delete(
-                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/employeeLists/${id}`,
+                `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/deleteEmployee/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -146,7 +153,7 @@ function EmployeeTable({ color, employees = [] }) {
                 const token = localStorage.getItem("token");
 
                 await axios.patch(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/employeeLists/${editingId}`,
+                    `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/updateEmployee/${editingId}`,
                     formData,
                     {
                         headers: {
@@ -161,13 +168,13 @@ function EmployeeTable({ color, employees = [] }) {
                     timer: 1500,
                     showConfirmButton: false
                 });
-                
+
             } else {
                 // ADD NEW EMPLOYEE
                 const token = localStorage.getItem("token");
 
                 await axios.post(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/addEmployee`,
+                    `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/addEmployee`,
                     formData,
                     {
                         headers: {
@@ -199,7 +206,7 @@ function EmployeeTable({ color, employees = [] }) {
         (emp.name || "").toLowerCase().includes(search.toLowerCase()) ||
         (emp.email || "").toLowerCase().includes(search.toLowerCase()) ||
         (emp.department || "").toLowerCase().includes(search.toLowerCase()) ||
-        (emp.user_id || "").toLowerCase().includes(search.toLowerCase())
+        String(emp.user_id || "").toLowerCase().includes(search.toLowerCase())
     );
 
     const focusRing = color === "blue" ? "focus:ring-blue-500" : "focus:ring-purple-500";
@@ -466,6 +473,7 @@ function EmployeeTable({ color, employees = [] }) {
                                         name="department"
                                         value={formData.department}
                                         onChange={handleChange}
+                                        disabled={apiPrefix === "/api/admin"}
                                         className={`w-full border bg-slate-50 p-3 rounded-xl
                             focus:outline-none focus:ring-2 focus:ring-purple-500
                             ${errors.department ? "border-red-500" : "border-slate-300"}`}
@@ -496,6 +504,7 @@ function EmployeeTable({ color, employees = [] }) {
                                         name="role"
                                         value={formData.role}
                                         onChange={handleChange}
+                                        disabled={apiPrefix === "/api/admin"}
                                         className={`w-full border bg-slate-50 p-3 rounded-xl
                             focus:outline-none focus:ring-2 focus:ring-purple-500
                             ${errors.role ? "border-red-500" : "border-slate-300"}`}

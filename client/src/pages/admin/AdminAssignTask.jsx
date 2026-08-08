@@ -54,7 +54,7 @@ function AdminAssignTask() {
 
                 {/* Reusable Form */}
                 <div className="lg:pt-4">
-                    <AssignTaskForm color="blue" />
+                    <AssignTaskForm color="blue" apiPrefix="/api/admin"/>
                 </div>
             </div>
         </div>

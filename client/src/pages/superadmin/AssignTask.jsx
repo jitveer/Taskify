@@ -27,7 +27,7 @@ function AssignTask() {
 
                 {/* Super Admin Assign Task Form */}
                 <div className="lg:pt-4">
-                    <AssignTaskForm color="purple" />
+                    <AssignTaskForm color="purple" apiPrefix="/api/superadmin"/>
                 </div>
             </div>
         </div>

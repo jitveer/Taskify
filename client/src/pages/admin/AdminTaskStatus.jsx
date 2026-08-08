@@ -24,7 +24,7 @@ function AdminTaskStatus() {
                 {/* Header */}
                 <Header title="Task Progress" role="Admin" />
 
-                <TaskStatusTable color="blue" />
+                <TaskStatusTable color="blue" apiPrefix="/api/admin"/>
             </div>
         </div>
     );

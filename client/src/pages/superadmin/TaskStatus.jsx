@@ -24,7 +24,7 @@ function TaskStatus() {
                 {/* Header */}
                 <Header title="Global Task Status" name="Super Admin" role="Super Admin" />
 
-                <TaskStatusTable color="purple" />
+                <TaskStatusTable color="purple" apiPrefix="/api/superadmin"/>
             </div>
         </div>
     );

@@ -3,31 +3,31 @@ const generatetoken = require('../utils/generateToken');
 
 
 // SUPERADMIN LOGIN
-const authLogin = async(req, res)=>{
-    try{
-        const {email, password, role} = req.body;
+const authLogin = async (req, res) => {
+    try {
+        const { email, password, role } = req.body;
 
         // User Find
-        const user = await User.findOne({email});
+        const user = await User.findOne({ email });
 
         //user check
-        if(!user){
+        if (!user) {
             return res.status(404).json({
-                success:false,
-                message:"User not found",
+                success: false,
+                message: "User not found",
             })
         }
 
         //password check
-        if(password != user.password){
+        if (password != user.password) {
             return res.status(403).json({
                 success: false,
-                message:"Invalid Details",
+                message: "Invalid Details",
             })
         }
 
         //role verify
-        if(role != user.role){
+        if (role != user.role) {
             return res.status(403).json({
                 success: false,
                 message: "Invalid role"
@@ -36,21 +36,22 @@ const authLogin = async(req, res)=>{
 
 
         //generate token
-        const token = generatetoken(user._id, user.role )
+        const token = generatetoken(user._id, user.role, user.department)
 
         return res.status(200).json({
             success: true,
-            message:"login Successful",
+            message: "login Successful",
             token,
-            user:{
+            user: {
                 id: user._id,
-                name: `${user.first_name} ${user.last_name}`,
+                name: user.name,
                 email: user.email,
                 role: user.role,
+                department: user.department
             }
-        })        
-        
-    } catch(e){
+        })
+
+    } catch (e) {
         return res.status(500).json({
             success: false,
             message: "Server Error",
@@ -63,4 +64,4 @@ const authLogin = async(req, res)=>{
 
 
 
-module.exports = {authLogin};
+module.exports = { authLogin };

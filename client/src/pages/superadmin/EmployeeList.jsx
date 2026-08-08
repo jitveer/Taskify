@@ -97,6 +97,7 @@ function EmployeeList() {
                 <EmployeeTable
                     color="purple"
                     employees={employees}
+                    apiPrefix="/api/superadmin"
                 />
 
             </div>

@@ -2,7 +2,7 @@ import { Search, Eye, X, Filter, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-function TaskStatusTable({ color }) {
+function TaskStatusTable({ color, apiPrefix }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState("All");
     const [selectedTask, setSelectedTask] = useState(null);
@@ -20,7 +20,7 @@ function TaskStatusTable({ color }) {
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/taskList`,
+                      `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/taskList`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`

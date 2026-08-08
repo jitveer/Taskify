@@ -17,11 +17,26 @@ function AdminEmployeeList() {
     ];
 
     const fetchEmployees = async () => {
+
         try {
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/employees`);
-            setEmployees(response.data);
+
+            const token = localStorage.getItem("token");
+
+            const response = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/api/admin/employeeList`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            setEmployees(response.data.employees);
+
         } catch (error) {
-            console.log("Error fetching employees:", error);
+
+
+            console.log("FULL ERROR:", error);
         }
     };
 
@@ -40,7 +55,7 @@ function AdminEmployeeList() {
                 <Header title="Employee Directory" role="Admin" />
 
                 {/* Admin Employee Table */}
-                <EmployeeTable color="blue" employees={employees} />
+                <EmployeeTable color="blue" employees={employees} apiPrefix="/api/admin"/>
             </div>
         </div>
     );

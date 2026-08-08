@@ -11,10 +11,9 @@ const employeeRoutes = require('./routes/employeeRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
-
 router.use('/superadmin', superAdminRoutes);
 router.use('/admin', adminRoutes);
-router.use('/employee', employeeRoutes);
+// router.use('/employee', employeeRoutes);
 
 
 

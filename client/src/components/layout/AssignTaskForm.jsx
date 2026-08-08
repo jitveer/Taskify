@@ -7,11 +7,20 @@ import {
     showConfirm
 } from "../../components/layout/Alerts";
 
-function AssignTaskForm({ color }) {
+function AssignTaskForm({ color, apiPrefix }) {
+
+    const loggedInUser = JSON.parse(localStorage.getItem("user")) || {};
 
     const [formData, setFormData] = useState({
-        taskType: "",
-        department: "",
+        taskType:
+            apiPrefix === "/api/admin"
+                ? "Individual"
+                : "",
+
+        department:
+            apiPrefix === "/api/admin"
+                ? loggedInUser.department
+                : "",
         employeeName: "",
         priority: "",
         taskTitle: "",
@@ -28,7 +37,7 @@ function AssignTaskForm({ color }) {
             const token = localStorage.getItem("token");
 
             const response = await axios.get(
-                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/allUser`,
+                `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/allUser`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -36,7 +45,11 @@ function AssignTaskForm({ color }) {
                 }
             );
 
-            setUserList(response.data.users);
+            setUserList(
+                response.data.users ||
+                response.data.employees ||
+                []
+            );
 
         } catch (error) {
 
@@ -143,9 +156,8 @@ function AssignTaskForm({ color }) {
 
             const token = localStorage.getItem("token");
 
-            const loggedInUser = JSON.parse(
-                localStorage.getItem("user")
-            );
+            const loggedInUser =
+                JSON.parse(localStorage.getItem("user")) || {};
 
             console.log("Logged User:", loggedInUser);
 
@@ -210,7 +222,7 @@ function AssignTaskForm({ color }) {
             console.log("Payload:", payload);
 
             const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/addTask`,
+                `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/addTask`,
                 payload,
                 {
                     headers: {
@@ -244,7 +256,17 @@ function AssignTaskForm({ color }) {
     );
 
     const filteredEmployees = userList
-        .filter((user) => user.role === "employee")
+        .filter((user) => {
+
+            if (apiPrefix === "/api/admin") {
+                return (
+                    user.role === "employee" &&
+                    user.department === loggedInUser.department
+                );
+            }
+
+            return user.role === "employee";
+        })
         .filter((user) =>
             user.name
                 .toLowerCase()
@@ -286,6 +308,7 @@ function AssignTaskForm({ color }) {
                                     <select
                                         name="taskType"
                                         value={formData.taskType}
+                                        disabled={apiPrefix === "/api/admin"}
                                         onChange={(e) => {
                                             const value = e.target.value;
                                             setFormData({
@@ -301,7 +324,11 @@ function AssignTaskForm({ color }) {
                                     >
                                         <option value="">Select Task Type</option>
                                         <option value="Individual">Individual Task</option>
-                                        <option value="Group Task">Group Task</option>
+                                        {apiPrefix === "/api/superadmin" && (
+                                            <option value="Group Task">
+                                                Group Task
+                                            </option>
+                                        )}
                                     </select>
 
                                     {selectIcon}
@@ -324,7 +351,7 @@ function AssignTaskForm({ color }) {
                                         <select
                                             name="department"
                                             value={formData.department}
-                                            disabled={formData.taskType === ""}
+                                            disabled={formData.taskType === "" || apiPrefix === "/api/admin"}
                                             onChange={(e) => {
 
                                                 const value = e.target.value;
