@@ -28,7 +28,7 @@ function EmployeeLogin() {
             console.log("Employee Data:", data);
 
             const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/employee/login`,
+                `${import.meta.env.VITE_BACKEND_URL}/api/auth/employee/login`,
                 {
                     email: data.email,
                     password: data.password,

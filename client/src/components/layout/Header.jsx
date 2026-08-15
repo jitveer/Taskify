@@ -88,6 +88,13 @@ function Header({ title, role }) {
         clearAllNotifications();
     };
 
+    const handleProfileClick = () => {
+        const userRole = (role || user.role || "employee").toLowerCase().replace(/\s+/g, "");
+        if (userRole === "employee") {
+            navigate("/employee-profile");
+        }
+    };
+
     // Close notifications dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -127,7 +134,13 @@ function Header({ title, role }) {
                 {/* Notification Group */}
                 <div className="relative" ref={headerRef}>
                     <button
-                        onClick={() => setShowNotifications(prev => !prev)}
+                        onClick={() => {
+                            if (activeRole === "employee") {
+                                navigate("/notifications");
+                            } else {
+                                setShowNotifications(prev => !prev);
+                            }
+                        }}
                         className="relative p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-600 transition border border-slate-100"
                     >
                         <Bell size={18} />
@@ -248,7 +261,10 @@ function Header({ title, role }) {
                 </div>
 
                 {/* Profile */}
-                <div className="flex items-center gap-3 pl-2 md:pl-4 md:border-l border-slate-200">
+                <div 
+                    onClick={handleProfileClick}
+                    className="flex items-center gap-3 pl-2 md:pl-4 md:border-l border-slate-200 cursor-pointer hover:opacity-80 transition"
+                >
                     <div className="hidden md:block text-right">
                         <h2 className="font-bold text-sm text-slate-800 leading-tight">
                             {user.name || user.employee_name || "User"}
@@ -258,7 +274,7 @@ function Header({ title, role }) {
                         </p>
                     </div>
 
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex justify-center items-center font-bold shadow-sm border-2 border-white cursor-pointer hover:scale-105 transition">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex justify-center items-center font-bold shadow-sm border-2 border-white hover:scale-105 transition">
                         {(user.name || user.employee_name || "U").charAt(0).toUpperCase()}
                     </div>
                 </div>

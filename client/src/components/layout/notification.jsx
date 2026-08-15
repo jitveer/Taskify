@@ -52,9 +52,8 @@ function Notifications() {
             return [
                 { name: "Dashboard", path: "/employee-dashboard" },
                 { name: "My Tasks", path: "/employee-my-tasks" },
-                { name: "Tasks Assigned by Me", path: "/employee-task-status" },
-                { name: "Update Status", path: "/employee-update-status" },
-                { name: "Reports", path: "/employee-reports" }
+                { name: "Reports", path: "/employee-reports" },
+                { name: "My Profile", path: "/employee-profile" }
             ];
         }
     };

@@ -2,7 +2,7 @@ const User = require('../models/Users');
 const generatetoken = require('../utils/generateToken');
 
 
-// SUPERADMIN LOGIN
+// SUPERADMIN, ADMIN, EMPLOYEE LOGIN
 const authLogin = async (req, res) => {
     try {
         const { email, password, role } = req.body;
@@ -59,6 +59,7 @@ const authLogin = async (req, res) => {
         })
     }
 }
+
 
 
 

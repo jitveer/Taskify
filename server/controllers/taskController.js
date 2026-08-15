@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const taskTable = require('../models/Tasks');
 
 
@@ -82,7 +83,63 @@ const addTask = async (req, res) => {
 
 
 
+
+const getMyTasks = async (req, res) => {
+    try {
+        const loggedInUserId = new mongoose.Types.ObjectId(req.user.id);
+        const tasks = await taskTable.find({ assignedTo: loggedInUserId }).populate("assignedBy", "name email");
+
+        return res.status(200).json({
+            success: true,
+            message: "Successfully fetched your tasks",
+            tasks
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: "Failed to fetch tasks",
+            error: error.message
+        });
+    }
+};
+
+
+
+const updateTaskStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, comment } = req.body;
+
+        const updatedTask = await taskTable.findByIdAndUpdate(
+            id,
+            { status, comment, completedAt: status === "Completed" ? new Date() : null },
+            { new: true }
+        );
+
+        if (!updatedTask) {
+            return res.status(404).json({
+                success: false,
+                message: "Task not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Task status updated successfully",
+            task: updatedTask
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: "Failed to update task status",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     addTask,
-    taskList
+    taskList,
+    getMyTasks,
+    updateTaskStatus
 };

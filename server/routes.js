@@ -13,7 +13,7 @@ const employeeRoutes = require('./routes/employeeRoutes');
 router.use('/auth', authRoutes);
 router.use('/superadmin', superAdminRoutes);
 router.use('/admin', adminRoutes);
-// router.use('/employee', employeeRoutes);
+router.use('/employee', employeeRoutes);
 
 
 

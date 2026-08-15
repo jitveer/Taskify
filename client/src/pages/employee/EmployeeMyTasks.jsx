@@ -8,8 +8,8 @@ function EmployeeTasks() {
     const menuItems = [
         { name: "Dashboard", path: "/employee-dashboard" },
         { name: "My Tasks", path: "/employee-my-tasks" },
-        { name: "Update Status", path: "/employee-update-status" },
-        { name: "Reports", path: "/employee-reports" }
+        { name: "Reports", path: "/employee-reports" },
+        { name: "My Profile", path: "/employee-profile" }
     ];
 
     return (

@@ -19,13 +19,12 @@ function EmployeeTaskStatus() {
         },
 
         {
-            name: "Update Status",
-            path: "/employee-update-status"
-        },
-
-        {
             name: "Reports",
             path: "/employee-reports"
+        },
+        {
+            name: "My Profile",
+            path: "/employee-profile"
         }
 
     ];

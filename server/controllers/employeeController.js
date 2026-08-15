@@ -164,14 +164,11 @@ const employeeDelete = async (req, res) => {
             message: e.message
         })
     }
-
 }
 
 
 
-
 // UPDATE EMPLOYEE DETAILS
-
 const employeeUpdate = async (req, res) => {
     try {
         const employeeId = req.params.id;
@@ -210,4 +207,36 @@ const employeeUpdate = async (req, res) => {
 
 
 
-module.exports = { addEmployee, employeeList, employeeDelete, employeeUpdate };
+const updateSelfProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { name, email } = req.body;
+
+        const updatedUser = await Users.findByIdAndUpdate(
+            userId,
+            { name, email },
+            { new: true }
+        ).select("-password");
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            user: updatedUser
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: "Failed to update profile",
+            error: error.message
+        });
+    }
+};
+
+module.exports = { addEmployee, employeeList, employeeDelete, employeeUpdate, updateSelfProfile };
