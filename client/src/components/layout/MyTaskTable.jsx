@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import axios from "axios";
-import { X, Calendar, FileText, User } from "lucide-react";
+import { taskApi } from "../../services/api";
+import { X, Calendar, FileText } from "lucide-react";
 
 function MyTaskTable({ color }) {
     const location = useLocation();
@@ -18,20 +18,25 @@ function MyTaskTable({ color }) {
     const fetchMyTasks = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem("token");
-            const response = await axios.get(
-                `${import.meta.env.VITE_BACKEND_URL}/api/employee/my-tasks`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-            if (response.data && response.data.success) {
-                setTaskList(response.data.tasks);
+            const response = await taskApi.getMyTasks();
+            if (response && response.success) {
+                // Map flat legacy response objects into standard schema representations
+                const normalizedTasks = (response.tasks || []).map(t => ({
+                    ...t,
+                    // If backend is flat, normalize fields locally
+                    assignmentId: t.assignmentId,
+                    status: t.status,
+                    completedAt: t.completedAt
+                }));
+                setTaskList(normalizedTasks);
             }
         } catch (error) {
             console.error("Fetch My Tasks Error:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.message || "Failed to load tasks."
+            });
         } finally {
             setLoading(false);
         }
@@ -50,6 +55,7 @@ function MyTaskTable({ color }) {
     const getStatusColor = (status) => {
         if (status === "Completed") return "bg-green-100 text-green-700";
         if (status === "In Progress") return "bg-blue-100 text-blue-700";
+        if (status === "Rejected") return "bg-red-100 text-red-700";
         return "bg-amber-100 text-amber-700";
     };
 
@@ -63,15 +69,46 @@ function MyTaskTable({ color }) {
     const handleUpdateStatus = (originalIndex) => {
         const taskToUpdate = filteredTasks[originalIndex];
 
+        // Do not allow status changes if Completed
+        if (taskToUpdate.status === "Completed") {
+            Swal.fire({
+                icon: "error",
+                title: "Completed Task",
+                text: "Completed tasks cannot be changed."
+            });
+            return;
+        }
+
+        // Build list of valid transitions based on backend rules
+        const transitionRules = {
+            "Pending": [
+                { label: "In Progress", value: "In Progress" },
+                { label: "Rejected", value: "Rejected" }
+            ],
+            "In Progress": [
+                { label: "Completed", value: "Completed" },
+                { label: "Rejected", value: "Rejected" },
+                { label: "Pending", value: "Pending" }
+            ],
+            "Rejected": [
+                { label: "Pending", value: "Pending" },
+                { label: "In Progress", value: "In Progress" }
+            ],
+            "Overdue": [
+                { label: "In Progress", value: "In Progress" },
+                { label: "Completed", value: "Completed" }
+            ]
+        };
+
+        const availableOptions = transitionRules[taskToUpdate.status] || [];
+
         Swal.fire({
             title: "Update Task Status",
             html: `
                 <div style="text-align: left;">
                     <label style="display: block; font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 6px; tracking-wide">Select Status</label>
                     <select id="swal-status" class="swal2-input" style="width: 100%; height: 45px; margin: 0 0 16px 0; box-sizing: border-box; font-size: 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <option value="Pending" ${taskToUpdate.status === "Pending" ? "selected" : ""}>Pending</option>
-                        <option value="In Progress" ${taskToUpdate.status === "In Progress" ? "selected" : ""}>In Progress</option>
-                        <option value="Completed" ${taskToUpdate.status === "Completed" ? "selected" : ""}>Completed</option>
+                        ${availableOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join("")}
                     </select>
                     
                     <label style="display: block; font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 6px; tracking-wide">Comment / Notes</label>
@@ -102,33 +139,27 @@ function MyTaskTable({ color }) {
                 }).then(async (confirmResult) => {
                     if (confirmResult.isConfirmed) {
                         try {
-                            const token = localStorage.getItem("token");
-                            const response = await axios.patch(
-                                `${import.meta.env.VITE_BACKEND_URL}/api/employee/update-status/${taskToUpdate._id}`,
-                                { status: selectedStatus, comment: enteredComment },
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`
-                                    }
-                                }
+                            // Target status patch via assignmentId rather than task ID
+                            await taskApi.updateAssignmentStatus(
+                                taskToUpdate.assignmentId,
+                                selectedStatus,
+                                enteredComment
                             );
 
-                            if (response.data && response.data.success) {
-                                Swal.fire({
-                                    icon: "success",
-                                    title: "Status Updated",
-                                    text: `Task status updated to ${selectedStatus}`,
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                });
-                                fetchMyTasks();
-                            }
+                            Swal.fire({
+                                icon: "success",
+                                title: "Status Updated",
+                                text: `Task status updated to ${selectedStatus}`,
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            fetchMyTasks();
                         } catch (error) {
                             console.error("Update Task Status Error:", error);
                             Swal.fire({
                                 icon: "error",
                                 title: "Update Failed",
-                                text: "Something went wrong while updating task status."
+                                text: error.message || "Failed to update status transition."
                             });
                         }
                     }
@@ -257,17 +288,19 @@ function MyTaskTable({ color }) {
                                             </span>
                                         </td>
                                         <td className="py-4 px-6 text-center">
-                                            <button
-                                                onClick={() => handleUpdateStatus(index)}
-                                                className={`px-3 py-1.5 border rounded-xl text-xs font-bold transition ${color === "purple"
-                                                    ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-200"
-                                                    : color === "blue"
-                                                        ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
-                                                        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200"
-                                                    }`}
-                                            >
-                                                Update
-                                            </button>
+                                            {task.status !== "Completed" && (
+                                                <button
+                                                    onClick={() => handleUpdateStatus(index)}
+                                                    className={`px-3 py-1.5 border rounded-xl text-xs font-bold transition ${color === "purple"
+                                                        ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-200"
+                                                        : color === "blue"
+                                                            ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
+                                                            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-200"
+                                                        }`}
+                                                >
+                                                    Update
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -311,17 +344,19 @@ function MyTaskTable({ color }) {
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(task.status)}`}>
                                             {task.status}
                                         </span>
-                                        <button
-                                            onClick={() => handleUpdateStatus(index)}
-                                            className={`px-2.5 py-1 border rounded-lg text-[10px] font-bold transition ${color === "purple"
-                                                ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-100"
-                                                : color === "blue"
-                                                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100"
-                                                    : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100"
-                                                }`}
-                                        >
-                                            Update
-                                        </button>
+                                        {task.status !== "Completed" && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(index)}
+                                                className={`px-2.5 py-1 border rounded-lg text-[10px] font-bold transition ${color === "purple"
+                                                    ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-100"
+                                                    : color === "blue"
+                                                        ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100"
+                                                        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100"
+                                                    }`}
+                                            >
+                                                Update
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -1,5 +1,6 @@
 const User = require('../models/Users');
 const generatetoken = require('../utils/generateToken');
+const bcrypt = require('bcryptjs');
 
 
 // SUPERADMIN, ADMIN, EMPLOYEE LOGIN
@@ -17,6 +18,16 @@ const authLogin = async (req, res) => {
                 message: "User not found",
             })
         }
+
+        //password check (using bcrypt)
+        // const isMatch = await bcrypt.compare(password, user.password);
+        // if (!isMatch) {
+        //     return res.status(403).json({
+        //         success: false,
+        //         message: "Invalid Details",
+        //     })
+        // }
+
 
         //password check
         if (password != user.password) {

@@ -2,20 +2,11 @@ const mongoose = require("mongoose");
 
 const taskSchema = new mongoose.Schema(
     {
-
         assignedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-
-        assignedTo: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
-                required: true,
-            }
-        ],
 
         taskType: {
             type: String,
@@ -28,7 +19,6 @@ const taskSchema = new mongoose.Schema(
 
         department: {
             type: String,
-            ref: "Department",
             enum: ["csr", "it", "hr", "interior", "sales", "accounts"],
             required: function () {
                 return this.taskType === "group_task";
@@ -58,6 +48,12 @@ const taskSchema = new mongoose.Schema(
             required: true,
         },
 
+        parentTaskId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Task",
+            default: null,
+        },
+
         attachments: [
             {
                 fileName: {
@@ -70,40 +66,15 @@ const taskSchema = new mongoose.Schema(
                 },
             }
         ],
-
-        status: {
-            type: String,
-            enum: [
-                "Pending",
-                "In Progress",
-                "Completed",
-                "Rejected",
-                "Overdue",
-            ],
-            default: "Pending",
-        },
-
-        completedAt: {
-            type: Date,
-            default: null
-        },
     },
     {
         timestamps: true,
     }
-
 );
 
-
-//At liast one employee required
-taskSchema.path("assignedTo").validate(function (value) {
-    return value.length > 0;
-}, "At least one employee madt be assigned to the task");
-
-
-taskSchema.path("assignedTo").validate(function (value) {
-    const uniqueIds = [...new Set(value.map(id => id.toString()))];
-    return uniqueIds.length === value.length;
-}, "Duplicate employees are not allowed");
+// Indexes
+taskSchema.index({ assignedBy: 1 });
+taskSchema.index({ department: 1 });
+taskSchema.index({ dueDate: 1 });
 
 module.exports = mongoose.model("Task", taskSchema);

@@ -1,6 +1,6 @@
 import { Search, Eye, X, Filter, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { taskApi } from "../../services/api";
 
 function TaskStatusTable({ color, apiPrefix }) {
     const [searchQuery, setSearchQuery] = useState("");
@@ -9,48 +9,45 @@ function TaskStatusTable({ color, apiPrefix }) {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
 
-
-    // fetch employee and admin from task table 
+    // fetch employee and admin from task table using centralized services
     useEffect(() => {
-
         const fetchTasks = async () => {
-
             try {
+                setLoading(true);
+                let response;
+                if (apiPrefix === "/api/superadmin") {
+                    response = await taskApi.getSuperAdminTasks();
+                } else {
+                    response = await taskApi.getAdminTasks();
+                }
 
-                const token = localStorage.getItem("token");
-
-                const response = await axios.get(
-                      `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/taskList`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-                console.log("Task List:", response.data);
-
-                setTasks(response.data.assignedTasks);
-
+                if (response && response.success) {
+                    const mappedTasks = (response.assignedTasks || []).map(t => {
+                        const completed = t.assignments?.filter(a => a.status === "Completed").length || 0;
+                        const progress = t.assignments?.length > 0
+                            ? Math.round((completed / t.assignments.length) * 100) + "%"
+                            : "0%";
+                        return {
+                            ...t,
+                            progress
+                        };
+                    });
+                    setTasks(mappedTasks);
+                }
             } catch (error) {
-
-                console.log("Task List Error:", error);
-
+                console.error("Task List Error:", error);
             } finally {
-
                 setLoading(false);
             }
         };
 
         fetchTasks();
-
-    }, []);
-
-
+    }, [apiPrefix]);
 
     const getStatusColor = (status) => {
         if (status === "Completed") return "bg-green-100 text-green-700 border border-green-200/50";
         if (status === "In Progress") return "bg-blue-100 text-blue-700 border border-blue-200/50";
+        if (status === "Rejected") return "bg-red-100 text-red-700 border border-red-200/50";
         return "bg-amber-100 text-amber-700 border border-amber-200/50";
     };
 
@@ -97,15 +94,10 @@ function TaskStatusTable({ color, apiPrefix }) {
     };
 
     const activeColor = colorClasses[color] || colorClasses.emerald;
-    
+
     // filter buttons
     const filteredTasks = tasks.filter((task) => {
-
-        const matchesSearch =
-            (task.title || "")
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase());
-
+        const matchesSearch = (task.title || "").toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter =
             filterType === "All" ||
             (filterType === "Group Task" && task.taskType === "group_task") ||
@@ -116,7 +108,6 @@ function TaskStatusTable({ color, apiPrefix }) {
 
     return (
         <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
-            {/* Inject Animation Styles */}
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @keyframes fadeIn {
@@ -136,7 +127,6 @@ function TaskStatusTable({ color, apiPrefix }) {
             `}} />
 
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-
                 {/* Header Section */}
                 <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
@@ -144,9 +134,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                         <p className="text-sm text-slate-500 mt-1">Monitor the progress of your team members.</p>
                     </div>
 
-                    {/* Search and Dropdown Filter Container */}
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        {/* Search Input */}
                         <div className="relative flex-1 sm:flex-initial">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                                 <Search className="w-4 h-4" />
@@ -160,7 +148,6 @@ function TaskStatusTable({ color, apiPrefix }) {
                             />
                         </div>
 
-                        {/* Dropdown for Filtration */}
                         <div className="relative flex-1 sm:flex-initial">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                                 <Filter className="w-4 h-4" />
@@ -174,7 +161,6 @@ function TaskStatusTable({ color, apiPrefix }) {
                                 <option value="Group Task">Group Task</option>
                                 <option value="Individual Task">Individual Task</option>
                             </select>
-                            {/* Custom arrow icon for select */}
                             <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -190,41 +176,27 @@ function TaskStatusTable({ color, apiPrefix }) {
                         <thead className="bg-slate-50">
                             <tr>
                                 <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">ID</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Assigned To</th>
                                 <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Title</th>
                                 <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Assign Date</th>
                                 <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Due Date</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 text-center whitespace-nowrap">Status</th>
+                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Assignments & Status</th>
                                 <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 text-center whitespace-nowrap">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredTasks.map((task, index) => (
                                 <tr key={task._id} className="hover:bg-slate-50 transition border-b border-slate-50 last:border-none">
-                                    {/* ID Column */}
                                     <td className="py-4 px-6 text-sm font-bold text-slate-800 whitespace-nowrap">
                                         {index + 1}
                                     </td>
 
-                                    {/* Assigned To Column */}
-                                    <td className="py-4 px-6 text-sm font-semibold text-slate-700 whitespace-nowrap">
-                                        <div className="flex items-center gap-2.5 whitespace-nowrap">
-                                            <div className={`w-8 h-8 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-xs`}>
-                                                {task.assignedTo?.[0]?.name?.charAt(0) || "U"}
-                                            </div>
-                                            <span className="whitespace-nowrap">{task.assignedTo?.map(emp => emp.name).join(", ")}</span>
-                                        </div>
-                                    </td>
-
-                                    {/* Title & Department Column */}
                                     <td className="py-4 px-6 text-sm font-semibold text-slate-700 min-w-[200px]">
                                         <div className="flex flex-col">
                                             <span className="whitespace-nowrap">{task.title}</span>
-                                            <span className="text-[10px] text-slate-400 font-normal mt-0.5 whitespace-nowrap">{task.department} • {task.type}</span>
+                                            <span className="text-[10px] text-slate-400 font-normal mt-0.5 whitespace-nowrap">{task.department} • {task.taskType}</span>
                                         </div>
                                     </td>
 
-                                    {/* Assign Date Column */}
                                     <td className="py-4 px-6 text-sm font-medium text-slate-500 whitespace-nowrap">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap">
                                             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -238,22 +210,30 @@ function TaskStatusTable({ color, apiPrefix }) {
                                         </div>
                                     </td>
 
-                                    {/* Due Date Column */}
                                     <td className="py-4 px-6 text-sm font-medium text-slate-500 whitespace-nowrap">
                                         <div className="flex items-center gap-1.5 whitespace-nowrap">
                                             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                            <span>{new Date(task.dueDate).toLocaleDateString()}</span>
+                                            <span>{new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                         </div>
                                     </td>
 
-                                    {/* Status Column */}
-                                    <td className="py-4 px-6 text-center whitespace-nowrap">
-                                        <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${getStatusColor(task.status)} whitespace-nowrap`}>
-                                            {task.status}
-                                        </span>
+                                    <td className="py-4 px-6 text-sm">
+                                        <div className="flex flex-col gap-1.5">
+                                            {task.assignments && task.assignments.length > 0 ? (
+                                                task.assignments.map((assignment, aIdx) => (
+                                                    <div key={aIdx} className="flex items-center gap-2">
+                                                        <span className="font-semibold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                            {assignment.status}
+                                                        </span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <span className="text-slate-400 text-xs italic">No assignments</span>
+                                            )}
+                                        </div>
                                     </td>
 
-                                    {/* Action Column */}
                                     <td className="py-4 px-6 text-center whitespace-nowrap">
                                         <button
                                             onClick={() => setSelectedTask(task)}
@@ -267,7 +247,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                             ))}
                             {filteredTasks.length === 0 && (
                                 <tr>
-                                    <td colSpan="7" className="py-12 text-center text-slate-400 text-sm">
+                                    <td colSpan="6" className="py-12 text-center text-slate-400 text-sm">
                                         No tasks found matching your criteria.
                                     </td>
                                 </tr>
@@ -280,32 +260,34 @@ function TaskStatusTable({ color, apiPrefix }) {
                 <div className="lg:hidden flex flex-col gap-4 p-4 bg-slate-50/50">
                     {filteredTasks.map((task, index) => (
                         <div key={task._id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 relative">
-
-                            {/* Card Header: ID and Status */}
                             <div className="flex justify-between items-center pb-3 border-b border-slate-100">
                                 <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs border border-slate-200/50 font-bold">
                                     Task #{index + 1}
                                 </span>
-                                <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${getStatusColor(task.status)}`}>
-                                    {task.status}
-                                </span>
                             </div>
 
-                            {/* Assigned To & Title */}
-                            <div className="flex flex-col gap-2.5">
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-7 h-7 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-xs`}>
-                                        {task.assignedTo?.[0]?.name?.charAt(0) || "U"}
-                                    </div>
-                                    <span className="text-xs font-semibold text-slate-600">{task.assignedTo?.map(emp => emp.name).join(", ")}</span>
-                                </div>
+                            <div className="flex flex-col gap-3">
                                 <div>
                                     <h3 className="font-bold text-slate-800 text-base leading-snug">{task.title}</h3>
-                                    <p className="text-xs text-slate-400 font-medium mt-1">{task.department} • {task.type}</p>
+                                    <p className="text-xs text-slate-400 font-medium mt-1">{task.department} • {task.taskType}</p>
+                                </div>
+                                <div className="flex flex-col gap-1.5 mt-1">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Assignments</span>
+                                    {task.assignments && task.assignments.length > 0 ? (
+                                        task.assignments.map((assignment, aIdx) => (
+                                            <div key={aIdx} className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                                <span className="text-xs font-semibold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                    {assignment.status}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span className="text-slate-400 text-xs italic">No assignments</span>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Dates Section */}
                             <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div>
                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assign Date</span>
@@ -322,12 +304,11 @@ function TaskStatusTable({ color, apiPrefix }) {
                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Due Date</span>
                                     <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
                                         <Calendar className="w-3 h-3 text-slate-400" />
-                                        {new Date(task.dueDate).toLocaleDateString()}
+                                        {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Action Row */}
                             <div className="flex justify-end pt-1">
                                 <button
                                     onClick={() => setSelectedTask(task)}
@@ -337,7 +318,6 @@ function TaskStatusTable({ color, apiPrefix }) {
                                     View Details
                                 </button>
                             </div>
-
                         </div>
                     ))}
                     {filteredTasks.length === 0 && (
@@ -356,10 +336,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div className="flex items-center gap-3">
                                 <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono text-xs border border-slate-200/50 font-bold">
-                                    {selectedTask._id}
-                                </span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(selectedTask.status)}`}>
-                                    {selectedTask.status}
+                                    Task Details
                                 </span>
                             </div>
                             <button
@@ -382,7 +359,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                                 <div>
                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Type</span>
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activeColor.badgeBg} ${activeColor.badgeText} border ${activeColor.badgeBorder}`}>
-                                        {selectedTask.taskType}
+                                        {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : ''}
                                     </span>
                                 </div>
                             </div>
@@ -393,21 +370,31 @@ function TaskStatusTable({ color, apiPrefix }) {
                             </div>
 
                             <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned Employee</span>
-                                <div className="flex items-center gap-3 mt-1.5">
-                                    <div className={`w-8 h-8 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-xs`}>
-                                        {selectedTask.assignedTo?.[0]?.name?.charAt(0) || "U"}
-                                    </div>
-
-                                    <span className="text-sm font-semibold text-slate-700">
-                                        {selectedTask.assignedTo?.map(emp => emp.name).join(", ") || "No Employee"}
-                                    </span>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned Employees</span>
+                                <div className="flex flex-col gap-2 mt-2">
+                                    {selectedTask.assignments && selectedTask.assignments.length > 0 ? (
+                                        selectedTask.assignments.map((assignment, aIdx) => (
+                                            <div key={aIdx} className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-6 h-6 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-[10px]`}>
+                                                        {assignment.assignee?.name?.charAt(0) || "U"}
+                                                    </div>
+                                                    <span className="text-xs font-bold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
+                                                </div>
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                    {assignment.status}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span className="text-slate-400 text-xs italic">No assignments</span>
+                                    )}
                                 </div>
                             </div>
 
                             <div>
                                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Description</span>
-                                <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100/50 mt-1">
+                                <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100/50 mt-1 whitespace-pre-wrap">
                                     {selectedTask.description}
                                 </p>
                             </div>
