@@ -11,7 +11,7 @@ import {
     showSuccess,
     showError,
     showWarning
-} from "../../components/layout/Alerts";
+} from "../../components/layout/alerts";
 
 
 function AdminLogin() {

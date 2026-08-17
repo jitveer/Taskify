@@ -5,7 +5,7 @@ import {
     showSuccess,
     showError,
     showConfirm
-} from "../../components/layout/Alerts";
+} from "../../components/layout/alerts";
 
 function AssignTaskForm({ color, apiPrefix }) {
 

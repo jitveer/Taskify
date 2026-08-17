@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import {
     showSuccess,
     showError
-} from "../../components/layout/Alerts";
+} from "../../components/layout/alerts";
 
 
 function EmployeeTable({ color, employees = [], apiPrefix }) {
