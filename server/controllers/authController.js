@@ -28,7 +28,6 @@ const authLogin = async (req, res) => {
         //     })
         // }
 
-
         //password check
         if (password != user.password) {
             return res.status(403).json({
