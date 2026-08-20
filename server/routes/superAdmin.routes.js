@@ -1,14 +1,14 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/authMiddleware');
-const authorize = require('../middlewares/roleMiddleware');
-const superAdminController = require('../controllers/superAdminController');
-const adminController = require('../controllers/adminController');
-const employeeController = require('../controllers/employeeController');
-const taskController = require('../controllers/taskController');
-const Users = require('../models/Users');
-const addAdminValidation = require('../middlewares/addAdminValidation');
-const upload = require("../middlewares/uploadMiddleware");
+const authMiddleware = require('../middlewares/auth.middleware');
+const authorize = require('../middlewares/role.middleware');
+const superAdminController = require('../controllers/superAdmin.controller');
+const adminController = require('../controllers/admin.controller');
+const employeeController = require('../controllers/employee.controller');
+const taskController = require('../controllers/task.controller');
+const Users = require('../models/user.model');
+const addAdminValidation = require('../middlewares/addAdmin.validation');
+const upload = require('../middlewares/upload.middleware');
 
 // Apply authentication and authorization middleware to all routes
 router.use(authMiddleware);

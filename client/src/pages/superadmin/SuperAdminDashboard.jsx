@@ -3,9 +3,11 @@ import axios from "axios";
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 import { Users, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function SuperAdminDashboard() {
 
+    const navigate = useNavigate();
     const [dashboardData, setDashboardData] = useState(null);
 
     const menuItems = [
@@ -71,25 +73,25 @@ function SuperAdminDashboard() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-8 lg:mb-10">
 
                         {/* Card 1: Total Admins */}
-                        <div className="bg-purple-600 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-purple-100 border border-purple-700 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300">
+                        <div onClick={() => navigate('/admin-list')} className="cursor-pointer bg-purple-600 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-purple-100 border border-purple-700 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-purple-100 text-[10px] lg:text-xs font-bold uppercase tracking-wider">Total Admins</h3>
                                 <ShieldAlert className="text-purple-200 w-5 h-5 group-hover:rotate-12 transition-transform" />
                             </div>
                             <div className="flex items-end justify-between">
-                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">12</h1>
+                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">{dashboardData?.totalAdmins || 0}</h1>
                                 <span className="text-[10px] lg:text-xs font-bold px-2 py-1 bg-white/20 rounded backdrop-blur-sm">Active</span>
                             </div>
                         </div>
 
                         {/* Card 2: Total Employees */}
-                        <div className="bg-blue-600 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-blue-100 border border-blue-700 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300">
+                        <div onClick={() => navigate('/employee-list')} className="cursor-pointer bg-blue-600 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-blue-100 border border-blue-700 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-blue-100 text-[10px] lg:text-xs font-bold uppercase tracking-wider">Total Staff</h3>
                                 <Users className="text-blue-200 w-5 h-5 group-hover:rotate-12 transition-transform" />
                             </div>
                             <div className="flex items-end justify-between">
-                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">120</h1>
+                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">{dashboardData?.totalEmployees || 0}</h1>
                                 <span className="text-[10px] lg:text-xs font-bold px-2 py-1 bg-white/20 rounded backdrop-blur-sm">Global</span>
                             </div>
                         </div>
@@ -101,7 +103,7 @@ function SuperAdminDashboard() {
                                 <Clock className="text-orange-200 w-5 h-5 group-hover:rotate-12 transition-transform" />
                             </div>
                             <div className="flex items-end justify-between">
-                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">18</h1>
+                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">{dashboardData?.totalPending || 0}</h1>
                                 <span className="text-[10px] lg:text-xs font-bold px-2 py-1 bg-white/20 rounded backdrop-blur-sm">All Teams</span>
                             </div>
                         </div>
@@ -113,7 +115,7 @@ function SuperAdminDashboard() {
                                 <CheckCircle2 className="text-emerald-200 w-5 h-5 group-hover:rotate-12 transition-transform" />
                             </div>
                             <div className="flex items-end justify-between">
-                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">86</h1>
+                                <h1 className="text-3xl lg:text-4xl font-black leading-none tracking-tight">{dashboardData?.totalCompleted || 0}</h1>
                                 <span className="text-[10px] lg:text-xs font-bold px-2 py-1 bg-white/20 rounded backdrop-blur-sm">This Month</span>
                             </div>
                         </div>

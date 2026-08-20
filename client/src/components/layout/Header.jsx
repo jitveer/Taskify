@@ -135,10 +135,15 @@ function Header({ title, role }) {
                 <div className="relative" ref={headerRef}>
                     <button
                         onClick={() => {
-                            if (activeRole === "employee") {
+                            const isMobile = window.innerWidth < 1024;
+                            if (isMobile) {
                                 navigate("/notifications");
                             } else {
-                                setShowNotifications(prev => !prev);
+                                if (activeRole === "employee") {
+                                    navigate("/notifications");
+                                } else {
+                                    setShowNotifications(prev => !prev);
+                                }
                             }
                         }}
                         className="relative p-2.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-600 transition border border-slate-100"
@@ -261,7 +266,7 @@ function Header({ title, role }) {
                 </div>
 
                 {/* Profile */}
-                <div 
+                <div
                     onClick={handleProfileClick}
                     className="flex items-center gap-3 pl-2 md:pl-4 md:border-l border-slate-200 cursor-pointer hover:opacity-80 transition"
                 >

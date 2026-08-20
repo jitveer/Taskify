@@ -236,6 +236,27 @@ function AssignTaskForm({ color, apiPrefix }) {
 
             showSuccess("Task Assigned Successfully");
 
+            // Reset form data and inputs
+            setFormData({
+                taskType: apiPrefix === "/api/admin" ? "Individual" : "",
+                department: apiPrefix === "/api/admin" ? loggedInUser.department : "",
+                employeeName: "",
+                priority: "",
+                taskTitle: "",
+                description: "",
+                dueDate: "",
+                attachment: null
+            });
+            setSelectedEmployees([]);
+            setSearchTerm("");
+            setErrors({});
+
+            // Clear the file input DOM element value
+            const fileInput = document.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.value = "";
+            }
+
         } catch (error) {
 
             console.log("FULL ERROR:", error.response?.data);
@@ -300,50 +321,52 @@ function AssignTaskForm({ color, apiPrefix }) {
                         {/* Grid Inputs */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                            {/* Task Type */}
-                            <div>
-                                <label className={labelStyle}>Task Type</label>
+                            {/* Task Type - Hidden for Admin, shown only for superadmin or others */}
+                            {apiPrefix !== "/api/admin" ? (
+                                <div>
+                                    <label className={labelStyle}>Task Type</label>
 
-                                <div className={selectWrapperStyle}>
-                                    <select
-                                        name="taskType"
-                                        value={formData.taskType}
-                                        disabled={apiPrefix === "/api/admin"}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            setFormData({
-                                                ...formData,
-                                                taskType: value,
-                                                department: "",
-                                                employeeName: ""
-                                            });
-                                            setSelectedEmployees([]);
-                                            setSearchTerm("");
-                                        }}
-                                        className={`${inputStyle} ${errors.taskType ? "border-red-500" : ""}`}
-                                    >
-                                        <option value="">Select Task Type</option>
-                                        <option value="Individual">Individual Task</option>
-                                        {apiPrefix === "/api/superadmin" && (
-                                            <option value="Group Task">
-                                                Group Task
-                                            </option>
-                                        )}
-                                    </select>
+                                    <div className={selectWrapperStyle}>
+                                        <select
+                                            name="taskType"
+                                            value={formData.taskType}
+                                            disabled={apiPrefix === "/api/admin"}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setFormData({
+                                                    ...formData,
+                                                    taskType: value,
+                                                    department: "",
+                                                    employeeName: ""
+                                                });
+                                                setSelectedEmployees([]);
+                                                setSearchTerm("");
+                                            }}
+                                            className={`${inputStyle} ${errors.taskType ? "border-red-500" : ""}`}
+                                        >
+                                            <option value="">Select Task Type</option>
+                                            <option value="Individual">Individual Task</option>
+                                            {apiPrefix === "/api/superadmin" && (
+                                                <option value="Group Task">
+                                                    Group Task
+                                                </option>
+                                            )}
+                                        </select>
 
-                                    {selectIcon}
+                                        {selectIcon}
+                                    </div>
+
+                                    {errors.taskType && (
+                                        <p className="text-red-500 text-xs mt-1">
+                                            {errors.taskType}
+                                        </p>
+                                    )}
                                 </div>
-
-                                {errors.taskType && (
-                                    <p className="text-red-500 text-xs mt-1">
-                                        {errors.taskType}
-                                    </p>
-                                )}
-                            </div>
+                            ) : null}
 
 
-                            {/* Department */}
-                            {formData.taskType !== "Individual" ? (
+                            {/* Department - Hidden for Admin since they assign to individual employees only */}
+                            {apiPrefix !== "/api/admin" && formData.taskType !== "Individual" ? (
                                 <div>
                                     <label className={labelStyle}>Department</label>
 
@@ -384,7 +407,7 @@ function AssignTaskForm({ color, apiPrefix }) {
                                     )}
                                 </div>
                             ) : (
-                                <div className="hidden md:block"></div>
+                                apiPrefix !== "/api/admin" && <div className="hidden md:block"></div>
                             )}
 
 

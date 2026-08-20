@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const taskAssignmentSchema = new mongoose.Schema(
     {
@@ -52,6 +52,10 @@ const taskAssignmentSchema = new mongoose.Schema(
         completedAt: {
             type: Date,
             default: null,
+        },
+        comment: {
+            type: String,
+            default: "",
         },
     },
     {

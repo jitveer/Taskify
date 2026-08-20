@@ -1,4 +1,4 @@
-const TaskHistory = require("../models/TaskHistory");
+const TaskHistory = require('../models/taskHistory.model');
 
 class TaskHistoryRepository {
     async create(historyData) {
@@ -11,6 +11,10 @@ class TaskHistoryRepository {
 
     async findByAssignmentId(assignmentId) {
         return await TaskHistory.find({ assignmentId }).populate("actorId", "name role department").sort({ createdAt: -1 });
+    }
+
+    async find(filter) {
+        return await TaskHistory.find(filter).populate("actorId", "name role department").sort({ createdAt: -1 });
     }
 
     async deleteByTaskId(taskId) {

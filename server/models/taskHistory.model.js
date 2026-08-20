@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const taskHistorySchema = new mongoose.Schema(
     {
@@ -37,6 +37,10 @@ const taskHistorySchema = new mongoose.Schema(
         metadata: {
             type: mongoose.Schema.Types.Mixed,
             default: {},
+        },
+        comment: {
+            type: String,
+            default: null,
         },
     },
     {

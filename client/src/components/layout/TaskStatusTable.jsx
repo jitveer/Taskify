@@ -374,16 +374,56 @@ function TaskStatusTable({ color, apiPrefix }) {
                                 <div className="flex flex-col gap-2 mt-2">
                                     {selectedTask.assignments && selectedTask.assignments.length > 0 ? (
                                         selectedTask.assignments.map((assignment, aIdx) => (
-                                            <div key={aIdx} className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-6 h-6 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-[10px]`}>
-                                                        {assignment.assignee?.name?.charAt(0) || "U"}
+                                            <div key={aIdx} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-6 h-6 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-[10px]`}>
+                                                            {assignment.assignee?.name?.charAt(0) || "U"}
+                                                        </div>
+                                                        <span className="text-xs font-bold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
                                                     </div>
-                                                    <span className="text-xs font-bold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                        {assignment.status}
+                                                    </span>
                                                 </div>
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
-                                                    {assignment.status}
-                                                </span>
+                                                {assignment.comment && (
+                                                    <p className="text-[11px] text-slate-500 italic bg-amber-50/40 p-2 rounded-xl border border-amber-100/40 mt-1 pl-8">
+                                                        "Latest: {assignment.comment}"
+                                                    </p>
+                                                )}
+                                                {assignment.history && assignment.history.length > 0 && (
+                                                    <details className="mt-1 pl-8 group">
+                                                        <summary className="text-[10px] text-blue-600 font-bold uppercase tracking-wider cursor-pointer hover:underline list-none flex items-center gap-1 select-none">
+                                                            <span>View Activity Logs ({assignment.history.length})</span>
+                                                        </summary>
+                                                        <div className="mt-3 border-l-2 border-slate-100 pl-3.5 space-y-3.5">
+                                                            {assignment.history.map((log, lIdx) => (
+                                                                <div key={lIdx} className="relative">
+                                                                    <span className="absolute -left-[19.5px] top-1 w-2 h-2 rounded-full bg-slate-300 ring-4 ring-slate-50"></span>
+                                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                                            Status: {log.newValue}
+                                                                        </span>
+                                                                    </div>
+                                                                    {log.comment && (
+                                                                        <p className="text-xs text-slate-600 mt-1 bg-white p-2 rounded-xl border border-slate-100/60 leading-normal">
+                                                                            "{log.comment}"
+                                                                        </p>
+                                                                    )}
+                                                                    <span className="text-[9px] text-slate-400 font-medium block mt-1">
+                                                                        {new Date(log.createdAt).toLocaleString("en-GB", {
+                                                                            day: "2-digit",
+                                                                            month: "short",
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                            hour12: true
+                                                                        })}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </details>
+                                                )}
                                             </div>
                                         ))
                                     ) : (

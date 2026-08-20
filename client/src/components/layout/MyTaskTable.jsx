@@ -426,7 +426,11 @@ function MyTaskTable({ color }) {
                                     </div>
                                     <div>
                                         <p className="text-xs font-semibold text-slate-700">{selectedTask.assignedBy?.name || "Admin"}</p>
-                                        <p className="text-[10px] text-slate-400">{selectedTask.assignedBy?.email || ""}</p>
+                                        <p className="text-[10px] text-slate-400">
+                                            {selectedTask.assignedBy
+                                                ? `${selectedTask.assignedBy.department?.toUpperCase() || ""} | ${selectedTask.assignedBy.role === 'superadmin' ? 'Super Admin' : selectedTask.assignedBy.role === 'admin' ? 'Admin' : 'Employee'}`
+                                                : ""}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

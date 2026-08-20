@@ -1,55 +1,12 @@
-const mongoose = require('mongoose');
-const taskService = require("../services/taskService");
-const taskAssignmentService = require("../services/taskAssignmentService");
-const taskRepository = require("../repositories/taskRepository");
-const taskAssignmentRepository = require("../repositories/taskAssignmentRepository");
+const taskService = require('../services/task.service');
+const taskAssignmentService = require('../services/taskAssignment.service');
+const taskAssignmentRepository = require('../repositories/taskAssignment.repository');
 
 // LIST TASKS (Admin / Creator view)
 const taskList = async (req, res) => {
     try {
         const loggedInUserId = req.user.id;
-        const tasks = await taskRepository.find({ assignedBy: loggedInUserId });
-        const taskIds = tasks.map(t => t._id);
-
-        // Fetch all assignments associated with these tasks in a single query (resolving N+1 query issue)
-        const allAssignments = await taskAssignmentRepository.find({ taskId: { $in: taskIds } });
-
-        // Group assignments by taskId
-        const assignmentsMap = {};
-        for (const assignment of allAssignments) {
-            const tId = assignment.taskId._id.toString();
-            if (!assignmentsMap[tId]) {
-                assignmentsMap[tId] = [];
-            }
-            assignmentsMap[tId].push(assignment);
-        }
-
-        const taskLists = tasks.map(task => {
-            const taskObj = task.toObject();
-            const assignments = assignmentsMap[task._id.toString()] || [];
-
-            // Authoritative new TaskAssignment data array
-            taskObj.assignments = assignments.map(a => ({
-                assignmentId: a._id,
-                assignee: a.assigneeId ? {
-                    _id: a.assigneeId._id,
-                    name: a.assigneeId.name,
-                    user_id: a.assigneeId.user_id
-                } : null,
-                status: a.status,
-                dueDate: a.dueDate,
-                assignedAt: a.assignedAt,
-                acknowledgedAt: a.acknowledgedAt,
-                startedAt: a.startedAt,
-                completedAt: a.completedAt
-            }));
-
-            // DEPRECATED compatibility fields (maintained to prevent breaking older views)
-            taskObj.assignedTo = assignments.map(a => a.assigneeId).filter(Boolean);
-            taskObj.status = assignments.length > 0 ? assignments[0].status : "Pending";
-
-            return taskObj;
-        });
+        const taskLists = await taskService.getTaskLists(loggedInUserId);
 
         return res.status(200).json({
             success: true,
@@ -120,18 +77,7 @@ const addTask = async (req, res) => {
 // GET MY TASKS (Employee view)
 const getMyTasks = async (req, res) => {
     try {
-        const loggedInUserId = req.user.id;
-        const assignments = await taskAssignmentRepository.find({ assigneeId: loggedInUserId });
-
-        // Map assignments to look like tasks for frontend compatibility
-        const tasks = assignments.map(assignment => {
-            if (!assignment.taskId) return null;
-            const t = assignment.taskId.toObject();
-            t.status = assignment.status;
-            t.completedAt = assignment.completedAt;
-            t.assignmentId = assignment._id;
-            return t;
-        }).filter(Boolean);
+        const tasks = await taskService.getMyTasks(req.user.id);
 
         return res.status(200).json({
             success: true,
@@ -151,7 +97,7 @@ const getMyTasks = async (req, res) => {
 const updateTaskStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, comment } = req.body;
 
         // 1. Locate specific TaskAssignment
         let assignment = await taskAssignmentRepository.findOne({ taskId: id, assigneeId: req.user.id });
@@ -168,7 +114,7 @@ const updateTaskStatus = async (req, res) => {
         }
 
         // 2. Delegate update to TaskAssignmentService
-        const updatedAssignment = await taskAssignmentService.updateStatus(assignment._id, status, req.user);
+        const updatedAssignment = await taskAssignmentService.updateStatus(assignment._id, status, req.user, comment);
 
         // Map back to a task-like object to satisfy client response schema
         const taskObj = updatedAssignment.taskId ? updatedAssignment.taskId.toObject() : {};

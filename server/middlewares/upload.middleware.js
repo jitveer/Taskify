@@ -1,5 +1,5 @@
-const multer = require("multer");
-const path = require("path");
+const multer = require('multer');
+const path = require('path');
 
 
 // 1. Storage Configuration: decide file directory location and name of file 

@@ -1,5 +1,5 @@
-const taskAssignmentRepository = require("../repositories/taskAssignmentRepository");
-const taskHistoryRepository = require("../repositories/taskHistoryRepository");
+const taskAssignmentRepository = require('../repositories/taskAssignment.repository');
+const taskHistoryRepository = require('../repositories/taskHistory.repository');
 
 class TaskAssignmentService {
     async getAssignmentsForEmployee(employeeId) {
@@ -14,7 +14,7 @@ class TaskAssignmentService {
         return await taskAssignmentRepository.find({});
     }
 
-    async updateStatus(assignmentId, newStatus, actor) {
+    async updateStatus(assignmentId, newStatus, actor, comment) {
         const assignment = await taskAssignmentRepository.findById(assignmentId);
         if (!assignment) {
             throw new Error("Task assignment not found");
@@ -56,7 +56,7 @@ class TaskAssignmentService {
         }
 
         // Set timestamps
-        const updateData = { status: newStatus };
+        const updateData = { status: newStatus, comment: comment || "" };
         const now = new Date();
 
         if (newStatus === "In Progress") {
@@ -80,7 +80,8 @@ class TaskAssignmentService {
             action: "STATUS_CHANGE",
             oldValue: oldStatus,
             newValue: newStatus,
-            source: "WEB"
+            source: "WEB",
+            comment: comment || null
         });
 
         return updatedAssignment;

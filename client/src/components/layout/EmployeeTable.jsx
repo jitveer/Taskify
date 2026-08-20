@@ -89,9 +89,12 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
         try {
             // delete employee
             const token = localStorage.getItem("token");
+            const deleteUrl = apiPrefix === "/api/superadmin"
+                ? `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/employeeLists/${id}`
+                : `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/deleteEmployee/${id}`;
 
             await axios.delete(
-                `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/deleteEmployee/${id}`,
+                deleteUrl,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -151,9 +154,12 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
             if (editingId) {
                 // update employee
                 const token = localStorage.getItem("token");
+                const updateUrl = apiPrefix === "/api/superadmin"
+                    ? `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/employeeLists/${editingId}`
+                    : `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/updateEmployee/${editingId}`;
 
                 await axios.patch(
-                    `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/updateEmployee/${editingId}`,
+                    updateUrl,
                     formData,
                     {
                         headers: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, CheckCircle2, Clock, AlertCircle, History, Tag, Calendar, MessageSquare } from "lucide-react";
+import { taskApi } from "../../services/api";
 
 function ReportsDashboard({ color }) {
     const themeColor = color === "blue" ? "blue" : color === "purple" ? "purple" : "emerald";
@@ -13,28 +14,45 @@ function ReportsDashboard({ color }) {
     });
 
     useEffect(() => {
-        // Read tasks from localStorage or initialize with defaults if not present
-        const localTasks = localStorage.getItem("employee_tasks");
-        let tasks = [];
-        if (localTasks) {
-            tasks = JSON.parse(localTasks);
-        } else {
-            tasks = [
-                { title: "UI Dashboard Design", priority: "High", dueDate: "20 May 2026", status: "Pending", comment: "Assigned by Admin", lastUpdated: "10 Aug 2026 10:15 AM" },
-                { title: "Backend API Integration", priority: "Medium", dueDate: "22 May 2026", status: "In Progress", comment: "Working on auth middleware", lastUpdated: "10 Aug 2026 02:30 PM" },
-                { title: "Attendance Module", priority: "Low", dueDate: "25 May 2026", status: "Completed", comment: "Completed testing and verified DOM layout", lastUpdated: "10 Aug 2026 05:45 PM" }
-            ];
-            localStorage.setItem("employee_tasks", JSON.stringify(tasks));
-        }
+        const fetchReportData = async () => {
+            try {
+                const loggedInUser = JSON.parse(localStorage.getItem("user")) || {};
+                const role = loggedInUser.role || "employee";
+                
+                let response;
+                let tasks = [];
+                
+                if (role === "superadmin") {
+                    response = await taskApi.getSuperAdminTasks();
+                    if (response && response.success) {
+                        tasks = response.assignedTasks || [];
+                    }
+                } else if (role === "admin") {
+                    response = await taskApi.getAdminTasks();
+                    if (response && response.success) {
+                        tasks = response.assignedTasks || [];
+                    }
+                } else {
+                    response = await taskApi.getMyTasks();
+                    if (response && response.success) {
+                        tasks = response.tasks || [];
+                    }
+                }
 
-        setTaskList(tasks);
+                setTaskList(tasks);
 
-        setReportData({
-            totalTasks: tasks.length,
-            completedTasks: tasks.filter(t => t.status === "Completed").length,
-            pendingTasks: tasks.filter(t => t.status === "Pending").length,
-            inProgressTasks: tasks.filter(t => t.status === "In Progress").length
-        });
+                setReportData({
+                    totalTasks: tasks.length,
+                    completedTasks: tasks.filter(t => (t.status || "").toLowerCase() === "completed").length,
+                    pendingTasks: tasks.filter(t => (t.status || "").toLowerCase() === "pending").length,
+                    inProgressTasks: tasks.filter(t => (t.status || "").toLowerCase() === "in progress").length
+                });
+            } catch (error) {
+                console.error("Failed to load reports data:", error);
+            }
+        };
+
+        fetchReportData();
     }, []);
 
     const getStatusColor = (status) => {
@@ -135,7 +153,7 @@ function ReportsDashboard({ color }) {
                                             {task.status}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex flex-col gap-1.5 pt-1">
                                         {task.comment && (
                                             <p className="text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex items-start gap-1.5 font-medium">
