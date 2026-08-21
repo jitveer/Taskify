@@ -55,7 +55,7 @@ function AdminEmployeeList() {
                 <Header title="Employee Directory" role="Admin" />
 
                 {/* Admin Employee Table */}
-                <EmployeeTable color="blue" employees={employees} apiPrefix="/api/admin"/>
+                <EmployeeTable color="blue" employees={employees} apiPrefix="/api/admin" />
             </div>
         </div>
     );

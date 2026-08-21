@@ -26,6 +26,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
     });
 
     const [search, setSearch] = useState("");
+    const [selectedDepartment, setSelectedDepartment] = useState("");
     const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     const mobileRegex = /^[0-9]{10}$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#]).{8,}$/;
@@ -208,12 +209,18 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
         }
     };
 
-    const filteredEmployees = employees.filter((emp) =>
-        (emp.name || "").toLowerCase().includes(search.toLowerCase()) ||
-        (emp.email || "").toLowerCase().includes(search.toLowerCase()) ||
-        (emp.department || "").toLowerCase().includes(search.toLowerCase()) ||
-        String(emp.user_id || "").toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredEmployees = employees.filter((emp) => {
+        const matchesSearch =
+            (emp.name || "").toLowerCase().includes(search.toLowerCase()) ||
+            (emp.email || "").toLowerCase().includes(search.toLowerCase()) ||
+            (emp.department || "").toLowerCase().includes(search.toLowerCase()) ||
+            String(emp.user_id || "").toLowerCase().includes(search.toLowerCase());
+
+        const matchesDepartment = selectedDepartment === "" ||
+            (emp.department || "").toLowerCase() === selectedDepartment.toLowerCase();
+
+        return matchesSearch && matchesDepartment;
+    });
 
     const focusRing = color === "blue" ? "focus:ring-blue-500" : "focus:ring-purple-500";
     const btnBg = color === "blue" ? "bg-blue-600 hover:bg-blue-700" : "bg-purple-600 hover:bg-purple-700";
@@ -222,17 +229,33 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
         <div className="p-8">
             {/* Top Section */}
             <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6">
-                <input
-                    type="text"
-                    placeholder="Search Employee..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className={`w-[320px] border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 ${focusRing}`}
-                />
+                <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Search Employee..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className={`w-full sm:w-[320px] border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 ${focusRing}`}
+                    />
+
+                    <select
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                        className={`w-full sm:w-[200px] border border-gray-300 bg-white rounded-xl px-4 py-3 outline-none focus:ring-2 ${focusRing}`}
+                    >
+                        <option value="">All Departments</option>
+                        <option value="csr">CSR</option>
+                        <option value="it">IT</option>
+                        <option value="hr">HR</option>
+                        <option value="interior">Interior</option>
+                        <option value="sales">Sales</option>
+                        <option value="accounts">Accounts</option>
+                    </select>
+                </div>
 
                 <button
                     onClick={handleOpenAdd}
-                    className={`${btnBg} text-white px-6 py-3 rounded-xl font-semibold duration-300 shadow-lg`}
+                    className={`${btnBg} text-white px-6 py-3 rounded-xl font-semibold duration-300 shadow-lg w-full lg:w-auto`}
                 >
                     + Add Employee
                 </button>
