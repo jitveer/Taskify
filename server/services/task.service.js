@@ -62,6 +62,21 @@ class TaskService {
             metadata: { assigneeCount: assigneeIds.length }
         });
 
+        // Trigger push notifications asynchronously
+        try {
+            const { sendPushNotification } = require('./push.service');
+            assignees.forEach(emp => {
+                const targetUrl = emp.role === "admin" ? "/admin-my-tasks" : "/employee-my-tasks";
+                sendPushNotification(emp._id, {
+                    title: "New Task Assigned 📋",
+                    body: `${creator.name} assigned you a task: "${task.title}"`,
+                    url: targetUrl
+                });
+            });
+        } catch (err) {
+            console.error("Failed to trigger task assignment push notifications:", err);
+        }
+
         return { task, assignments };
     }
 

@@ -84,6 +84,24 @@ class TaskAssignmentService {
             comment: comment || null
         });
 
+        // Trigger push notifications asynchronously
+        try {
+            const { sendPushNotification } = require('./push.service');
+            const assignerId = updatedAssignment.assignedBy._id || updatedAssignment.assignedBy;
+            const assigneeName = updatedAssignment.assigneeId.name;
+            const taskTitle = updatedAssignment.taskId.title;
+            const assignerRole = updatedAssignment.assignedBy.role;
+            const targetUrl = assignerRole === "superadmin" ? "/task-status" : "/admin-task-status";
+
+            sendPushNotification(assignerId, {
+                title: "Task Status Updated 🔄",
+                body: `${assigneeName} updated task "${taskTitle}" to "${newStatus}"`,
+                url: targetUrl
+            });
+        } catch (err) {
+            console.error("Failed to trigger status update push notification:", err);
+        }
+
         return updatedAssignment;
     }
 }

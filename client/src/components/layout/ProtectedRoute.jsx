@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
+import { subscribeToPushNotifications } from "../../utils/pushSubscription";
 
 function ProtectedRoute({
     children,
@@ -9,6 +11,12 @@ function ProtectedRoute({
     const user = JSON.parse(
         localStorage.getItem("user")
     );
+
+    useEffect(() => {
+        if (user) {
+            subscribeToPushNotifications();
+        }
+    }, [user]);
 
     // User not logged in
     if (!user) {

@@ -40,7 +40,6 @@ import Notifications from "./components/layout/notification";
 function App() {
   return (
 
-
     <BrowserRouter>
       <Routes>
 
