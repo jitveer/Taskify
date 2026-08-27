@@ -9,15 +9,27 @@ function Sidebar({ role, menuItems, color }) {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
 
+
     useEffect(() => {
-        const updateCount = () => {
-            const notifs = getNotifications();
-            setUnreadCount(notifs.filter(n => !n.read).length);
+        const updateCount = async () => {
+            try {
+                const notifs = await getNotifications(); // Added async/await here
+                if (Array.isArray(notifs)) {
+                    setUnreadCount(notifs.filter(n => !n.read).length);
+                } else {
+                    setUnreadCount(0);
+                }
+            } catch (error) {
+                console.error("Error updating sidebar unread count:", error);
+                setUnreadCount(0);
+            }
         };
         updateCount();
         window.addEventListener("notificationsUpdated", updateCount);
         return () => window.removeEventListener("notificationsUpdated", updateCount);
     }, []);
+
+
 
     const modifiedMenuItems = [...menuItems];
     const dashboardIndex = modifiedMenuItems.findIndex(item => item.name.toLowerCase().includes("dashboard"));

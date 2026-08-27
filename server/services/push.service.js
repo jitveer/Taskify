@@ -23,7 +23,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 const sendPushNotification = async (userId, payload) => {
     try {
         const subscriptions = await Subscription.find({ userId });
-        
+
         if (!subscriptions || subscriptions.length === 0) {
             return;
         }

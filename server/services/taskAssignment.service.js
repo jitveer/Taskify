@@ -84,6 +84,27 @@ class TaskAssignmentService {
             comment: comment || null
         });
 
+        // Save database notification for in-app UI display
+        try {
+            const Notification = require('../models/notification.model');
+            const assignerId = updatedAssignment.assignedBy?._id || updatedAssignment.assignedBy;
+            const assigneeName = updatedAssignment.assigneeId?.name || "Employee";
+            const taskTitle = updatedAssignment.taskId?.title || "Task";
+
+            if (assignerId) {
+                await Notification.create({
+                    userId: assignerId,
+                    title: "Task Status Updated 🔄",
+                    description: `${assigneeName} updated task "${taskTitle}" to "${newStatus}"`,
+                    type: "info",
+                    taskTitle: taskTitle
+                });
+            }
+        } catch (err) {
+            console.error("Failed to save database notification for status update:", err);
+        }
+
+
         // Trigger push notifications asynchronously
         try {
             const { sendPushNotification } = require('./push.service');

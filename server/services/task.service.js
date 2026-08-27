@@ -77,6 +77,24 @@ class TaskService {
             console.error("Failed to trigger task assignment push notifications:", err);
         }
 
+        // Save database notifications for in-app UI display
+        try {
+            const Notification = require('../models/notification.model');
+            const notifPromises = assignees.map(emp => {
+                return Notification.create({
+                    userId: emp._id,
+                    title: "New Task Assigned 📋",
+                    description: `${creator.name} assigned you a task: "${task.title}"`,
+                    type: "alert",
+                    taskTitle: task.title
+                });
+            });
+            await Promise.all(notifPromises);
+        } catch (err) {
+            console.error("Failed to save database notifications:", err);
+        }
+
+
         return { task, assignments };
     }
 

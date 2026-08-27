@@ -1,8 +1,10 @@
 import { Search, Eye, X, Filter, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { taskApi } from "../../services/api";
 
 function TaskStatusTable({ color, apiPrefix }) {
+    const location = useLocation();
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState("All");
     const [selectedTask, setSelectedTask] = useState(null);
@@ -41,8 +43,33 @@ function TaskStatusTable({ color, apiPrefix }) {
             }
         };
 
+
         fetchTasks();
     }, [apiPrefix]);
+
+
+
+    // URL se search query read karna aur matched task ka details modal auto-open karna
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const searchParam = queryParams.get("search");
+        if (searchParam) {
+            setSearchQuery(searchParam);
+
+            // Agar tasks backend se load ho chuke hain, toh matching task dhoondhein
+            if (tasks.length > 0) {
+                const matchedTask = tasks.find(t =>
+                    (t.title || "").toLowerCase() === searchParam.toLowerCase()
+                );
+                if (matchedTask) {
+                    setSelectedTask(matchedTask); // Modal automatically open ho jayega!
+                }
+            }
+        }
+    }, [location.search, tasks]);
+
+
+
 
     const getStatusColor = (status) => {
         if (status === "Completed") return "bg-green-100 text-green-700 border border-green-200/50";

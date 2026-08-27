@@ -45,12 +45,19 @@ function Header({ title, role }) {
     }
 
     useEffect(() => {
-        const updateNotifications = () => {
-            setNotifications(getNotifications());
+        const updateNotifications = async () => {
+            const data = await getNotifications();
+            setNotifications(data);
         };
         updateNotifications();
         window.addEventListener("notificationsUpdated", updateNotifications);
-        return () => window.removeEventListener("notificationsUpdated", updateNotifications);
+        
+        const intervalId = setInterval(updateNotifications, 15000);
+
+        return () => {
+            window.removeEventListener("notificationsUpdated", updateNotifications);
+            clearInterval(intervalId);
+        };
     }, []);
 
     const getNotificationIcon = (type) => {
@@ -150,7 +157,9 @@ function Header({ title, role }) {
                     >
                         <Bell size={18} />
                         {unreadCount > 0 && (
-                            <span className={`absolute top-2 right-2.5 w-2 h-2 rounded-full border-2 border-white ${bellTheme.bellDot}`}></span>
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
                         )}
                     </button>
 

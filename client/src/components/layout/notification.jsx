@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import { getNotifications, saveNotifications, toggleNotificationRead, markAllNotificationsAsRead, clearAllNotifications } from "../../utils/notifications";
+import { getNotifications, toggleNotificationRead, markAllNotificationsAsRead, clearAllNotifications } from "../../utils/notifications";
 import { ShieldAlert, CheckCircle2, Clock, Bell, Trash2, CheckSquare } from "lucide-react";
 
 function Notifications() {
@@ -61,13 +61,21 @@ function Notifications() {
     const menuItems = getRoleMenuItems();
 
     useEffect(() => {
-        const updateNotifications = () => {
-            setNotifications(getNotifications());
+        const updateNotifications = async () => {
+            const data = await getNotifications();
+            setNotifications(data);
         };
         updateNotifications();
         window.addEventListener("notificationsUpdated", updateNotifications);
-        return () => window.removeEventListener("notificationsUpdated", updateNotifications);
+
+        const intervalId = setInterval(updateNotifications, 15000);
+
+        return () => {
+            window.removeEventListener("notificationsUpdated", updateNotifications);
+            clearInterval(intervalId);
+        };
     }, []);
+
 
     const getIcon = (type) => {
         switch (type) {
@@ -93,17 +101,29 @@ function Notifications() {
         }
     };
 
-    const handleNotificationClick = (notif) => {
+    const handleNotificationClick = async (notif) => {
         // Mark as read first
-        toggleNotificationRead(notif.id);
+        await toggleNotificationRead(notif.id);
 
-        // Go to task list of that notification
-        if (notif.taskTitle) {
-            navigate(`${taskListPath}?search=${encodeURIComponent(notif.taskTitle)}`);
+        let targetPath = taskListPath;
+
+        const isStatusUpdate = notif.title && notif.title.includes("Status Updated");
+
+        if (role === "superadmin") {
+            targetPath = "/task-status";
+        } else if (role === "admin") {
+            targetPath = isStatusUpdate ? "/admin-task-status" : "/admin-my-tasks";
         } else {
-            navigate(taskListPath);
+            targetPath = "/employee-my-tasks";
+        }
+
+        if (notif.taskTitle) {
+            navigate(`${targetPath}?search=${encodeURIComponent(notif.taskTitle)}`);
+        } else {
+            navigate(targetPath);
         }
     };
+
 
     return (
         <div className="flex flex-col lg:flex-row bg-[#f8fafc] min-h-screen font-sans text-slate-800">
