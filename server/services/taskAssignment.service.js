@@ -85,13 +85,43 @@ class TaskAssignmentService {
         });
 
         // Save database notification for in-app UI display
+        // try {
+        //     const Notification = require('../models/notification.model');
+        //     const assignerId = updatedAssignment.assignedBy?._id || updatedAssignment.assignedBy;
+        //     const assigneeName = updatedAssignment.assigneeId?.name || "Employee";
+        //     const taskTitle = updatedAssignment.taskId?.title || "Task";
+
+        //     if (assignerId) {
+        //         await Notification.create({
+        //             userId: assignerId,
+        //             title: "Task Status Updated 🔄",
+        //             description: `${assigneeName} updated task "${taskTitle}" to "${newStatus}"`,
+        //             type: "info",
+        //             taskTitle: taskTitle
+        //         });
+        //     }
+        // } catch (err) {
+        //     console.error("Failed to save database notification for status update:", err);
+        // }
+
+
+
+
+
+
+
+        // Save database notification & emit via socket for in-app UI display
         try {
             const Notification = require('../models/notification.model');
+            const { getIO } = require('../utils/socketHelper'); // <--- Socket helper import kiya
+            const io = getIO();
+
             const assignerId = updatedAssignment.assignedBy?._id || updatedAssignment.assignedBy;
             const assigneeName = updatedAssignment.assigneeId?.name || "Employee";
             const taskTitle = updatedAssignment.taskId?.title || "Task";
 
             if (assignerId) {
+                // 1. DB me save karein
                 await Notification.create({
                     userId: assignerId,
                     title: "Task Status Updated 🔄",
@@ -99,10 +129,29 @@ class TaskAssignmentService {
                     type: "info",
                     taskTitle: taskTitle
                 });
+
+                // 2. Assigner (Admin/Super Admin) ke room me real-time emit karein
+                try {
+                    io.to(assignerId.toString()).emit("newNotification", {
+                        title: "Task Status Updated 🔄",
+                        description: `${assigneeName} updated task "${taskTitle}" to "${newStatus}"`,
+                        type: "info",
+                        taskTitle: taskTitle
+                    });
+                } catch (socketErr) {
+                    console.error("Failed to emit status update socket notification:", socketErr);
+                }
             }
         } catch (err) {
             console.error("Failed to save database notification for status update:", err);
         }
+
+
+
+
+
+
+
 
 
         // Trigger push notifications asynchronously

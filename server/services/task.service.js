@@ -78,21 +78,62 @@ class TaskService {
         }
 
         // Save database notifications for in-app UI display
+        // try {
+        //     const Notification = require('../models/notification.model');
+        //     const notifPromises = assignees.map(emp => {
+        //         return Notification.create({
+        //             userId: emp._id,
+        //             title: "New Task Assigned 📋",
+        //             description: `${creator.name} assigned you a task: "${task.title}"`,
+        //             type: "alert",
+        //             taskTitle: task.title
+        //         });
+        //     });
+        //     await Promise.all(notifPromises);
+        // } catch (err) {
+        //     console.error("Failed to save database notifications:", err);
+        // }
+
+
+
+        // Save database notifications for in-app UI display
         try {
             const Notification = require('../models/notification.model');
-            const notifPromises = assignees.map(emp => {
-                return Notification.create({
+            const { getIO } = require('../utils/socketHelper'); // <--- Socket helper import kiya
+            const io = getIO();
+
+            const notifPromises = assignees.map(async (emp) => {
+                // 1. DB me save karein
+                await Notification.create({
                     userId: emp._id,
                     title: "New Task Assigned 📋",
                     description: `${creator.name} assigned you a task: "${task.title}"`,
                     type: "alert",
                     taskTitle: task.title
                 });
+
+                // 2. Us employee ke room me real-time emit karein
+                try {
+                    io.to(emp._id.toString()).emit("newNotification", {
+                        title: "New Task Assigned 📋",
+                        description: `${creator.name} assigned you a task: "${task.title}"`,
+                        type: "alert",
+                        taskTitle: task.title
+                    });
+                } catch (socketErr) {
+                    console.error(`Failed to emit task socket notification to ${emp._id}:`, socketErr);
+                }
             });
+
             await Promise.all(notifPromises);
         } catch (err) {
             console.error("Failed to save database notifications:", err);
         }
+
+
+
+
+
 
 
         return { task, assignments };

@@ -44,6 +44,22 @@ function Header({ title, role }) {
         };
     }
 
+    // useEffect(() => {
+    //     const updateNotifications = async () => {
+    //         const data = await getNotifications();
+    //         setNotifications(data);
+    //     };
+    //     updateNotifications();
+    //     window.addEventListener("notificationsUpdated", updateNotifications);
+
+    //     const intervalId = setInterval(updateNotifications, 15000);
+
+    //     return () => {
+    //         window.removeEventListener("notificationsUpdated", updateNotifications);
+    //         clearInterval(intervalId);
+    //     };
+    // }, []);
+
     useEffect(() => {
         const updateNotifications = async () => {
             const data = await getNotifications();
@@ -51,14 +67,12 @@ function Header({ title, role }) {
         };
         updateNotifications();
         window.addEventListener("notificationsUpdated", updateNotifications);
-        
-        const intervalId = setInterval(updateNotifications, 15000);
 
         return () => {
             window.removeEventListener("notificationsUpdated", updateNotifications);
-            clearInterval(intervalId);
         };
     }, []);
+
 
     const getNotificationIcon = (type) => {
         switch (type) {

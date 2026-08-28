@@ -60,6 +60,23 @@ function Notifications() {
 
     const menuItems = getRoleMenuItems();
 
+    // useEffect(() => {
+    //     const updateNotifications = async () => {
+    //         const data = await getNotifications();
+    //         setNotifications(data);
+    //     };
+    //     updateNotifications();
+    //     window.addEventListener("notificationsUpdated", updateNotifications);
+
+    //     const intervalId = setInterval(updateNotifications, 15000);
+
+    //     return () => {
+    //         window.removeEventListener("notificationsUpdated", updateNotifications);
+    //         clearInterval(intervalId);
+    //     };
+    // }, []);
+
+
     useEffect(() => {
         const updateNotifications = async () => {
             const data = await getNotifications();
@@ -68,13 +85,11 @@ function Notifications() {
         updateNotifications();
         window.addEventListener("notificationsUpdated", updateNotifications);
 
-        const intervalId = setInterval(updateNotifications, 15000);
-
         return () => {
             window.removeEventListener("notificationsUpdated", updateNotifications);
-            clearInterval(intervalId);
         };
     }, []);
+
 
 
     const getIcon = (type) => {
