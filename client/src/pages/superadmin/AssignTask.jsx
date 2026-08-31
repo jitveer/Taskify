@@ -21,13 +21,13 @@ function AssignTask() {
             <Sidebar role="Super Admin" menuItems={menuItems} color="purple" />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
-                <Header title="Assign Master Task" name="Super Admin" role="Super Admin" />
+                <Header title="Assign New Task" name="Super Admin" role="Super Admin" />
 
                 {/* Super Admin Assign Task Form */}
                 <div className="lg:pt-4">
-                    <AssignTaskForm color="purple" apiPrefix="/api/superadmin"/>
+                    <AssignTaskForm color="purple" apiPrefix="/api/superadmin" />
                 </div>
             </div>
         </div>

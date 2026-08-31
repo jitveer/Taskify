@@ -155,10 +155,6 @@ function Notifications() {
 
                         {/* Title Bar & Quick Actions */}
                         <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-50/30">
-                            <div>
-                                <h2 className="text-xl font-bold text-slate-800 tracking-tight">Notification Center</h2>
-                                <p className="text-xs text-slate-500 mt-1 font-medium">Keep track of updates, tasks, and reports.</p>
-                            </div>
 
                             {notifications.length > 0 && (
                                 <div className="flex items-center gap-3">
@@ -175,13 +171,13 @@ function Notifications() {
                                         Mark all as read
                                     </button>
 
-                                    <button
+                                    {/* <button
                                         onClick={clearAllNotifications}
                                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100 transition"
                                     >
                                         <Trash2 size={14} />
                                         Clear all
-                                    </button>
+                                    </button> */}
                                 </div>
                             )}
                         </div>

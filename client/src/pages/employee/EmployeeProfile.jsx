@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 import Swal from "sweetalert2";
-import { User, Mail, Briefcase, Shield, Edit2, Check } from "lucide-react";
+import { User, Mail, Briefcase, Shield, Edit2, Check, LogOut } from "lucide-react";
 import axios from "axios";
 
 function EmployeeProfile() {
@@ -12,6 +13,57 @@ function EmployeeProfile() {
         { name: "Reports", path: "/employee-reports" },
         { name: "My Profile", path: "/employee-profile" }
     ];
+
+
+
+
+
+
+
+
+
+
+
+    const handleLogout = () => {
+        Swal.fire({
+            title: "Logout?",
+            text: "Are you sure you want to logout?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, Logout",
+            cancelButtonText: "Cancel",
+            confirmButtonColor: "#e11d48",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem("user");
+                localStorage.removeItem("token");
+                Swal.fire({
+                    icon: "success",
+                    title: "Logged Out Successfully",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                setTimeout(() => {
+                    navigate("/");
+                }, 1500);
+            }
+        });
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const [isEditing, setIsEditing] = useState(false);
     const [currentUser, setCurrentUser] = useState(() => {
@@ -107,7 +159,7 @@ function EmployeeProfile() {
 
                         {/* Profile Info */}
                         <div className="pt-16 md:pt-6 md:pl-48 px-6 pb-8">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6 text-center md:text-left">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-1 text-center md:text-left">
                                 <div>
                                     <h2 className="text-xl md:text-2xl font-bold text-slate-800">
                                         {formData.name || "User"}
@@ -142,7 +194,7 @@ function EmployeeProfile() {
                                                 placeholder="Enter full name"
                                             />
                                         ) : (
-                                            <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
+                                            <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
                                                 {formData.name}
                                             </p>
                                         )}
@@ -162,7 +214,7 @@ function EmployeeProfile() {
                                                 placeholder="Enter email address"
                                             />
                                         ) : (
-                                            <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
+                                            <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
                                                 {formData.email}
                                             </p>
                                         )}
@@ -173,7 +225,7 @@ function EmployeeProfile() {
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                             <Briefcase size={13} className="text-slate-400" /> Department
                                         </label>
-                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-3 rounded-xl border border-slate-100 select-none">
+                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-0 rounded-xl border border-slate-100 select-none">
                                             {formData.department}
                                         </p>
                                     </div>
@@ -183,7 +235,7 @@ function EmployeeProfile() {
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                             <Shield size={13} className="text-slate-400" /> Role
                                         </label>
-                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-3 rounded-xl border border-slate-100 select-none">
+                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-0 rounded-xl border border-slate-100 select-none">
                                             {formData.role}
                                         </p>
                                     </div>
@@ -207,6 +259,22 @@ function EmployeeProfile() {
                                     </div>
                                 )}
                             </form>
+
+
+                            {/* Mobile View Logout Button (Only visible on mobile screens) */}
+                            <div className="lg:hidden mt-8 pt-6 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-200 cursor-pointer"
+                                >
+                                    <LogOut size={16} /> Logout
+                                </button>
+                            </div>
+
+
+
+
                         </div>
                     </div>
                 </div>

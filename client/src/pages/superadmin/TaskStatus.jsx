@@ -20,7 +20,7 @@ function TaskStatus() {
             <Sidebar role="Super Admin" menuItems={menuItems} color="purple" />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
                 <Header title="Global Task Status" name="Super Admin" role="Super Admin" />
 

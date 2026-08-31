@@ -184,11 +184,7 @@ function MyTaskTable({ color }) {
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
 
                 {/* Header Section */}
-                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-800">My Tasks</h2>
-                        <p className="text-sm text-slate-500 mt-1">Review your assigned tasks and deadlines.</p>
-                    </div>
+                {/* <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     {searchFilter && (
                         <div>
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${color === "purple"
@@ -207,7 +203,7 @@ function MyTaskTable({ color }) {
                             </span>
                         </div>
                     )}
-                </div>
+                </div> */}
 
                 {/* Filter Tabs */}
                 <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex overflow-x-auto gap-2 pb-3 md:pb-4 max-w-full scrollbar-none">

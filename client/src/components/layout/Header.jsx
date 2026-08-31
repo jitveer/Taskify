@@ -130,7 +130,7 @@ function Header({ title, role }) {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 lg:px-8 py-4 flex justify-between items-center sticky top-0 z-40">
+        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 lg:px-8 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
             {/* Left Side */}
             <div className="flex items-center gap-3">
                 {/* Hamburger menu for Admin/SuperAdmin on mobile/tablet */}

@@ -84,11 +84,11 @@ function EmployeeList() {
             />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
 
                 {/* Header */}
                 <Header
-                    title="Employee Directory"
+                    title="List of Employees"
                     name="Super Admin"
                     role="Super Admin"
                 />

@@ -86,16 +86,16 @@ function EmployeeDashboard() {
                 <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto pb-24 md:pb-10">
 
                     {/* Welcome Section */}
-                    <div className="mb-6 md:mb-8">
+                    {/* <div className="mb-6 md:mb-8">
                         <h2 className="text-xl md:text-2xl font-semibold text-slate-800">Overview</h2>
                         <p className="text-slate-500 text-xs md:text-sm mt-1">A summary of your current tasks and progress.</p>
-                    </div>
+                    </div> */}
 
                     {/* Stats Grid - 4 columns on desktop, 2 on mobile */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8 md:mb-10">
 
                         {/* Card 1 - My All Tasks */}
-                        <div 
+                        <div
                             onClick={() => setStatusFilter("All")}
                             className="bg-emerald-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-emerald-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
@@ -110,7 +110,7 @@ function EmployeeDashboard() {
                         </div>
 
                         {/* Card 2 - Pending Tasks */}
-                        <div 
+                        <div
                             onClick={() => setStatusFilter("Pending")}
                             className="bg-amber-500 text-white p-4 lg:p-6 rounded-xl shadow-md border border-amber-600 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
@@ -125,7 +125,7 @@ function EmployeeDashboard() {
                         </div>
 
                         {/* Card 3 - Processing Tasks */}
-                        <div 
+                        <div
                             onClick={() => setStatusFilter("In Progress")}
                             className="bg-blue-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-blue-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
@@ -140,7 +140,7 @@ function EmployeeDashboard() {
                         </div>
 
                         {/* Card 4 - Completed Tasks */}
-                        <div 
+                        <div
                             onClick={() => setStatusFilter("Completed")}
                             className="bg-green-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-green-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
@@ -157,15 +157,15 @@ function EmployeeDashboard() {
                     </div>
 
                     {/* Task Lists Section */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        {/* Header with status filter tabs */}
+                    {/* <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        Header with status filter tabs
                         <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
                             <div>
                                 <h2 className="text-base md:text-lg font-bold text-slate-800">My Task Assignments ({statusFilter})</h2>
                                 <p className="text-xs text-slate-500 font-medium mt-0.5">Click any record to inspect complete task requirements and details.</p>
                             </div>
                             <div className="flex items-center gap-3 self-end sm:self-auto">
-                                <button 
+                                <button
                                     onClick={() => navigate("/employee-my-tasks")}
                                     className="text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 transition cursor-pointer"
                                 >
@@ -174,7 +174,7 @@ function EmployeeDashboard() {
                             </div>
                         </div>
 
-                        {/* Task List items */}
+                        Task List items
                         <div className="divide-y divide-slate-100">
                             {loading ? (
                                 <div className="p-12 text-center text-slate-500 text-sm font-medium">Loading tasks...</div>
@@ -190,8 +190,8 @@ function EmployeeDashboard() {
                                             : "border-l-amber-500";
 
                                     return (
-                                        <div 
-                                            key={idx} 
+                                        <div
+                                            key={idx}
                                             onClick={() => setSelectedTask(task)}
                                             className={`p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4 hover:bg-slate-50/70 transition duration-150 border-l-4 ${borderStyle} cursor-pointer`}
                                         >
@@ -224,7 +224,7 @@ function EmployeeDashboard() {
                                 })
                             )}
                         </div>
-                    </div>
+                    </div> */}
 
                 </div>
             </div>

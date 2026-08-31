@@ -306,7 +306,7 @@ function AssignTaskForm({ color, apiPrefix }) {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
 
                 {/* Header Banner */}
-                <div className={`${color === "blue" ? "bg-gradient-to-r from-blue-600 to-blue-400" : "bg-gradient-to-r from-purple-600 to-purple-400"} p-5 md:p-6 text-white flex items-center gap-4`}>
+                {/* <div className={`${color === "blue" ? "bg-gradient-to-r from-blue-600 to-blue-400" : "bg-gradient-to-r from-purple-600 to-purple-400"} p-5 md:p-6 text-white flex items-center gap-4`}>
                     <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm hidden md:block">
                         <FileText size={24} className="text-white" />
                     </div>
@@ -314,7 +314,7 @@ function AssignTaskForm({ color, apiPrefix }) {
                         <h2 className="text-xl md:text-2xl font-bold tracking-tight leading-tight">Assign New Task</h2>
                         <p className="text-white/80 text-xs mt-0.5 font-medium">Create and delegate work to your team.</p>
                     </div>
-                </div>
+                </div> */}
 
                 <div className="px-5 py-5 md:px-7 md:py-7">
                     <form className="space-y-4">

@@ -11,13 +11,13 @@ const getNotifications = async (req, res) => {
     }
 };
 
-// 2. Toggle single notification read status
+// 2. Mark single notification as read
 const toggleRead = async (req, res) => {
     try {
         const { id } = req.params;
         const notif = await Notification.findById(id);
         if (notif) {
-            notif.read = !notif.read;
+            notif.read = true;
             await notif.save();
         }
         return res.status(200).json({ success: true });

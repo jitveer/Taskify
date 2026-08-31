@@ -288,15 +288,15 @@ function AdminList() {
             <Sidebar role="Super Admin" menuItems={menuItems} color="purple" />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
                 <Header title="Admin List" role="Super Admin" />
 
                 <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
 
                     {/* Top Section */}
-                    <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-8">
-                        <div className="relative w-full lg:w-[350px]">
+                    <div className="flex flex-row justify-between items-center gap-3 mb-8">
+                        <div className="relative flex-1 max-w-[350px]">
                             <input
                                 type="text"
                                 placeholder="Search administrators..."
@@ -306,8 +306,9 @@ function AdminList() {
                             />
                         </div>
 
-                        <button onClick={() => setShowPopup(true)} className="w-full lg:w-auto bg-purple-600 hover:bg-purple-700 text-white px-8 py-3.5 rounded-2xl font-bold transition duration-300 shadow-lg shadow-purple-200 active:scale-[0.98]">
-                            + Add New Admin
+                        <button onClick={() => setShowPopup(true)} className="w-[20%] sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-8 py-3.5 rounded-2xl font-bold transition duration-300 shadow-lg shadow-purple-200 active:scale-[0.98] whitespace-nowrap text-xs sm:text-base text-center flex justify-center items-center">
+                            <span className="block sm:hidden">+ ADD</span>
+                            <span className="hidden sm:block">+ Add New Admin</span>
                         </button>
                     </div>
 
@@ -363,7 +364,7 @@ function AdminList() {
                             <div key={index} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative group overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-                                <div className="flex justify-between items-start mb-6">
+                                <div className="flex justify-between items-start mb-2 sm:mb-6">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-purple-100">
                                             {admin.name.charAt(0)}
@@ -378,7 +379,7 @@ function AdminList() {
                                     </span>
                                 </div>
 
-                                <div className="space-y-4 mb-6">
+                                <div className="space-y-1.5 sm:space-y-4 mb-0 sm:mb-6 ">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
                                             <span className="text-xs font-bold">@</span>
@@ -401,7 +402,7 @@ function AdminList() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-50">
+                                <div className="grid grid-cols-2 gap-3 pt-3 sm:pt-4 border-t border-slate-50">
                                     <button
                                         onClick={() => editAdmin(admin)}
                                         className="bg-purple-600 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition active:scale-[0.98] shadow-lg shadow-purple-100">
@@ -425,7 +426,7 @@ function AdminList() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                                        <div className="relative pb-6">
+                                        <div className="relative pb-0 sm:pb-6">
                                             <input
                                                 type="text"
                                                 name="name"
@@ -444,7 +445,7 @@ function AdminList() {
                                         </div>
 
 
-                                        <div className="relative pb-6">
+                                        <div className="relative pb-0 sm:pb-6">
                                             <input
                                                 type="email"
                                                 name="email"
@@ -462,7 +463,7 @@ function AdminList() {
                                             )}
                                         </div>
 
-                                        <div className="relative pb-6">
+                                        <div className="relative pb-0 sm:pb-6">
                                             <div className="relative">
                                                 <input
                                                     type={showPassword ? "text" : "password"}
@@ -490,7 +491,7 @@ function AdminList() {
                                             )}
                                         </div>
 
-                                        <div className="relative pb-6">
+                                        <div className="relative pb-0 sm:pb-6">
                                             <input
                                                 type="text"
                                                 name="mobile"
@@ -509,7 +510,7 @@ function AdminList() {
                                         </div>
 
 
-                                        <div className="relative pb-6">
+                                        <div className="relative pb-0 sm:pb-6">
                                             <select
                                                 name="department"
                                                 value={formData.department}
@@ -545,7 +546,7 @@ function AdminList() {
                                             )}
                                         </div>
 
-                                        <div className="relative pb-6">
+                                        <div className="relative pb-0 sm:pb-6">
                                             <select
                                                 name="role"
                                                 value={formData.role}

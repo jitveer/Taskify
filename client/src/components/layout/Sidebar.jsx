@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
 import { Home, Users, CheckSquare, FileText, LayoutDashboard, Bell } from "lucide-react";
 import { getNotifications } from "../../utils/notifications";
 
 function Sidebar({ role, menuItems, color }) {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const location = useLocation();
 
 
     useEffect(() => {
@@ -20,7 +20,7 @@ function Sidebar({ role, menuItems, color }) {
                     setUnreadCount(0);
                 }
             } catch (error) {
-                console.error("Error updating sidebar unread count:", error);
+                console.error("Error sidebar unread count:", error);
                 setUnreadCount(0);
             }
         };
@@ -85,14 +85,15 @@ function Sidebar({ role, menuItems, color }) {
         return () => window.removeEventListener("toggleSidebar", handleToggle);
     }, []);
 
-    const getIcon = (name) => {
+    const getIcon = (name, isActive) => {
         const n = name.toLowerCase();
-        if (n.includes("dashboard")) return <LayoutDashboard size={20} />;
-        if (n.includes("employee")) return <Users size={20} />;
-        if (n.includes("task") || n.includes("status")) return <CheckSquare size={20} />;
-        if (n.includes("report")) return <FileText size={20} />;
-        if (n.includes("notification")) return <Bell size={20} />;
-        return <Home size={20} />;
+        const strokeWidth = isActive ? 3 : 2;
+        if (n.includes("dashboard")) return <LayoutDashboard size={20} strokeWidth={strokeWidth} />;
+        if (n.includes("employee")) return <Users size={20} strokeWidth={strokeWidth} />;
+        if (n.includes("task") || n.includes("status")) return <CheckSquare size={20} strokeWidth={strokeWidth} />;
+        if (n.includes("report")) return <FileText size={20} strokeWidth={strokeWidth} />;
+        if (n.includes("notification")) return <Bell size={20} strokeWidth={strokeWidth} />;
+        return <Home size={20} strokeWidth={strokeWidth} />;
     };
 
     const renderSidebarContent = () => (
@@ -145,29 +146,34 @@ function Sidebar({ role, menuItems, color }) {
 
                 {/* Mobile Bottom Nav */}
                 <div className={`lg:hidden fixed bottom-0 left-0 w-full bg-${color}-600 text-white flex justify-between items-center px-6 py-3 pb-safe z-50 rounded-t-2xl shadow-[0_-4px_15px_rgba(0,0,0,0.15)]`}>
-                    {modifiedMenuItems.map((item, index) => {
-                        // Shorten names for bottom nav
-                        let shortName = item.name.replace('Employee ', '').replace(' Status', '');
-                        if (item.name === "Notification") shortName = "Notify";
-                        if (shortName.length > 10) shortName = shortName.substring(0, 10);
+                    {modifiedMenuItems
+                        .filter(item => item.name.toLowerCase() !== "my profile") // <--- "My Profile" ko filter kiya
+                        .map((item, index) => {
+                            // Shorten names for bottom nav
+                            let shortName = item.name.replace('Employee ', '').replace(' Status', '');
+                            if (item.name === "Notification") shortName = "Notify";
+                            if (shortName.length > 10) shortName = shortName.substring(0, 10);
 
-                        const isNotification = item.name === "Notification";
+                            const isNotification = item.name === "Notification";
+                            const isActive = location.pathname === item.path;
 
-                        return (
-                            <Link to={item.path} key={index} className="flex flex-col items-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity flex-1 relative">
-                                <div className="relative">
-                                    {getIcon(item.name)}
-                                    {isNotification && unreadCount > 0 && (
-                                        <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-0.5">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </div>
-                                <span className="text-[10px] font-medium tracking-tight truncate w-full text-center">{shortName}</span>
-                            </Link>
-                        );
-                    })}
+                            return (
+                                <Link to={item.path} key={index} className={`flex flex-col items-center gap-1.5 transition-all flex-1 relative ${isActive ? "opacity-100 text-white font-bold" : "opacity-60 hover:opacity-100"}`}>
+                                    <div className="relative">
+                                        {getIcon(item.name, isActive)}
+                                        {isNotification && unreadCount > 0 && (
+                                            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] flex items-center justify-center rounded-full px-0.5">
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className={`text-[10px] tracking-tight truncate w-full text-center ${isActive ? "font-bold" : "font-medium"}`}>{shortName}</span>
+                                </Link>
+                            );
+                        })}
                 </div>
+
+
             </>
         );
     }
