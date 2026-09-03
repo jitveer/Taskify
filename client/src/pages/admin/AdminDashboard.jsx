@@ -52,7 +52,7 @@ function AdminDashboard() {
                 const responseUsers = await taskApi.getAllUsers("/api/admin");
                 const team = (responseUsers.users || responseUsers.employees || [])
                     .filter(u => u.role === "employee" && u.department === loggedInUser.department);
-                
+
                 // Fetch tasks assigned by admin
                 const responseTasks = await taskApi.getAdminTasks();
                 const tasks = responseTasks.assignedTasks || [];
@@ -110,24 +110,18 @@ function AdminDashboard() {
             <Sidebar role="Admin" menuItems={menuItems} color="blue" />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
                 <Header title="Admin Dashboard" name="Admin" role="Admin" />
 
                 <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto pb-24 md:pb-10">
-                    
-                    {/* Welcome Section */}
-                    <div className="mb-6 lg:mb-8">
-                        <h2 className="text-xl lg:text-2xl font-semibold text-slate-800">Admin Overview</h2>
-                        <p className="text-slate-500 text-xs lg:text-sm mt-1">A high-level view of your team and tasks.</p>
-                    </div>
 
                     {/* Stats Grid - 4 columns on desktop, 2 on mobile */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8 md:mb-10">
-                        
-                        {/* Card 1 - Total Team Members */}
-                        <div 
-                            onClick={() => setStatusFilter("All")}
+
+                        {/* Card 1 - Total Team Members -> Employee List */}
+                        <div
+                            onClick={() => navigate("/admin-employee-list")}
                             className="bg-blue-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-blue-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">
@@ -140,9 +134,9 @@ function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Card 2 - In Progress */}
-                        <div 
-                            onClick={() => setStatusFilter("In Progress")}
+                        {/* Card 2 - In Progress -> Tasks Assigned by Me */}
+                        <div
+                            onClick={() => navigate("/admin-task-status?search=In Progress")}
                             className="bg-sky-500 text-white p-4 lg:p-6 rounded-xl shadow-md border border-sky-600 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">
@@ -155,9 +149,9 @@ function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Card 3 - Pending */}
-                        <div 
-                            onClick={() => setStatusFilter("Pending")}
+                        {/* Card 3 - Pending -> Tasks Assigned by Me */}
+                        <div
+                            onClick={() => navigate("/admin-task-status?search=Pending")}
                             className="bg-orange-500 text-white p-4 lg:p-6 rounded-xl shadow-md border border-orange-600 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">
@@ -170,9 +164,9 @@ function AdminDashboard() {
                             </div>
                         </div>
 
-                        {/* Card 4 - Completed */}
-                        <div 
-                            onClick={() => setStatusFilter("Completed")}
+                        {/* Card 4 - Completed -> Tasks Assigned by Me */}
+                        <div
+                            onClick={() => navigate("/admin-task-status?search=Completed")}
                             className="bg-emerald-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-emerald-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">
@@ -185,88 +179,6 @@ function AdminDashboard() {
                             </div>
                         </div>
 
-                    </div>
-
-                    {/* Team Tasks Section */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        {/* Header with status filter tabs */}
-                        <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
-                            <div>
-                                <h2 className="text-base md:text-lg font-bold text-slate-800">Team Members Task Assignments</h2>
-                                <p className="text-xs text-slate-500 font-medium mt-0.5">Click any record to inspect complete task requirements and logs.</p>
-                            </div>
-                            {/* Filter Tabs */}
-                            <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1 rounded-xl">
-                                {[
-                                    { label: "All", value: "All" },
-                                    { label: "Pending", value: "Pending" },
-                                    { label: "In Progress", value: "In Progress" },
-                                    { label: "Completed", value: "Completed" }
-                                ].map(tab => (
-                                    <button
-                                        key={tab.value}
-                                        onClick={() => setStatusFilter(tab.value)}
-                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition duration-200 cursor-pointer ${statusFilter === tab.value
-                                            ? "bg-white text-blue-600 shadow-sm"
-                                            : "text-slate-500 hover:text-slate-800"
-                                            }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Assignments List */}
-                        <div className="divide-y divide-slate-100">
-                            {loading ? (
-                                <div className="p-12 text-center text-slate-500 text-sm font-medium">Loading team task records...</div>
-                            ) : filteredAssignments.length === 0 ? (
-                                <div className="p-12 text-center text-slate-500 text-sm font-medium">No task assignments found under "{statusFilter}" status filter.</div>
-                            ) : (
-                                filteredAssignments.map((assignment, idx) => {
-                                    const statusLower = (assignment.status || "").toLowerCase();
-                                    const borderStyle = statusLower === "completed"
-                                        ? "border-l-emerald-500"
-                                        : statusLower === "in progress"
-                                            ? "border-l-blue-500"
-                                            : "border-l-amber-500";
-
-                                    return (
-                                        <div 
-                                            key={idx} 
-                                            onClick={() => setSelectedAssignment(assignment)}
-                                            className={`p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4 hover:bg-slate-50/70 transition duration-150 border-l-4 ${borderStyle} cursor-pointer`}
-                                        >
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="font-bold text-slate-800 text-sm md:text-base leading-snug">{assignment.taskTitle}</span>
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getPriorityColor(assignment.priority)}`}>
-                                                        {assignment.priority}
-                                                    </span>
-                                                </div>
-                                                <p className="text-xs text-slate-500 mt-1">
-                                                    Assigned to: <span className="font-bold text-slate-700">{assignment.assigneeName}</span> ({assignment.assigneeUserId})
-                                                </p>
-                                                {assignment.comment && (
-                                                    <p className="text-[11px] font-medium text-slate-400 mt-1 italic truncate">
-                                                        Comment: {assignment.comment}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end">
-                                                <span className="text-[11px] font-medium text-slate-500">
-                                                    Due: {new Date(assignment.dueDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                                                </span>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(assignment.status)}`}>
-                                                    {assignment.status}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
                     </div>
 
                 </div>

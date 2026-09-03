@@ -48,13 +48,13 @@ function AdminAssignTask() {
             <Sidebar role="Admin" menuItems={menuItems} color="blue" />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
                 <Header title="Assign Task" name="Admin" role="Admin" />
 
                 {/* Reusable Form */}
                 <div className="lg:pt-4">
-                    <AssignTaskForm color="blue" apiPrefix="/api/admin"/>
+                    <AssignTaskForm color="blue" apiPrefix="/api/admin" />
                 </div>
             </div>
         </div>

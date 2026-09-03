@@ -30,7 +30,10 @@ const userSchema = new mongoose.Schema({
     },
 
     mobile: {
-        type: String
+        type: String,
+        required: true,
+        unique: true,
+        sparse: true
     },
 
     password: {

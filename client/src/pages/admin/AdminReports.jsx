@@ -20,7 +20,7 @@ function AdminReports() {
             <Sidebar role="Admin" menuItems={menuItems} color="blue" />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
                 <Header title="Analytics Reports" role="Admin" />
 

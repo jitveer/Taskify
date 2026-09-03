@@ -5,7 +5,8 @@ import Swal from "sweetalert2";
 
 import {
     showSuccess,
-    showError
+    showError,
+    showConfirm
 } from "../../components/layout/alerts";
 
 
@@ -74,15 +75,13 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
     };
 
     const deleteEmployee = async (id) => {
-        const result = await Swal.fire({
+        const result = await showConfirm({
             title: "Delete Employee?",
-            text: "This action cannot be undone.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#dc2626",
-            cancelButtonColor: "#6b7280",
+            text: "This action cannot be undone and will remove the employee records.",
             confirmButtonText: "Delete",
-            cancelButtonText: "Cancel"
+            cancelButtonText: "Cancel",
+            icon: "warning",
+            isDestructive: true
         });
 
         if (!result.isConfirmed) return;
@@ -103,7 +102,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                 }
             );
 
-            showSuccess("Employee Deleted Successfully");
+            await showSuccess("Employee Deleted Successfully");
             window.location.reload();
         } catch (error) {
             console.log(error);
@@ -169,13 +168,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                     }
                 );
 
-                await Swal.fire({
-                    icon: "success",
-                    title: "Employee Updated Successfully",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-
+                await showSuccess("Employee Updated Successfully");
             } else {
                 // ADD NEW EMPLOYEE
                 const token = localStorage.getItem("token");
@@ -189,7 +182,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                         }
                     }
                 );
-                showSuccess("Employee Added Successfully");
+                await showSuccess("Employee Added Successfully");
             }
 
             setShowModal(false);
@@ -205,7 +198,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
             window.location.reload();
         } catch (error) {
             console.log(error);
-            showError(error.response?.data?.message || "Error saving employee");
+            showError(error.response?.data?.message || "Error saving employee", "Failed to Save");
         }
     };
 
@@ -226,24 +219,24 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
     const btnBg = color === "blue" ? "bg-blue-600 hover:bg-blue-700" : "bg-purple-600 hover:bg-purple-700";
 
     return (
-        <div className="p-8">
-            {/* Top Section */}
-            <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6">
-                <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+        <div className="p-4 lg:p-8">
+            {/* Top Section - Sticky below header */}
+            <div className="sticky top-[73px] z-30 bg-[#f8fafc]/90 backdrop-blur-md py-3 -mt-3 mb-4 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div className="flex flex-row gap-2 sm:gap-4 w-full lg:w-auto">
                     <input
                         type="text"
-                        placeholder="Search Employee..."
+                        placeholder="Search..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className={`w-full sm:w-[320px] border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 ${focusRing}`}
+                        className={`w-[65%] sm:w-[320px] bg-white border border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:ring-2 shadow-xs ${focusRing}`}
                     />
 
                     <select
                         value={selectedDepartment}
                         onChange={(e) => setSelectedDepartment(e.target.value)}
-                        className={`w-full sm:w-[200px] border border-gray-300 bg-white rounded-xl px-4 py-3 outline-none focus:ring-2 ${focusRing}`}
+                        className={`w-[35%] sm:w-[200px] border border-gray-300 bg-white rounded-xl px-2 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:ring-2 truncate shadow-xs ${focusRing}`}
                     >
-                        <option value="">All Departments</option>
+                        <option value="">All Depts</option>
                         <option value="csr">CSR</option>
                         <option value="it">IT</option>
                         <option value="hr">HR</option>
@@ -255,7 +248,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
 
                 <button
                     onClick={handleOpenAdd}
-                    className={`${btnBg} text-white px-6 py-3 rounded-xl font-semibold duration-300 shadow-lg w-full lg:w-auto`}
+                    className={`hidden lg:block ${btnBg} text-white px-6 py-3 rounded-xl font-semibold duration-300 shadow-lg`}
                 >
                     + Add Employee
                 </button>
@@ -310,7 +303,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
             {/* Mobile Cards */}
             <div className="lg:hidden flex flex-col gap-4 bg-slate-50/50 p-2 -mx-4 lg:mx-0">
                 {filteredEmployees.map((employee, index) => (
-                    <div key={index} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-4 relative">
+                    <div key={index} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-2 relative">
                         <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-full bg-${color === 'blue' ? 'blue' : 'purple'}-100 text-${color === 'blue' ? 'blue' : 'purple'}-600 flex justify-center items-center font-bold text-sm`}>
@@ -386,10 +379,10 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                         {/* Form */}
                         <div className="px-8 pb-6">
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
 
                                 {/* Name */}
-                                <div className="relative pb-5">
+                                <div className="relative pb-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                                         Full Name
                                     </label>
@@ -413,7 +406,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 </div>
 
                                 {/* Email */}
-                                <div className="relative pb-5">
+                                <div className="relative pb-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                                         Email Address
                                     </label>
@@ -437,7 +430,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 </div>
 
                                 {/* Password */}
-                                <div className="relative pb-5">
+                                <div className="relative pb-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                                         Password
                                     </label>
@@ -469,7 +462,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 </div>
 
                                 {/* Mobile */}
-                                <div className="relative pb-5">
+                                <div className="relative pb-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                                         Mobile Number
                                     </label>
@@ -493,7 +486,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 </div>
 
                                 {/* Department */}
-                                <div className="relative pb-5">
+                                <div className="relative pb-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                                         Department
                                     </label>
@@ -524,7 +517,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 </div>
 
                                 {/* Role */}
-                                <div className="relative pb-5">
+                                <div className="relative pb-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                                         Role
                                     </label>
@@ -582,6 +575,24 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
 
                 </div>
             )}
+
+            {/* Mobile & Tablet Floating Circular Add Button */}
+            <button
+                onClick={handleOpenAdd}
+                aria-label="Add Employee"
+                className={`lg:hidden fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full ${btnBg} text-white flex items-center justify-center shadow-2xl shadow-blue-500/50 hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/20`}
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-7 w-7"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
         </div>
     );
 }

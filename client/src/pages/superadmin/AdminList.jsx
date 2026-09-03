@@ -7,7 +7,8 @@ import Swal from "sweetalert2";
 import {
     showSuccess,
     showError,
-    showWarning
+    showWarning,
+    showConfirm
 } from "../../components/layout/alerts";
 
 
@@ -213,16 +214,13 @@ function AdminList() {
 
 
     const deleteAdmin = async (id) => {
-
-        const result = await Swal.fire({
+        const result = await showConfirm({
             title: "Delete Admin?",
             text: "This action cannot be undone.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#dc2626",
-            cancelButtonColor: "#6b7280",
             confirmButtonText: "Yes, Delete",
-            cancelButtonText: "Cancel"
+            cancelButtonText: "Cancel",
+            icon: "warning",
+            isDestructive: true
         });
 
         if (!result.isConfirmed) return;

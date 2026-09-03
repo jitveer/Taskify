@@ -1,38 +1,26 @@
-import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import { showSuccess, showConfirm } from "./alerts";
 
 function LogoutButton() {
-
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-
-        Swal.fire({
+    const handleLogout = async () => {
+        const result = await showConfirm({
             title: "Logout?",
             text: "Are you sure you want to logout?",
-            icon: "warning",
-            showCancelButton: true,
             confirmButtonText: "Yes, Logout",
-            cancelButtonText: "Cancel"
-        }).then((result) => {
-
-            if (result.isConfirmed) {
-
-                localStorage.removeItem("user");
-                localStorage.removeItem("token");
-
-                Swal.fire({
-                    icon: "success",
-                    title: "Logged Out Successfully",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-
-                setTimeout(() => {
-                    navigate("/");
-                }, 1500);
-            }
+            cancelButtonText: "Cancel",
+            icon: "warning",
+            isDestructive: true
         });
+
+        if (result.isConfirmed) {
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+
+            await showSuccess("Logged Out Successfully");
+            navigate("/");
+        }
     };
 
     return (

@@ -132,8 +132,18 @@ function Notifications() {
             targetPath = "/employee-my-tasks";
         }
 
+        const queryParams = new URLSearchParams();
         if (notif.taskTitle) {
-            navigate(`${targetPath}?search=${encodeURIComponent(notif.taskTitle)}`);
+            queryParams.set("search", notif.taskTitle);
+            // If it's a new task assignment notification, direct to Pending tab directly
+            if (!isStatusUpdate) {
+                queryParams.set("status", "Pending");
+            }
+        }
+
+        const queryString = queryParams.toString();
+        if (queryString) {
+            navigate(`${targetPath}?${queryString}`);
         } else {
             navigate(targetPath);
         }
@@ -146,7 +156,7 @@ function Notifications() {
             <Sidebar role={displayRole} menuItems={menuItems} color={sidebarColor} />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
                 <Header title="Notifications" role={displayRole} />
 
@@ -205,10 +215,9 @@ function Notifications() {
                                         className={`p-6 flex gap-4 hover:bg-slate-50/80 transition-all cursor-pointer relative ${!notif.read ? "bg-slate-50/30" : ""
                                             }`}
                                     >
-                                        {/* Unread Left Border Line */}
+                                        {/* Unread Left Border Line (Hidden on mobile, visible on tablet/desktop) */}
                                         {!notif.read && (
-                                            <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-md ${sidebarColor === "purple" ? "bg-purple-600" : sidebarColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
-                                                }`}></div>
+                                            <div className="hidden sm:block absolute left-0 top-0 bottom-0 w-1 rounded-r-md bg-red-500"></div>
                                         )}
 
                                         {/* Icon */}
@@ -219,10 +228,17 @@ function Notifications() {
                                         {/* Body */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
-                                                <h3 className={`text-sm lg:text-base leading-snug ${notif.read ? "text-slate-700 font-medium" : "text-slate-900 font-bold"
-                                                    }`}>
-                                                    {notif.title}
-                                                </h3>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <h3 className={`text-sm lg:text-base leading-snug ${notif.read ? "text-slate-700 font-medium" : "text-slate-900 font-bold"
+                                                        }`}>
+                                                        {notif.title}
+                                                    </h3>
+                                                    {!notif.read && (
+                                                        <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs animate-pulse">
+                                                            New
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap self-start sm:self-auto">
                                                     {notif.time}
                                                 </span>

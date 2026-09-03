@@ -45,19 +45,20 @@ function AdminEmployeeList() {
     }, []);
 
     return (
+
         <div className="flex flex-col lg:flex-row bg-[#f8fafc] min-h-screen font-sans text-slate-800">
             {/* Sidebar */}
             <Sidebar role="Admin" menuItems={menuItems} color="blue" />
 
             {/* Main Content */}
-            <div className="flex-1 min-h-screen w-full overflow-hidden">
+            <div className="flex-1 min-h-screen w-full">
                 {/* Header */}
                 <Header title="Employee Directory" role="Admin" />
 
                 {/* Admin Employee Table */}
                 <EmployeeTable color="blue" employees={employees} apiPrefix="/api/admin" />
             </div>
-        </div>
+        </div >
     );
 }
 

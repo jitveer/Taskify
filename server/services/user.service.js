@@ -7,6 +7,28 @@ class UserService {
     }
 
     async addAdmin(adminData) {
+        // Check if email already exists
+        if (adminData.email) {
+            const existingEmail = await userRepository.findOne({ email: adminData.email.trim().toLowerCase() });
+            if (existingEmail) {
+                const error = new Error("An admin/user with this Email address already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            adminData.email = adminData.email.trim().toLowerCase();
+        }
+
+        // Check if mobile already exists
+        if (adminData.mobile) {
+            const existingMobile = await userRepository.findOne({ mobile: adminData.mobile.trim() });
+            if (existingMobile) {
+                const error = new Error("An admin/user with this Mobile number already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            adminData.mobile = adminData.mobile.trim();
+        }
+
         let nextUserId = 1000;
         if (adminData.role === "admin") {
             const lastUser = await userRepository.findOne(
@@ -20,6 +42,34 @@ class UserService {
     }
 
     async editAdmin(adminId, adminNewData) {
+        // Check if email already exists on other users
+        if (adminNewData.email) {
+            const existingEmail = await userRepository.findOne({
+                _id: { $ne: adminId },
+                email: adminNewData.email.trim().toLowerCase()
+            });
+            if (existingEmail) {
+                const error = new Error("An admin/user with this Email address already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            adminNewData.email = adminNewData.email.trim().toLowerCase();
+        }
+
+        // Check if mobile already exists on other users
+        if (adminNewData.mobile) {
+            const existingMobile = await userRepository.findOne({
+                _id: { $ne: adminId },
+                mobile: adminNewData.mobile.trim()
+            });
+            if (existingMobile) {
+                const error = new Error("An admin/user with this Mobile number already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            adminNewData.mobile = adminNewData.mobile.trim();
+        }
+
         const updateAdmin = await userRepository.findByIdAndUpdate(adminId, adminNewData, { new: true });
         if (!updateAdmin) {
             const error = new Error("Admin not found");
@@ -43,6 +93,28 @@ class UserService {
     async addEmployee(employeeData, currentUser) {
         if (currentUser.role === "admin") {
             employeeData.department = currentUser.department;
+        }
+
+        // Check if email already exists
+        if (employeeData.email) {
+            const existingEmail = await userRepository.findOne({ email: employeeData.email.trim().toLowerCase() });
+            if (existingEmail) {
+                const error = new Error("An employee with this Email address already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            employeeData.email = employeeData.email.trim().toLowerCase();
+        }
+
+        // Check if mobile already exists
+        if (employeeData.mobile) {
+            const existingMobile = await userRepository.findOne({ mobile: employeeData.mobile.trim() });
+            if (existingMobile) {
+                const error = new Error("An employee with this Mobile number already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            employeeData.mobile = employeeData.mobile.trim();
         }
 
         let nextUserId = 2000;
@@ -85,6 +157,34 @@ class UserService {
         const query = { _id: employeeId };
         if (currentUser.role === "admin") {
             query.department = currentUser.department;
+        }
+
+        // Check duplicate email on update
+        if (employeeUpdateData.email) {
+            const existingEmail = await userRepository.findOne({
+                _id: { $ne: employeeId },
+                email: employeeUpdateData.email.trim().toLowerCase()
+            });
+            if (existingEmail) {
+                const error = new Error("An employee with this Email address already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            employeeUpdateData.email = employeeUpdateData.email.trim().toLowerCase();
+        }
+
+        // Check duplicate mobile on update
+        if (employeeUpdateData.mobile) {
+            const existingMobile = await userRepository.findOne({
+                _id: { $ne: employeeId },
+                mobile: employeeUpdateData.mobile.trim()
+            });
+            if (existingMobile) {
+                const error = new Error("An employee with this Mobile number already exists.");
+                error.statusCode = 400;
+                throw error;
+            }
+            employeeUpdateData.mobile = employeeUpdateData.mobile.trim();
         }
 
         const updateEmp = await userRepository.findOneAndUpdate(query, employeeUpdateData, { new: true });

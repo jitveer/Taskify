@@ -130,7 +130,7 @@ function Header({ title, role }) {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 lg:px-8 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
+        <div className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 lg:px-8 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm w-full">
             {/* Left Side */}
             <div className="flex items-center gap-3">
                 {/* Hamburger menu for Admin/SuperAdmin on mobile/tablet */}
@@ -247,9 +247,16 @@ function Header({ title, role }) {
 
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex justify-between items-start gap-2">
-                                                            <p className={`text-xs leading-snug ${notif.read ? "text-slate-600" : "text-slate-800 font-bold"}`}>
-                                                                {notif.title}
-                                                            </p>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <p className={`text-xs leading-snug ${notif.read ? "text-slate-600" : "text-slate-800 font-bold"}`}>
+                                                                    {notif.title}
+                                                                </p>
+                                                                {!notif.read && (
+                                                                    <span className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider shadow-xs">
+                                                                        New
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap pt-0.5">
                                                                 {notif.time}
                                                             </span>

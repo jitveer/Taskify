@@ -9,6 +9,24 @@ class TaskService {
             throw new Error("At least one assignee is required.");
         }
 
+        if (!taskData.dueDate) {
+            throw new Error("Due date is required.");
+        }
+
+        const taskDueDate = new Date(taskData.dueDate);
+        if (isNaN(taskDueDate.getTime())) {
+            throw new Error("Invalid due date.");
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const compareDueDate = new Date(taskData.dueDate);
+        compareDueDate.setHours(0, 0, 0, 0);
+
+        if (compareDueDate < today) {
+            throw new Error("Due date cannot be in the past.");
+        }
+
         taskData.assignedBy = creator.id;
 
         const assignees = await userRepository.find({ _id: { $in: assigneeIds } });

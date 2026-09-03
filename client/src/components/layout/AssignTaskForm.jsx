@@ -130,8 +130,17 @@ function AssignTaskForm({ color, apiPrefix }) {
         if (!formData.description.trim())
             newErrors.description = "Description is required";
 
-        if (!formData.dueDate)
+        if (!formData.dueDate) {
             newErrors.dueDate = "Due Date is required";
+        } else {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const selectedDate = new Date(formData.dueDate);
+            selectedDate.setHours(0, 0, 0, 0);
+            if (selectedDate < today) {
+                newErrors.dueDate = "Due Date cannot be in the past";
+            }
+        }
 
         setErrors(newErrors);
 
@@ -631,6 +640,7 @@ function AssignTaskForm({ color, apiPrefix }) {
                                 <input
                                     type="date"
                                     name="dueDate"
+                                    min={new Date().toISOString().split("T")[0]}
                                     value={formData.dueDate}
                                     onChange={(e) =>
                                         setFormData({

@@ -6,13 +6,28 @@ const addEmployee = async (req, res) => {
         const newEmployee = await userService.addEmployee(req.body, req.user);
         return res.status(200).json({
             success: true,
-            message: "Employee added successfuly",
+            message: "Employee added successfully",
             data: newEmployee
         });
     } catch (error) {
+        let message = error.message;
+
+        // MongoDB duplicate key error handling
+        if (error.code === 11000 || (error.message && error.message.includes("E11000"))) {
+            if (error.keyPattern?.email || error.message.includes("email")) {
+                message = "An employee with this Email address already exists.";
+            } else if (error.keyPattern?.mobile || error.message.includes("mobile")) {
+                message = "An employee with this Mobile number already exists.";
+            } else if (error.keyPattern?.user_id || error.message.includes("user_id")) {
+                message = "An employee with this User ID already exists.";
+            } else {
+                message = "An employee with these details already exists.";
+            }
+        }
+
         return res.status(400).json({
             success: false,
-            message: `Employee not added, ${error.message} `
+            message: message
         });
     }
 }
@@ -59,9 +74,19 @@ const employeeUpdate = async (req, res) => {
             user: updateEmp
         });
     } catch (e) {
+        let message = e.message;
+        if (e.code === 11000 || (e.message && e.message.includes("E11000"))) {
+            if (e.keyPattern?.email || e.message.includes("email")) {
+                message = "An employee with this Email address already exists.";
+            } else if (e.keyPattern?.mobile || e.message.includes("mobile")) {
+                message = "An employee with this Mobile number already exists.";
+            } else {
+                message = "An employee with these details already exists.";
+            }
+        }
         return res.status(e.statusCode || 400).json({
             success: false,
-            message: e.message
+            message: message
         });
     }
 }

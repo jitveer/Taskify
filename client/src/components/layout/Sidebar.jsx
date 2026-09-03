@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import Swal from "sweetalert2";
+import { showSuccess, showConfirm } from "../../components/layout/alerts";
 import { Home, Users, CheckSquare, FileText, LayoutDashboard, Bell } from "lucide-react";
 import { getNotifications } from "../../utils/notifications";
 
@@ -47,34 +47,23 @@ function Sidebar({ role, menuItems, color }) {
     {/*logout button sweet alert*/ }
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-
-        Swal.fire({
+    const handleLogout = async () => {
+        const result = await showConfirm({
             title: "Logout?",
             text: "Are you sure you want to logout?",
-            icon: "warning",
-            showCancelButton: true,
             confirmButtonText: "Yes, Logout",
-            cancelButtonText: "Cancel"
-        }).then((result) => {
-
-            if (result.isConfirmed) {
-
-                localStorage.removeItem("user");
-                localStorage.removeItem("token");
-
-                Swal.fire({
-                    icon: "success",
-                    title: "Logged Out Successfully",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-
-                setTimeout(() => {
-                    navigate("/");
-                }, 1500);
-            }
+            cancelButtonText: "Cancel",
+            icon: "warning",
+            isDestructive: true
         });
+
+        if (result.isConfirmed) {
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+
+            await showSuccess("Logged Out Successfully");
+            navigate("/");
+        }
     };
 
 

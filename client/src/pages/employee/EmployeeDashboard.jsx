@@ -96,7 +96,7 @@ function EmployeeDashboard() {
 
                         {/* Card 1 - My All Tasks */}
                         <div
-                            onClick={() => setStatusFilter("All")}
+                            onClick={() => navigate("/employee-my-tasks?status=All")}
                             className="bg-emerald-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-emerald-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">
@@ -111,7 +111,7 @@ function EmployeeDashboard() {
 
                         {/* Card 2 - Pending Tasks */}
                         <div
-                            onClick={() => setStatusFilter("Pending")}
+                            onClick={() => navigate("/employee-my-tasks?status=Pending")}
                             className="bg-amber-500 text-white p-4 lg:p-6 rounded-xl shadow-md border border-amber-600 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">
@@ -126,7 +126,7 @@ function EmployeeDashboard() {
 
                         {/* Card 3 - Processing Tasks */}
                         <div
-                            onClick={() => setStatusFilter("In Progress")}
+                            onClick={() => navigate("/employee-my-tasks?status=In Progress")}
                             className="bg-blue-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-blue-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">
@@ -141,7 +141,7 @@ function EmployeeDashboard() {
 
                         {/* Card 4 - Completed Tasks */}
                         <div
-                            onClick={() => setStatusFilter("Completed")}
+                            onClick={() => navigate("/employee-my-tasks?status=Completed")}
                             className="bg-green-600 text-white p-4 lg:p-6 rounded-xl shadow-md border border-green-700 flex flex-col justify-between h-full min-h-[120px] cursor-pointer hover:scale-[1.02] transition duration-200"
                         >
                             <div className="flex justify-between items-center mb-4">

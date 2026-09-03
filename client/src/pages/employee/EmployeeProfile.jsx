@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
-import Swal from "sweetalert2";
+import { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
 import { User, Mail, Briefcase, Shield, Edit2, Check, LogOut } from "lucide-react";
 import axios from "axios";
 
 function EmployeeProfile() {
+    const navigate = useNavigate();
     const menuItems = [
         { name: "Dashboard", path: "/employee-dashboard" },
         { name: "My Tasks", path: "/employee-my-tasks" },
@@ -14,56 +15,24 @@ function EmployeeProfile() {
         { name: "My Profile", path: "/employee-profile" }
     ];
 
-
-
-
-
-
-
-
-
-
-
-    const handleLogout = () => {
-        Swal.fire({
+    const handleLogout = async () => {
+        const result = await showConfirm({
             title: "Logout?",
             text: "Are you sure you want to logout?",
-            icon: "warning",
-            showCancelButton: true,
             confirmButtonText: "Yes, Logout",
             cancelButtonText: "Cancel",
-            confirmButtonColor: "#e11d48",
-        }).then((result) => {
-            if (result.isConfirmed) {
-                localStorage.removeItem("user");
-                localStorage.removeItem("token");
-                Swal.fire({
-                    icon: "success",
-                    title: "Logged Out Successfully",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-                setTimeout(() => {
-                    navigate("/");
-                }, 1500);
-            }
+            icon: "warning",
+            isDestructive: true
         });
+
+        if (result.isConfirmed) {
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+
+            await showSuccess("Logged Out Successfully");
+            navigate("/");
+        }
     };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     const [isEditing, setIsEditing] = useState(false);
     const [currentUser, setCurrentUser] = useState(() => {
@@ -89,11 +58,7 @@ function EmployeeProfile() {
     const handleSave = async (e) => {
         e.preventDefault();
         if (!formData.name.trim() || !formData.email.trim()) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Name and Email cannot be empty!",
-            });
+            showError("Name and Email cannot be empty!", "Validation Error");
             return;
         }
 
@@ -122,21 +87,11 @@ function EmployeeProfile() {
                 // Notify other components (like Header)
                 window.dispatchEvent(new Event("profileUpdated"));
 
-                Swal.fire({
-                    icon: "success",
-                    title: "Profile Updated",
-                    text: "Your profile has been successfully updated!",
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                await showSuccess("Your profile has been successfully updated!", "Profile Updated");
             }
         } catch (error) {
             console.error("Update profile error:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Update Failed",
-                text: error.response?.data?.message || "Failed to update profile in database."
-            });
+            showError(error.response?.data?.message || "Failed to update profile in database.", "Update Failed");
         }
     };
 

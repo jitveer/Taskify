@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
+import customSwal, { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
 import { taskApi } from "../../services/api";
 import { X, Calendar, FileText } from "lucide-react";
 
@@ -9,11 +9,20 @@ function MyTaskTable({ color }) {
     const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const searchFilter = queryParams.get("search") || "";
+    const statusParam = queryParams.get("status") || "All";
 
     const [taskList, setTaskList] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState("All");
+    const [statusFilter, setStatusFilter] = useState(statusParam);
     const [selectedTask, setSelectedTask] = useState(null);
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const currentStatus = queryParams.get("status");
+        if (currentStatus) {
+            setStatusFilter(currentStatus);
+        }
+    }, [location.search]);
 
     const fetchMyTasks = async () => {
         try {
@@ -29,14 +38,24 @@ function MyTaskTable({ color }) {
                     completedAt: t.completedAt
                 }));
                 setTaskList(normalizedTasks);
+
+                // If arriving from notification with searchFilter (task title), auto open task details and set Pending tab if applicable
+                const searchQ = new URLSearchParams(window.location.search).get("search");
+                if (searchQ) {
+                    const matched = normalizedTasks.find(t => t.title.toLowerCase().trim() === searchQ.toLowerCase().trim());
+                    if (matched) {
+                        setSelectedTask(matched);
+                        // If specific status param wasn't specified, switch to matched task's status tab
+                        const explicitStatus = new URLSearchParams(window.location.search).get("status");
+                        if (!explicitStatus && matched.status) {
+                            setStatusFilter(matched.status);
+                        }
+                    }
+                }
             }
         } catch (error) {
             console.error("Fetch My Tasks Error:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: error.message || "Failed to load tasks."
-            });
+            showError(error.message || "Failed to load tasks.", "Error");
         } finally {
             setLoading(false);
         }
@@ -71,11 +90,7 @@ function MyTaskTable({ color }) {
 
         // Do not allow status changes if Completed
         if (taskToUpdate.status === "Completed") {
-            Swal.fire({
-                icon: "error",
-                title: "Completed Task",
-                text: "Completed tasks cannot be changed."
-            });
+            showError("Completed tasks cannot be changed.", "Completed Task");
             return;
         }
 
@@ -102,68 +117,70 @@ function MyTaskTable({ color }) {
 
         const availableOptions = transitionRules[taskToUpdate.status] || [];
 
-        Swal.fire({
+        const btnColor = color === "purple" ? "#9333ea" : color === "blue" ? "#2563eb" : "#10b981";
+
+        customSwal.fire({
             title: "Update Task Status",
             html: `
-                <div style="text-align: left;">
-                    <label style="display: block; font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 6px; tracking-wide">Select Status</label>
-                    <select id="swal-status" class="swal2-input" style="width: 100%; height: 45px; margin: 0 0 16px 0; box-sizing: border-box; font-size: 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        ${availableOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join("")}
-                    </select>
+                <div class="text-left mt-3">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Select New Status</label>
+                    <div class="relative mb-4">
+                        <select id="swal-status" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition appearance-none cursor-pointer">
+                            ${availableOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join("")}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                     
-                    <label style="display: block; font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 6px; tracking-wide">Comment / Notes</label>
-                    <textarea id="swal-comment" class="swal2-textarea" style="width: 100%; height: 80px; margin: 0; box-sizing: border-box; font-size: 14px; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px;" placeholder="Add status comment or update notes...">${taskToUpdate.comment || ""}</textarea>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Comment / Notes</label>
+                    <textarea id="swal-comment" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 h-24 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none" placeholder="Add status comment or update notes...">${taskToUpdate.comment || ""}</textarea>
                 </div>
             `,
             showCancelButton: true,
-            confirmButtonText: "Select",
-            confirmButtonColor: color === "purple" ? "#9333ea" : color === "blue" ? "#2563eb" : "#10b981",
+            confirmButtonText: "Update Status",
             cancelButtonText: "Cancel",
+            customClass: {
+                popup: 'custom-swal-popup',
+                title: 'custom-swal-title',
+                htmlContainer: 'custom-swal-html',
+                confirmButton: 'custom-swal-confirm',
+                cancelButton: 'custom-swal-cancel',
+                actions: 'custom-swal-actions'
+            },
             preConfirm: () => {
-                const status = document.getElementById("swal-status").value;
-                const comment = document.getElementById("swal-comment").value;
+                const status = document.getElementById("swal-status")?.value;
+                const comment = document.getElementById("swal-comment")?.value;
                 return { status, comment };
             }
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed && result.value) {
                 const { status: selectedStatus, comment: enteredComment } = result.value;
 
-                Swal.fire({
+                const confirmResult = await showConfirm({
                     title: "Confirm Status Change",
                     text: `Are you sure you want to change the status of this task to "${selectedStatus}"?`,
-                    icon: "warning",
-                    showCancelButton: true,
                     confirmButtonText: "Yes, Update",
                     cancelButtonText: "No, Cancel",
-                    confirmButtonColor: color === "purple" ? "#9333ea" : color === "blue" ? "#2563eb" : "#10b981",
-                }).then(async (confirmResult) => {
-                    if (confirmResult.isConfirmed) {
-                        try {
-                            // Target status patch via assignmentId rather than task ID
-                            await taskApi.updateAssignmentStatus(
-                                taskToUpdate.assignmentId,
-                                selectedStatus,
-                                enteredComment
-                            );
-
-                            Swal.fire({
-                                icon: "success",
-                                title: "Status Updated",
-                                text: `Task status updated to ${selectedStatus}`,
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                            fetchMyTasks();
-                        } catch (error) {
-                            console.error("Update Task Status Error:", error);
-                            Swal.fire({
-                                icon: "error",
-                                title: "Update Failed",
-                                text: error.message || "Failed to update status transition."
-                            });
-                        }
-                    }
+                    icon: "question"
                 });
+
+                if (confirmResult.isConfirmed) {
+                    try {
+                        // Target status patch via assignmentId rather than task ID
+                        await taskApi.updateAssignmentStatus(
+                            taskToUpdate.assignmentId,
+                            selectedStatus,
+                            enteredComment
+                        );
+
+                        await showSuccess(`Task status updated to "${selectedStatus}"`, "Status Updated");
+                        fetchMyTasks();
+                    } catch (error) {
+                        console.error("Update Task Status Error:", error);
+                        showError(error.message || "Failed to update status transition.", "Update Failed");
+                    }
+                }
             }
         });
     };
@@ -181,32 +198,10 @@ function MyTaskTable({ color }) {
 
     return (
         <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-100">
 
-                {/* Header Section */}
-                {/* <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    {searchFilter && (
-                        <div>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${color === "purple"
-                                ? "bg-purple-50 text-purple-700 border-purple-100"
-                                : color === "blue"
-                                    ? "bg-blue-50 text-blue-700 border-blue-100"
-                                    : "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                }`}>
-                                Filtered by notification: "{searchFilter}"
-                                <button
-                                    onClick={() => navigate(location.pathname)}
-                                    className="hover:scale-110 ml-1.5 font-bold"
-                                >
-                                    ✕
-                                </button>
-                            </span>
-                        </div>
-                    )}
-                </div> */}
-
-                {/* Filter Tabs */}
-                <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex overflow-x-auto gap-2 pb-3 md:pb-4 max-w-full scrollbar-none">
+                {/* Filter Tabs - Sticky below navbar */}
+                <div className="sticky top-[73px] z-30 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 rounded-t-3xl flex overflow-x-auto gap-2 pb-3 md:pb-4 max-w-full scrollbar-none shadow-xs">
                     <style>{`
                         .scrollbar-none::-webkit-scrollbar {
                             display: none;
@@ -334,7 +329,7 @@ function MyTaskTable({ color }) {
                                     <p className="text-xs text-slate-500 mt-1.5 font-medium">Due: {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                 </div>
 
-                                <div className="mt-3 flex justify-between items-center border-t border-slate-100 pt-4">
+                                <div className="mt-3 flex justify-between items-center border-t border-slate-100">
                                     <span className="text-xs text-slate-500 font-medium">Status</span>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(task.status)}`}>
