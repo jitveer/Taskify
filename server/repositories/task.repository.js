@@ -10,7 +10,7 @@ class TaskRepository {
     }
 
     async find(filter) {
-        return await Task.find(filter).populate("assignedBy", "name email role department");
+        return await Task.find(filter).sort({ updatedAt: -1, createdAt: -1 }).populate("assignedBy", "name email role department");
     }
 
     async deleteById(taskId) {

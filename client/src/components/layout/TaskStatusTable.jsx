@@ -49,10 +49,16 @@ function TaskStatusTable({ color, apiPrefix }) {
 
 
 
-    // URL se search query read karna aur matched task ka details modal auto-open karna
+    // URL se filter ya search query read karna
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
+        const filterParam = queryParams.get("filter");
         const searchParam = queryParams.get("search");
+
+        if (filterParam) {
+            setFilterType(filterParam);
+        }
+
         if (searchParam) {
             setSearchQuery(searchParam);
 
@@ -122,16 +128,36 @@ function TaskStatusTable({ color, apiPrefix }) {
 
     const activeColor = colorClasses[color] || colorClasses.emerald;
 
-    // filter buttons
-    const filteredTasks = tasks.filter((task) => {
-        const matchesSearch = (task.title || "").toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter =
-            filterType === "All" ||
-            (filterType === "Group Task" && task.taskType === "group_task") ||
-            (filterType === "Individual Task" && task.taskType === "individual");
+    // filter buttons & sorting (latest created / updated first)
+    const filteredTasks = tasks
+        .filter((task) => {
+            const matchesSearch = (task.title || "").toLowerCase().includes(searchQuery.toLowerCase());
 
-        return matchesSearch && matchesFilter;
-    });
+            // Check task status across assignments
+            const hasPending = task.assignments?.some(a => (a.status || "").toLowerCase() === "pending") || (task.status || "").toLowerCase() === "pending";
+            const hasInProgress = task.assignments?.some(a => (a.status || "").toLowerCase() === "in progress") || (task.status || "").toLowerCase() === "in progress";
+            const hasCompleted = task.assignments?.some(a => (a.status || "").toLowerCase() === "completed") || (task.status || "").toLowerCase() === "completed";
+
+            let matchesFilter = true;
+            if (filterType === "Group Task") {
+                matchesFilter = task.taskType === "group_task";
+            } else if (filterType === "Individual Task") {
+                matchesFilter = task.taskType === "individual";
+            } else if (filterType === "Pending") {
+                matchesFilter = hasPending;
+            } else if (filterType === "In Progress") {
+                matchesFilter = hasInProgress;
+            } else if (filterType === "Completed") {
+                matchesFilter = hasCompleted;
+            }
+
+            return matchesSearch && matchesFilter;
+        })
+        .sort((a, b) => {
+            const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+            const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+            return timeB - timeA; // Descending: latest first
+        });
 
     return (
         <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
@@ -171,18 +197,21 @@ function TaskStatusTable({ color, apiPrefix }) {
                             />
                         </div>
 
-                        <div className="relative w-[35%] sm:w-48">
+                        <div className="relative w-[40%] sm:w-52">
                             <span className="absolute inset-y-0 left-0 flex items-center pl-2 sm:pl-3 pointer-events-none text-slate-400">
                                 <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
                             <select
                                 value={filterType}
                                 onChange={(e) => setFilterType(e.target.value)}
-                                className={`w-full pl-7 sm:pl-9 pr-6 sm:pr-8 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer truncate`}
+                                className={`w-full pl-7 sm:pl-9 pr-6 sm:pr-8 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer truncate font-medium text-slate-700`}
                             >
                                 <option value="All">All Tasks</option>
-                                <option value="Group Task">Group</option>
-                                <option value="Individual Task">Individual</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Group Task">Group Tasks</option>
+                                <option value="Individual Task">Individual Tasks</option>
                             </select>
                             <span className="absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3 pointer-events-none text-slate-400">
                                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

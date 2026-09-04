@@ -97,7 +97,10 @@ function SuperAdminDashboard() {
                         </div>
 
                         {/* Card 3: Global Pending */}
-                        <div className="bg-orange-500 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-orange-100 border border-orange-600 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300">
+                        <div
+                            onClick={() => navigate('/task-status?filter=Pending')}
+                            className="cursor-pointer bg-orange-500 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-orange-100 border border-orange-600 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300"
+                        >
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-orange-100 text-[10px] lg:text-xs font-bold uppercase tracking-wider">Total Pending</h3>
                                 <Clock className="text-orange-200 w-5 h-5 group-hover:rotate-12 transition-transform" />
@@ -109,7 +112,10 @@ function SuperAdminDashboard() {
                         </div>
 
                         {/* Card 4: Global Completed */}
-                        <div className="bg-emerald-600 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-emerald-100 border border-emerald-700 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300">
+                        <div
+                            onClick={() => navigate('/task-status?filter=Completed')}
+                            className="cursor-pointer bg-emerald-600 text-white p-4 lg:p-6 rounded-2xl shadow-lg shadow-emerald-100 border border-emerald-700 flex flex-col justify-between h-full group hover:scale-[1.02] transition-transform duration-300"
+                        >
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-emerald-100 text-[10px] lg:text-xs font-bold uppercase tracking-wider">Completed</h3>
                                 <CheckCircle2 className="text-emerald-200 w-5 h-5 group-hover:rotate-12 transition-transform" />
