@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 import {
@@ -21,6 +21,18 @@ function EmployeeLogin() {
     } = useForm();
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        try {
+            const user = JSON.parse(localStorage.getItem("user") || "null");
+            const token = localStorage.getItem("token");
+            if (user && token && user.role === "employee") {
+                navigate("/employee-dashboard", { replace: true });
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, [navigate]);
 
 
     const onSubmit = async (data) => {

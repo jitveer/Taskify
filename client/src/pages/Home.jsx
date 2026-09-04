@@ -1,7 +1,28 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ShieldAlert, ShieldCheck, UserCircle, ArrowRight } from "lucide-react";
 
 function Home() {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        try {
+            const user = JSON.parse(localStorage.getItem("user") || "null");
+            const token = localStorage.getItem("token");
+
+            if (user && token) {
+                if (user.role === "superadmin") {
+                    navigate("/super-admin-dashboard", { replace: true });
+                } else if (user.role === "admin") {
+                    navigate("/admin-dashboard", { replace: true });
+                } else if (user.role === "employee") {
+                    navigate("/employee-dashboard", { replace: true });
+                }
+            }
+        } catch (error) {
+            console.error("Error parsing user session:", error);
+        }
+    }, [navigate]);
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4 md:px-8 py-12 font-sans relative overflow-hidden">
             

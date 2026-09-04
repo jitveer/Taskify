@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 import {
@@ -22,6 +22,18 @@ function SuperAdminLogin() {
     } = useForm();
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        try {
+            const user = JSON.parse(localStorage.getItem("user") || "null");
+            const token = localStorage.getItem("token");
+            if (user && token && user.role === "superadmin") {
+                navigate("/super-admin-dashboard", { replace: true });
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, [navigate]);
 
     // 3. Define what happens when the form is valid
     const onSubmit = async (data) => {
