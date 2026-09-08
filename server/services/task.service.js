@@ -210,12 +210,14 @@ class TaskService {
                 assignedAt: a.assignedAt,
                 acknowledgedAt: a.acknowledgedAt,
                 startedAt: a.startedAt,
-                completedAt: a.completedAt
+                completedAt: a.completedAt,
+                progressUpdates: a.progressUpdates || []
             }));
 
             taskObj.assignedTo = assignments.map(a => a.assigneeId).filter(Boolean);
             taskObj.status = assignments.length > 0 ? assignments[0].status : "Pending";
             taskObj.comment = assignments.length > 0 ? assignments[0].comment : "";
+            taskObj.progressUpdates = assignments.length > 0 ? (assignments[0].progressUpdates || []) : [];
 
             return taskObj;
         });
@@ -233,6 +235,7 @@ class TaskService {
             t.comment = assignment.comment;
             t.completedAt = assignment.completedAt;
             t.assignmentId = assignment._id;
+            t.progressUpdates = assignment.progressUpdates || [];
             return t;
         }).filter(Boolean);
 

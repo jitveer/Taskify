@@ -1,4 +1,4 @@
-import { Search, Eye, X, Filter, Calendar } from "lucide-react";
+import { Search, Eye, X, Filter, Calendar, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { taskApi } from "../../services/api";
@@ -422,69 +422,6 @@ function TaskStatusTable({ color, apiPrefix }) {
                             </div>
 
                             <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned Employees</span>
-                                <div className="flex flex-col gap-2 mt-2">
-                                    {selectedTask.assignments && selectedTask.assignments.length > 0 ? (
-                                        selectedTask.assignments.map((assignment, aIdx) => (
-                                            <div key={aIdx} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`w-6 h-6 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-[10px]`}>
-                                                            {assignment.assignee?.name?.charAt(0) || "U"}
-                                                        </div>
-                                                        <span className="text-xs font-bold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
-                                                    </div>
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
-                                                        {assignment.status}
-                                                    </span>
-                                                </div>
-                                                {assignment.comment && (
-                                                    <p className="text-[11px] text-slate-500 italic bg-amber-50/40 p-2 rounded-xl border border-amber-100/40 mt-1 pl-8">
-                                                        "Latest: {assignment.comment}"
-                                                    </p>
-                                                )}
-                                                {assignment.history && assignment.history.length > 0 && (
-                                                    <details className="mt-1 pl-8 group">
-                                                        <summary className="text-[10px] text-blue-600 font-bold uppercase tracking-wider cursor-pointer hover:underline list-none flex items-center gap-1 select-none">
-                                                            <span>View Activity Logs ({assignment.history.length})</span>
-                                                        </summary>
-                                                        <div className="mt-3 border-l-2 border-slate-100 pl-3.5 space-y-3.5">
-                                                            {assignment.history.map((log, lIdx) => (
-                                                                <div key={lIdx} className="relative">
-                                                                    <span className="absolute -left-[19.5px] top-1 w-2 h-2 rounded-full bg-slate-300 ring-4 ring-slate-50"></span>
-                                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                                                                            Status: {log.newValue}
-                                                                        </span>
-                                                                    </div>
-                                                                    {log.comment && (
-                                                                        <p className="text-xs text-slate-600 mt-1 bg-white p-2 rounded-xl border border-slate-100/60 leading-normal">
-                                                                            "{log.comment}"
-                                                                        </p>
-                                                                    )}
-                                                                    <span className="text-[9px] text-slate-400 font-medium block mt-1">
-                                                                        {new Date(log.createdAt).toLocaleString("en-GB", {
-                                                                            day: "2-digit",
-                                                                            month: "short",
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                            hour12: true
-                                                                        })}
-                                                                    </span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </details>
-                                                )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <span className="text-slate-400 text-xs italic">No assignments</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div>
                                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Description</span>
                                 <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100/50 mt-1 whitespace-pre-wrap">
                                     {selectedTask.description}
@@ -517,17 +454,84 @@ function TaskStatusTable({ color, apiPrefix }) {
                                 </div>
                             </div>
 
-                            {/* Progress bar in Modal */}
+                            {/* Assigned Employees & Work Reports moved to end */}
                             <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Progress</span>
-                                    <span className="text-xs font-bold text-slate-700">{selectedTask.progress}</span>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-2">
-                                    <div
-                                        className={`h-2 rounded-full ${selectedTask.progress === '100%' ? 'bg-green-500' : 'bg-amber-500'}`}
-                                        style={{ width: selectedTask.progress }}
-                                    ></div>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned Employees</span>
+                                <div className="flex flex-col gap-2 mt-2">
+                                    {selectedTask.assignments && selectedTask.assignments.length > 0 ? (
+                                        selectedTask.assignments.map((assignment, aIdx) => (
+                                            <div key={aIdx} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-6 h-6 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-[10px]`}>
+                                                            {assignment.assignee?.name?.charAt(0) || "U"}
+                                                        </div>
+                                                        <span className="text-xs font-bold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
+                                                    </div>
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                        {assignment.status}
+                                                    </span>
+                                                </div>
+                                                {assignment.comment && (
+                                                    <p className="text-[11px] text-slate-500 italic bg-amber-50/40 p-2 rounded-xl border border-amber-100/40 mt-1 pl-8">
+                                                        "Latest: {assignment.comment}"
+                                                    </p>
+                                                )}
+
+                                                {/* Progress Updates with Attachments */}
+                                                {assignment.progressUpdates && assignment.progressUpdates.length > 0 && (
+                                                    <div className="mt-2 pl-8 flex flex-col gap-2">
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                            Progress Reports ({assignment.progressUpdates.length}/18)
+                                                        </span>
+                                                        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+                                                            {assignment.progressUpdates.map((pLog, pIdx) => (
+                                                                <div key={pIdx} className="bg-white border border-slate-200/80 p-2.5 rounded-xl flex flex-col gap-1">
+                                                                    <div className="flex items-center justify-between text-[10px]">
+                                                                        <span className={`px-1.5 py-0.5 rounded font-bold ${getStatusColor(pLog.status)}`}>
+                                                                            {pLog.status}
+                                                                        </span>
+                                                                        <span className="text-slate-400">
+                                                                            {new Date(pLog.updatedAt).toLocaleString("en-GB", {
+                                                                                day: "2-digit",
+                                                                                month: "short",
+                                                                                hour: "2-digit",
+                                                                                minute: "2-digit",
+                                                                                hour12: true
+                                                                            })}
+                                                                        </span>
+                                                                    </div>
+                                                                    {pLog.comment && (
+                                                                        <p className="text-xs text-slate-700 font-medium leading-snug">
+                                                                            {pLog.comment}
+                                                                        </p>
+                                                                    )}
+                                                                    {pLog.attachment && pLog.attachment.fileUrl && (
+                                                                        <a
+                                                                            href={`${import.meta.env.VITE_BACKEND_URL}${pLog.attachment.fileUrl}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="mt-1 flex items-center gap-1.5 p-1.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-lg text-xs font-semibold text-emerald-700 group transition"
+                                                                        >
+                                                                            <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                                                            <span className="truncate flex-1 text-[11px]">{pLog.attachment.fileName || "View Attached File"}</span>
+                                                                            {pLog.attachment.fileSize && (
+                                                                                <span className="text-[9px] text-slate-400 font-normal">
+                                                                                    ({(pLog.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
+                                                                                </span>
+                                                                            )}
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span className="text-slate-400 text-xs italic">No assignments</span>
+                                    )}
                                 </div>
                             </div>
                         </div>

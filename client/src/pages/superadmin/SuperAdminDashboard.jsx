@@ -50,7 +50,6 @@ function SuperAdminDashboard() {
     };
 
 
-
     return (
         <div className="flex flex-col lg:flex-row bg-[#f8fafc] min-h-screen font-sans text-slate-800">
             {/* Sidebar */}

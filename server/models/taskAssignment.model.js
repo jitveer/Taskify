@@ -57,6 +57,30 @@ const taskAssignmentSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        progressUpdates: [
+            {
+                status: {
+                    type: String,
+                    required: true,
+                },
+                comment: {
+                    type: String,
+                    default: "",
+                },
+                attachment: {
+                    fileName: { type: String },
+                    fileUrl: { type: String },
+                    fileType: { type: String },
+                    fileSize: { type: Number },
+                },
+                updatedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
+
+
     },
     {
         timestamps: true,

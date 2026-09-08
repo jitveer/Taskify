@@ -50,8 +50,15 @@ export const taskApi = {
         return api.get("/api/employee/my-tasks");
     },
 
-    updateAssignmentStatus: async (assignmentId, status, comment) => {
-        return api.patch(`/api/employee/update-status/${assignmentId}`, { status, comment });
+    updateAssignmentStatus: async (assignmentId, data) => {
+        if (data instanceof FormData) {
+            return api.patch(`/api/employee/update-status/${assignmentId}`, data, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                }
+            });
+        }
+        return api.patch(`/api/employee/update-status/${assignmentId}`, data);
     },
 
     // Admin endpoints

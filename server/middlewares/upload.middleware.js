@@ -18,7 +18,13 @@ const storage = multer.diskStorage({
 
 // 2. File Filter , We can decide file type here
 const fileFilter = (req, file, cb) => {
-    cb(null, true);
+    const allowedExtensions = /jpeg|jpg|png|webp|pdf|doc|docx|xls|xlsx|csv|ppt|pptx|txt/;
+    const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
+    if (extname) {
+        return cb(null, true);
+    } else {
+        cb(new Error("Only images, PDFs, Word docs, Excel sheets, and Presentation files are allowed!"), false);
+    }
 };
 
 

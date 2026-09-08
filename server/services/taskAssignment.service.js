@@ -14,7 +14,11 @@ class TaskAssignmentService {
         return await taskAssignmentRepository.find({});
     }
 
-    async updateStatus(assignmentId, newStatus, actor, comment) {
+
+
+
+
+    async updateStatus(assignmentId, newStatus, actor, comment, attachment = null) {
         const assignment = await taskAssignmentRepository.findById(assignmentId);
         if (!assignment) {
             throw new Error("Task assignment not found");
@@ -29,8 +33,16 @@ class TaskAssignmentService {
         }
 
         const oldStatus = assignment.status;
-        if (oldStatus === newStatus) {
-            return assignment; // No changes needed
+        const progressCount = assignment.progressUpdates ? assignment.progressUpdates.length : 0;
+
+        // 18 updates limit validation for In Progress
+        if (newStatus === "In Progress" && progressCount >= 18) {
+            throw new Error("Maximum limit of 18 progress updates reached for this task.");
+        }
+
+        // Check if nothing changed (no status change, no comment, no attachment)
+        if (oldStatus === newStatus && !comment && !attachment) {
+            return assignment;
         }
 
         // Validate status value
@@ -40,12 +52,9 @@ class TaskAssignmentService {
         }
 
         // State transition rules validation
-        // Normal flow: Pending -> In Progress -> Completed
-        // Rejections: Pending / In Progress -> Rejected
-        // Normal status endpoint does not allow reopening a Completed task.
         const transitionRules = {
             "Pending": ["In Progress", "Rejected"],
-            "In Progress": ["Completed", "Rejected", "Pending"],
+            "In Progress": ["In Progress", "Completed", "Rejected", "Pending"],
             "Rejected": ["Pending", "In Progress"],
             "Completed": [], // Reopening is not allowed through the normal status endpoint
             "Overdue": ["In Progress", "Completed"]
@@ -56,8 +65,11 @@ class TaskAssignmentService {
         }
 
         // Set timestamps
-        const updateData = { status: newStatus, comment: comment || "" };
         const now = new Date();
+        const updateData = {
+            status: newStatus,
+            comment: comment || assignment.comment || ""
+        };
 
         if (newStatus === "In Progress") {
             if (!assignment.acknowledgedAt) {
@@ -70,6 +82,16 @@ class TaskAssignmentService {
             updateData.completedAt = now;
         }
 
+        // Progress entry push karna (har update ka record)
+        const progressEntry = {
+            status: newStatus,
+            comment: comment || "",
+            attachment: attachment || null,
+            updatedAt: now
+        };
+
+        updateData.$push = { progressUpdates: progressEntry };
+
         const updatedAssignment = await taskAssignmentRepository.updateById(assignmentId, updateData);
 
         // Record history log
@@ -81,33 +103,9 @@ class TaskAssignmentService {
             oldValue: oldStatus,
             newValue: newStatus,
             source: "WEB",
-            comment: comment || null
+            comment: comment || null,
+            metadata: attachment ? { attachment } : {}
         });
-
-        // Save database notification for in-app UI display
-        // try {
-        //     const Notification = require('../models/notification.model');
-        //     const assignerId = updatedAssignment.assignedBy?._id || updatedAssignment.assignedBy;
-        //     const assigneeName = updatedAssignment.assigneeId?.name || "Employee";
-        //     const taskTitle = updatedAssignment.taskId?.title || "Task";
-
-        //     if (assignerId) {
-        //         await Notification.create({
-        //             userId: assignerId,
-        //             title: "Task Status Updated 🔄",
-        //             description: `${assigneeName} updated task "${taskTitle}" to "${newStatus}"`,
-        //             type: "info",
-        //             taskTitle: taskTitle
-        //         });
-        //     }
-        // } catch (err) {
-        //     console.error("Failed to save database notification for status update:", err);
-        // }
-
-
-
-
-
 
 
         // Save database notification & emit via socket for in-app UI display

@@ -114,8 +114,19 @@ const updateTaskStatus = async (req, res) => {
             });
         }
 
-        // 2. Delegate update to TaskAssignmentService
-        const updatedAssignment = await taskAssignmentService.updateStatus(assignment._id, status, req.user, comment);
+        // File attachment handling (if uploaded via Multer)
+        let attachment = null;
+        if (req.file) {
+            attachment = {
+                fileName: req.file.originalname,
+                fileUrl: `/uploads/${req.file.filename}`,
+                fileType: req.file.mimetype,
+                fileSize: req.file.size
+            };
+        }
+        // 2. Delegate update to TaskAssignmentService (passing attachment)
+        const updatedAssignment = await taskAssignmentService.updateStatus(assignment._id, status, req.user, comment, attachment);
+
 
         // Map back to a task-like object to satisfy client response schema
         const taskObj = updatedAssignment.taskId ? updatedAssignment.taskId.toObject() : {};

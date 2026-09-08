@@ -101,6 +101,7 @@ function MyTaskTable({ color }) {
                 { label: "Rejected", value: "Rejected" }
             ],
             "In Progress": [
+                { label: "In Progress (Add Work/Progress Report)", value: "In Progress" },
                 { label: "Completed", value: "Completed" },
                 { label: "Rejected", value: "Rejected" },
                 { label: "Pending", value: "Pending" }
@@ -115,15 +116,23 @@ function MyTaskTable({ color }) {
             ]
         };
 
-        const availableOptions = transitionRules[taskToUpdate.status] || [];
+        const progressCount = taskToUpdate.progressUpdates?.length || 0;
+        const isLimitReached = progressCount >= 18;
 
+        const availableOptions = transitionRules[taskToUpdate.status] || [];
         const btnColor = color === "purple" ? "#9333ea" : color === "blue" ? "#2563eb" : "#10b981";
 
         customSwal.fire({
             title: "Update Task Status",
             html: `
                 <div class="text-left mt-3">
-                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Select New Status</label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Select New Status</label>
+                        <span class="text-[11px] font-bold ${progressCount >= 15 ? 'text-rose-500' : 'text-slate-400'}">
+                            Progress Updates: ${progressCount}/18
+                        </span>
+                    </div>
+
                     <div class="relative mb-4">
                         <select id="swal-status" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition appearance-none cursor-pointer">
                             ${availableOptions.map(opt => `<option value="${opt.value}">${opt.label}</option>`).join("")}
@@ -133,10 +142,39 @@ function MyTaskTable({ color }) {
                         </div>
                     </div>
                     
-                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Comment / Notes</label>
-                    <textarea id="swal-comment" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 h-24 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none" placeholder="Add status comment or update notes...">${taskToUpdate.comment || ""}</textarea>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Comment / Progress Notes</label>
+                    <textarea id="swal-comment" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 h-20 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none mb-3" placeholder="Add progress report or notes..."></textarea>
+
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Attach File / Report (Max 10MB)</label>
+                    <div class="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-3 text-center hover:bg-slate-100 transition cursor-pointer relative">
+                        <input type="file" id="swal-file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt" />
+                        <div class="flex items-center justify-center gap-2 text-slate-600 text-xs font-semibold" id="swal-file-label">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                            <span>Choose a file (Images, PDF, Excel, Docs, PPT)</span>
+                        </div>
+                    </div>
+                    <div id="swal-file-name" class="text-[11px] text-emerald-600 font-bold mt-1.5 truncate"></div>
                 </div>
             `,
+            didOpen: () => {
+                const fileInput = document.getElementById("swal-file");
+                const fileNameDiv = document.getElementById("swal-file-name");
+                if (fileInput) {
+                    fileInput.addEventListener("change", (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            if (file.size > 10 * 1024 * 1024) {
+                                customSwal.showValidationMessage("File size exceeds 10MB limit. Please select a smaller file.");
+                                fileInput.value = "";
+                                fileNameDiv.textContent = "";
+                            } else {
+                                customSwal.resetValidationMessage();
+                                fileNameDiv.textContent = `Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+                            }
+                        }
+                    });
+                }
+            },
             showCancelButton: true,
             confirmButtonText: "Update Status",
             cancelButtonText: "Cancel",
@@ -151,11 +189,24 @@ function MyTaskTable({ color }) {
             preConfirm: () => {
                 const status = document.getElementById("swal-status")?.value;
                 const comment = document.getElementById("swal-comment")?.value;
-                return { status, comment };
+                const fileInput = document.getElementById("swal-file");
+                const file = fileInput?.files?.[0] || null;
+
+                if (status === "In Progress" && isLimitReached) {
+                    customSwal.showValidationMessage("Maximum limit of 18 progress updates has been reached for this task.");
+                    return false;
+                }
+
+                if (file && file.size > 10 * 1024 * 1024) {
+                    customSwal.showValidationMessage("File size cannot exceed 10MB.");
+                    return false;
+                }
+
+                return { status, comment, file };
             }
         }).then(async (result) => {
             if (result.isConfirmed && result.value) {
-                const { status: selectedStatus, comment: enteredComment } = result.value;
+                const { status: selectedStatus, comment: enteredComment, file: selectedFile } = result.value;
 
                 const confirmResult = await showConfirm({
                     title: "Confirm Status Change",
@@ -167,11 +218,14 @@ function MyTaskTable({ color }) {
 
                 if (confirmResult.isConfirmed) {
                     try {
-                        // Target status patch via assignmentId rather than task ID
+                        const formData = new FormData();
+                        formData.append("status", selectedStatus);
+                        if (enteredComment) formData.append("comment", enteredComment);
+                        if (selectedFile) formData.append("attachment", selectedFile);
+
                         await taskApi.updateAssignmentStatus(
                             taskToUpdate.assignmentId,
-                            selectedStatus,
-                            enteredComment
+                            formData
                         );
 
                         await showSuccess(`Task status updated to "${selectedStatus}"`, "Status Updated");
@@ -439,6 +493,58 @@ function MyTaskTable({ color }) {
                                     <p className="text-xs text-slate-500 italic bg-amber-50/50 p-3 rounded-xl border border-amber-100/50 mt-1">
                                         "{selectedTask.comment}"
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Progress Updates Timeline (Work Logs) */}
+                            {selectedTask.progressUpdates && selectedTask.progressUpdates.length > 0 && (
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                            Work Progress History ({selectedTask.progressUpdates.length}/18)
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-2.5 max-h-56 overflow-y-auto pr-1">
+                                        {selectedTask.progressUpdates.map((update, uIdx) => (
+                                            <div key={uIdx} className="bg-slate-50 border border-slate-200/70 p-3 rounded-2xl flex flex-col gap-1.5">
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getStatusColor(update.status)}`}>
+                                                        {update.status}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                        {new Date(update.updatedAt).toLocaleString("en-GB", {
+                                                            day: "2-digit",
+                                                            month: "short",
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                            hour12: true
+                                                        })}
+                                                    </span>
+                                                </div>
+                                                {update.comment && (
+                                                    <p className="text-xs text-slate-700 leading-snug font-medium">
+                                                        {update.comment}
+                                                    </p>
+                                                )}
+                                                {update.attachment && update.attachment.fileUrl && (
+                                                    <a
+                                                        href={`${import.meta.env.VITE_BACKEND_URL}${update.attachment.fileUrl}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="mt-1 flex items-center gap-2 p-2 bg-white hover:bg-emerald-50/50 border border-slate-200 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                    >
+                                                        <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition" />
+                                                        <span className="truncate flex-1">{update.attachment.fileName || "View Attachment"}</span>
+                                                        {update.attachment.fileSize && (
+                                                            <span className="text-[10px] text-slate-400 font-normal">
+                                                                ({(update.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
+                                                            </span>
+                                                        )}
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
