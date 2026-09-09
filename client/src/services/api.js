@@ -93,3 +93,28 @@ export const taskApi = {
         return api.get(`${apiPrefix}/allUser`);
     }
 };
+
+export const dailyReportApi = {
+    // Admin: Submit a new daily work report with attachments
+    submitReport: async (reportFormData) => {
+        return api.post("/api/reports/submit", reportFormData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            }
+        });
+    },
+
+    // Admin: Get history of my submitted reports
+    getMyReports: async () => {
+        return api.get("/api/reports/my-reports");
+    },
+
+    // Super Admin: Get all daily reports with optional query filters
+    getAllReports: async (params = {}) => {
+        const cleanParams = Object.fromEntries(
+            Object.entries(params).filter(([_, v]) => v != null && v !== "" && v !== "All")
+        );
+        const queryString = new URLSearchParams(cleanParams).toString();
+        return api.get(`/api/reports/all${queryString ? `?${queryString}` : ''}`);
+    }
+};

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import customSwal, { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
 import { taskApi } from "../../services/api";
-import { X, Calendar, FileText } from "lucide-react";
+import { X, Calendar, FileText, ClipboardList, FileCheck, Clock, Paperclip } from "lucide-react";
 
 function MyTaskTable({ color }) {
     const location = useLocation();
@@ -15,6 +15,7 @@ function MyTaskTable({ color }) {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState(statusParam);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [activeModalTab, setActiveModalTab] = useState("overview"); // "overview" | "reports"
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
@@ -412,104 +413,193 @@ function MyTaskTable({ color }) {
 
             {/* Task View Modal */}
             {selectedTask && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
-                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] md:max-h-[85vh]">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300 animate-fadeIn">
+                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[85vh] animate-slideUp">
                         {/* Modal Header */}
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 border-t-4 border-t-emerald-600">
-                            <div className="flex items-center gap-3">
-                                <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono text-xs border border-slate-200/50 font-bold">
-                                    Task Details
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
+                            <div className="flex items-center gap-2">
+                                <span className="px-2.5 py-1 rounded-lg bg-white text-slate-700 font-mono text-xs border border-slate-200 shadow-2xs font-bold">
+                                    My Task Details
                                 </span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(selectedTask.status)}`}>
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getStatusColor(selectedTask.status)}`}>
                                     {selectedTask.status}
                                 </span>
                             </div>
                             <button
                                 onClick={() => setSelectedTask(null)}
-                                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition flex justify-center items-center cursor-pointer"
+                                className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/60 transition flex justify-center items-center cursor-pointer shadow-2xs"
                             >
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        {/* Modal Content */}
-                        <div className="p-6 flex flex-col gap-5 overflow-y-auto">
-                            <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Title</span>
-                                <h3 className="text-lg font-bold text-slate-800 leading-snug">{selectedTask.title}</h3>
+                        {/* Segmented Navigation Tabs */}
+                        <div className="px-5 pt-3 pb-1 border-b border-slate-100 bg-white">
+                            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                <button
+                                    onClick={() => setActiveModalTab("overview")}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        activeModalTab === "overview"
+                                            ? "bg-white text-slate-800 shadow-sm"
+                                            : "text-slate-500 hover:text-slate-700"
+                                    }`}
+                                >
+                                    <ClipboardList className="w-3.5 h-3.5" />
+                                    <span>Task Overview</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveModalTab("reports")}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        activeModalTab === "reports"
+                                            ? "bg-white text-slate-800 shadow-sm"
+                                            : "text-slate-500 hover:text-slate-700"
+                                    }`}
+                                >
+                                    <FileCheck className="w-3.5 h-3.5" />
+                                    <span>My Work Reports</span>
+                                    {selectedTask.progressUpdates && (
+                                        <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700 font-extrabold">
+                                            {selectedTask.progressUpdates.length}
+                                        </span>
+                                    )}
+                                </button>
                             </div>
+                        </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Priority</span>
-                                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getPriorityColor(selectedTask.priority)}`}>
-                                        {selectedTask.priority}
+                        {/* Modal Body: Tab 1 - Overview */}
+                        {activeModalTab === "overview" && (
+                            <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
+                                <div className="flex flex-wrap gap-2">
+                                    <span className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider ${getPriorityColor(selectedTask.priority)}`}>
+                                        Priority: {selectedTask.priority}
+                                    </span>
+                                    {selectedTask.department && (
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                                            Dept: {selectedTask.department}
+                                        </span>
+                                    )}
+                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 capitalize">
+                                        Type: {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : 'Individual'}
                                     </span>
                                 </div>
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Type</span>
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 capitalize">
-                                        {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : 'N/A'}
-                                    </span>
-                                </div>
-                            </div>
 
-                            {selectedTask.department && (
                                 <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Department</span>
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase">
-                                        {selectedTask.department}
-                                    </span>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Title</span>
+                                    <h3 className="text-base font-bold text-slate-800 leading-snug">{selectedTask.title}</h3>
                                 </div>
-                            )}
 
-                            <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned By</span>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex justify-center items-center font-bold text-xs">
-                                        {selectedTask.assignedBy?.name?.charAt(0) || "A"}
+                                {/* Assigned By Info */}
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned By</span>
+                                    <div className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
+                                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex justify-center items-center font-bold text-xs shadow-2xs">
+                                            {selectedTask.assignedBy?.name?.charAt(0) || "A"}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-800">{selectedTask.assignedBy?.name || "Admin"}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">
+                                                {selectedTask.assignedBy
+                                                    ? `${selectedTask.assignedBy.department?.toUpperCase() || ""} | ${selectedTask.assignedBy.role === 'superadmin' ? 'Super Admin' : selectedTask.assignedBy.role === 'admin' ? 'Admin' : 'Manager'}`
+                                                    : "Task Creator"}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-semibold text-slate-700">{selectedTask.assignedBy?.name || "Admin"}</p>
-                                        <p className="text-[10px] text-slate-400">
-                                            {selectedTask.assignedBy
-                                                ? `${selectedTask.assignedBy.department?.toUpperCase() || ""} | ${selectedTask.assignedBy.role === 'superadmin' ? 'Super Admin' : selectedTask.assignedBy.role === 'admin' ? 'Admin' : 'Employee'}`
-                                                : ""}
-                                        </p>
-                                    </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Description</span>
-                                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100 mt-1 whitespace-pre-wrap">
-                                    {selectedTask.description || "No description provided."}
-                                </p>
-                            </div>
-
-                            {selectedTask.comment && (
                                 <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Last Comment / Status Updates</span>
-                                    <p className="text-xs text-slate-500 italic bg-amber-50/50 p-3 rounded-xl border border-amber-100/50 mt-1">
-                                        "{selectedTask.comment}"
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Description</span>
+                                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100 whitespace-pre-wrap">
+                                        {selectedTask.description || "No description provided."}
                                     </p>
                                 </div>
-                            )}
 
-                            {/* Progress Updates Timeline (Work Logs) */}
-                            {selectedTask.progressUpdates && selectedTask.progressUpdates.length > 0 && (
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                                            Work Progress History ({selectedTask.progressUpdates.length}/18)
+                                {/* Dates Grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Assign Date</span>
+                                        <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                            {new Date(selectedTask.createdAt).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric"
+                                            })}
                                         </span>
                                     </div>
-                                    <div className="flex flex-col gap-2.5 max-h-56 overflow-y-auto pr-1">
+                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date</span>
+                                        <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                            {new Date(selectedTask.dueDate).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric"
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Task Attachments by Assigner */}
+                                {selectedTask.attachments && selectedTask.attachments.length > 0 && (
+                                    <div>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
+                                            Initial Task Files ({selectedTask.attachments.length})
+                                        </span>
+                                        <div className="flex flex-col gap-1.5">
+                                            {selectedTask.attachments.map((file, fIdx) => (
+                                                <a
+                                                    key={fIdx}
+                                                    href={`${import.meta.env.VITE_BACKEND_URL}${file.fileUrl}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                >
+                                                    <Paperclip className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition shrink-0" />
+                                                    <span className="truncate flex-1 text-[11px] font-bold">{file.fileName || "View Attached File"}</span>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Modal Body: Tab 2 - My Work Reports */}
+                        {activeModalTab === "reports" && (
+                            <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
+                                {/* Reports Status Header */}
+                                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-800">My Progress Updates</p>
+                                        <p className="text-[10px] text-slate-400">Daily reports & attachments submitted</p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(selectedTask.status)}`}>
+                                            {selectedTask.status}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">
+                                            {selectedTask.progressUpdates?.length || 0}/18 Used
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {selectedTask.comment && (
+                                    <div className="bg-amber-50/50 p-2.5 rounded-xl border border-amber-200/60">
+                                        <span className="text-[9px] font-bold text-amber-700 uppercase tracking-wider block mb-0.5">Latest Note</span>
+                                        <p className="text-xs text-slate-700 font-medium italic">
+                                            "{selectedTask.comment}"
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Progress Reports List */}
+                                {selectedTask.progressUpdates && selectedTask.progressUpdates.length > 0 ? (
+                                    <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto pr-1">
                                         {selectedTask.progressUpdates.map((update, uIdx) => (
-                                            <div key={uIdx} className="bg-slate-50 border border-slate-200/70 p-3 rounded-2xl flex flex-col gap-1.5">
+                                            <div key={uIdx} className="bg-white border border-slate-200/90 p-3 rounded-2xl flex flex-col gap-1.5 shadow-2xs">
                                                 <div className="flex items-center justify-between">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getStatusColor(update.status)}`}>
-                                                        {update.status}
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                        Report #{selectedTask.progressUpdates.length - uIdx}
                                                     </span>
                                                     <span className="text-[10px] text-slate-400 font-medium">
                                                         {new Date(update.updatedAt).toLocaleString("en-GB", {
@@ -521,22 +611,24 @@ function MyTaskTable({ color }) {
                                                         })}
                                                     </span>
                                                 </div>
+
                                                 {update.comment && (
-                                                    <p className="text-xs text-slate-700 leading-snug font-medium">
+                                                    <p className="text-xs text-slate-700 font-medium leading-relaxed bg-slate-50/60 p-2.5 rounded-xl border border-slate-100">
                                                         {update.comment}
                                                     </p>
                                                 )}
+
                                                 {update.attachment && update.attachment.fileUrl && (
                                                     <a
                                                         href={`${import.meta.env.VITE_BACKEND_URL}${update.attachment.fileUrl}`}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="mt-1 flex items-center gap-2 p-2 bg-white hover:bg-emerald-50/50 border border-slate-200 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                        className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group"
                                                     >
-                                                        <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition" />
-                                                        <span className="truncate flex-1">{update.attachment.fileName || "View Attachment"}</span>
+                                                        <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition shrink-0" />
+                                                        <span className="truncate flex-1 text-[11px] font-bold">{update.attachment.fileName || "View Attachment"}</span>
                                                         {update.attachment.fileSize && (
-                                                            <span className="text-[10px] text-slate-400 font-normal">
+                                                            <span className="text-[10px] text-slate-400 font-normal shrink-0">
                                                                 ({(update.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
                                                             </span>
                                                         )}
@@ -545,62 +637,22 @@ function MyTaskTable({ color }) {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            )}
-
-                            {/* Dates Grid */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Assign Date</span>
-                                    <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                        {new Date(selectedTask.createdAt).toLocaleDateString("en-GB", {
-                                            day: "2-digit",
-                                            month: "short",
-                                            year: "numeric"
-                                        })}
-                                    </span>
-                                </div>
-                                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date</span>
-                                    <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                        {new Date(selectedTask.dueDate).toLocaleDateString("en-GB", {
-                                            day: "2-digit",
-                                            month: "short",
-                                            year: "numeric"
-                                        })}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Attachments */}
-                            {selectedTask.attachments && selectedTask.attachments.length > 0 && (
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Attachments</span>
-                                    <div className="flex flex-col gap-1.5 mt-1">
-                                        {selectedTask.attachments.map((file, fIdx) => (
-                                            <a
-                                                key={fIdx}
-                                                href={`${import.meta.env.VITE_BACKEND_URL}${file.fileUrl}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl transition text-xs font-bold text-slate-700"
-                                            >
-                                                <FileText className="w-4 h-4 text-emerald-600" />
-                                                <span className="truncate flex-1">{file.fileName || "View Attachment"}</span>
-                                            </a>
-                                        ))}
+                                ) : (
+                                    <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-2">
+                                        <Clock className="w-6 h-6 text-slate-300" />
+                                        <p className="text-xs text-slate-400 font-medium">
+                                            You haven't submitted any progress reports yet.
+                                        </p>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Modal Footer */}
-                        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+                        <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex justify-end">
                             <button
                                 onClick={() => setSelectedTask(null)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 transition shadow-sm cursor-pointer"
+                                className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 transition shadow-2xs cursor-pointer"
                             >
                                 Close
                             </button>

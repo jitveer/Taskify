@@ -1,4 +1,4 @@
-import { Search, Eye, X, Filter, Calendar, FileText } from "lucide-react";
+import { Search, Eye, X, Filter, Calendar, FileText, ChevronDown, ChevronUp, User, FileCheck, ClipboardList, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { taskApi } from "../../services/api";
@@ -10,6 +10,9 @@ function TaskStatusTable({ color, apiPrefix }) {
     const [selectedTask, setSelectedTask] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeModalTab, setActiveModalTab] = useState("overview"); // "overview" | "reports"
+    const [selectedAssigneeIndex, setSelectedAssigneeIndex] = useState(0);
+
 
     // fetch employee and admin from task table using centralized services
     useEffect(() => {
@@ -383,164 +386,263 @@ function TaskStatusTable({ color, apiPrefix }) {
             {/* Task View Modal */}
             {selectedTask && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300 animate-fadeIn">
-                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-xl overflow-hidden border border-slate-100 flex flex-col animate-slideUp">
+                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[85vh] animate-slideUp">
                         {/* Modal Header */}
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <div className="flex items-center gap-3">
-                                <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono text-xs border border-slate-200/50 font-bold">
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
+                            <div className="flex items-center gap-2">
+                                <span className="px-2.5 py-1 rounded-lg bg-white text-slate-700 font-mono text-xs border border-slate-200 shadow-2xs font-bold">
                                     Task Details
+                                </span>
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getStatusColor(selectedTask.status)}`}>
+                                    {selectedTask.status}
                                 </span>
                             </div>
                             <button
                                 onClick={() => setSelectedTask(null)}
-                                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition flex justify-center items-center cursor-pointer"
+                                className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/60 transition flex justify-center items-center cursor-pointer shadow-2xs"
                             >
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        {/* Modal Content */}
-                        <div className="p-6 flex flex-col gap-6 overflow-y-auto max-h-[70vh]">
-                            <div className="flex flex-wrap gap-3">
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Department</span>
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                                        {selectedTask.department}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Type</span>
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${activeColor.badgeBg} ${activeColor.badgeText} border ${activeColor.badgeBorder}`}>
-                                        {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : ''}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Title</span>
-                                <h3 className="text-xl font-bold text-slate-800 leading-snug">{selectedTask.title}</h3>
-                            </div>
-
-                            <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Description</span>
-                                <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100/50 mt-1 whitespace-pre-wrap">
-                                    {selectedTask.description}
-                                </p>
-                            </div>
-
-                            {/* Dates Grid */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Assign Date</span>
-                                    <span className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                                        <Calendar className="w-4 h-4 text-slate-400" />
-                                        {new Date(selectedTask.createdAt).toLocaleDateString("en-GB", {
-                                            day: "2-digit",
-                                            month: "short",
-                                            year: "numeric"
-                                        })}
-                                    </span>
-                                </div>
-                                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date</span>
-                                    <span className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                                        <Calendar className="w-4 h-4 text-slate-400" />
-                                        {new Date(selectedTask.dueDate).toLocaleDateString("en-GB", {
-                                            day: "2-digit",
-                                            month: "short",
-                                            year: "numeric"
-                                        })}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Assigned Employees & Work Reports moved to end */}
-                            <div>
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned Employees</span>
-                                <div className="flex flex-col gap-2 mt-2">
-                                    {selectedTask.assignments && selectedTask.assignments.length > 0 ? (
-                                        selectedTask.assignments.map((assignment, aIdx) => (
-                                            <div key={aIdx} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={`w-6 h-6 rounded-full ${activeColor.bg} ${activeColor.text} flex justify-center items-center font-bold text-[10px]`}>
-                                                            {assignment.assignee?.name?.charAt(0) || "U"}
-                                                        </div>
-                                                        <span className="text-xs font-bold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
-                                                    </div>
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
-                                                        {assignment.status}
-                                                    </span>
-                                                </div>
-                                                {assignment.comment && (
-                                                    <p className="text-[11px] text-slate-500 italic bg-amber-50/40 p-2 rounded-xl border border-amber-100/40 mt-1 pl-8">
-                                                        "Latest: {assignment.comment}"
-                                                    </p>
-                                                )}
-
-                                                {/* Progress Updates with Attachments */}
-                                                {assignment.progressUpdates && assignment.progressUpdates.length > 0 && (
-                                                    <div className="mt-2 pl-8 flex flex-col gap-2">
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                            Progress Reports ({assignment.progressUpdates.length}/18)
-                                                        </span>
-                                                        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
-                                                            {assignment.progressUpdates.map((pLog, pIdx) => (
-                                                                <div key={pIdx} className="bg-white border border-slate-200/80 p-2.5 rounded-xl flex flex-col gap-1">
-                                                                    <div className="flex items-center justify-between text-[10px]">
-                                                                        <span className={`px-1.5 py-0.5 rounded font-bold ${getStatusColor(pLog.status)}`}>
-                                                                            {pLog.status}
-                                                                        </span>
-                                                                        <span className="text-slate-400">
-                                                                            {new Date(pLog.updatedAt).toLocaleString("en-GB", {
-                                                                                day: "2-digit",
-                                                                                month: "short",
-                                                                                hour: "2-digit",
-                                                                                minute: "2-digit",
-                                                                                hour12: true
-                                                                            })}
-                                                                        </span>
-                                                                    </div>
-                                                                    {pLog.comment && (
-                                                                        <p className="text-xs text-slate-700 font-medium leading-snug">
-                                                                            {pLog.comment}
-                                                                        </p>
-                                                                    )}
-                                                                    {pLog.attachment && pLog.attachment.fileUrl && (
-                                                                        <a
-                                                                            href={`${import.meta.env.VITE_BACKEND_URL}${pLog.attachment.fileUrl}`}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="mt-1 flex items-center gap-1.5 p-1.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-lg text-xs font-semibold text-emerald-700 group transition"
-                                                                        >
-                                                                            <FileText className="w-3.5 h-3.5 text-emerald-600" />
-                                                                            <span className="truncate flex-1 text-[11px]">{pLog.attachment.fileName || "View Attached File"}</span>
-                                                                            {pLog.attachment.fileSize && (
-                                                                                <span className="text-[9px] text-slate-400 font-normal">
-                                                                                    ({(pLog.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
-                                                                                </span>
-                                                                            )}
-                                                                        </a>
-                                                                    )}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <span className="text-slate-400 text-xs italic">No assignments</span>
+                        {/* Modern Segmented Navigation Tabs */}
+                        <div className="px-5 pt-3 pb-1 border-b border-slate-100 bg-white">
+                            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                <button
+                                    onClick={() => setActiveModalTab("overview")}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${activeModalTab === "overview"
+                                        ? "bg-white text-slate-800 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700"
+                                        }`}
+                                >
+                                    <ClipboardList className="w-3.5 h-3.5" />
+                                    <span>Task Overview</span>
+                                </button>
+                                <button
+                                    onClick={() => setActiveModalTab("reports")}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${activeModalTab === "reports"
+                                        ? "bg-white text-slate-800 shadow-sm"
+                                        : "text-slate-500 hover:text-slate-700"
+                                        }`}
+                                >
+                                    <FileCheck className="w-3.5 h-3.5" />
+                                    <span>Work Reports</span>
+                                    {selectedTask.assignments && (
+                                        <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700 font-extrabold">
+                                            {selectedTask.assignments.reduce((sum, a) => sum + (a.progressUpdates?.length || 0), 0)}
+                                        </span>
                                     )}
-                                </div>
+                                </button>
                             </div>
                         </div>
 
+                        {/* Modal Body: Tab 1 - Overview */}
+                        {activeModalTab === "overview" && (
+                            <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                                        Dept: {selectedTask.department}
+                                    </span>
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold ${activeColor.badgeBg} ${activeColor.badgeText} border ${activeColor.badgeBorder} capitalize`}>
+                                        Type: {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : 'N/A'}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Title</span>
+                                    <h3 className="text-base font-bold text-slate-800 leading-snug">{selectedTask.title}</h3>
+                                </div>
+
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Description</span>
+                                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100 whitespace-pre-wrap">
+                                        {selectedTask.description || "No description provided."}
+                                    </p>
+                                </div>
+
+                                {/* Dates Grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Assign Date</span>
+                                        <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                            {new Date(selectedTask.createdAt).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric"
+                                            })}
+                                        </span>
+                                    </div>
+                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date</span>
+                                        <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                            {new Date(selectedTask.dueDate).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric"
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Assignee Summary Pills */}
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
+                                        Assigned To ({selectedTask.assignments?.length || 0})
+                                    </span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedTask.assignments && selectedTask.assignments.length > 0 ? (
+                                            selectedTask.assignments.map((assignment, aIdx) => (
+                                                <div key={aIdx} className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-2.5 py-1.5 rounded-xl">
+                                                    <div className={`w-5 h-5 rounded-full ${activeColor.bg} ${activeColor.text} flex items-center justify-center font-bold text-[9px]`}>
+                                                        {assignment.assignee?.name?.charAt(0) || "U"}
+                                                    </div>
+                                                    <span className="text-xs font-semibold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
+                                                    <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                        {assignment.status}
+                                                    </span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-slate-400 italic">No assignees</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Modal Body: Tab 2 - Work Reports */}
+                        {activeModalTab === "reports" && (
+                            <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
+                                {/* Horizontal Employee Switcher (Chips) */}
+                                {selectedTask.assignments && selectedTask.assignments.length > 1 && (
+                                    <div>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
+                                            Select Assignee
+                                        </span>
+                                        <div className="flex gap-2 overflow-x-auto pb-1">
+                                            {selectedTask.assignments.map((assignment, aIdx) => {
+                                                const isSelected = selectedAssigneeIndex === aIdx;
+                                                const pCount = assignment.progressUpdates?.length || 0;
+                                                return (
+                                                    <button
+                                                        key={aIdx}
+                                                        onClick={() => setSelectedAssigneeIndex(aIdx)}
+                                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 cursor-pointer border ${isSelected
+                                                            ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-xs`
+                                                            : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
+                                                            }`}
+                                                    >
+                                                        <span>{assignment.assignee?.name || `Employee ${aIdx + 1}`}</span>
+                                                        <span className={`px-1.5 py-0.2 rounded-full text-[9px] ${isSelected ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"}`}>
+                                                            {pCount}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Selected Assignee Progress Timeline */}
+                                {selectedTask.assignments && selectedTask.assignments[selectedAssigneeIndex] ? (
+                                    (() => {
+                                        const currentAssignee = selectedTask.assignments[selectedAssigneeIndex];
+                                        const updates = currentAssignee.progressUpdates || [];
+
+                                        return (
+                                            <div className="flex flex-col gap-3">
+                                                {/* Assignee Mini Profile Header */}
+                                                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className={`w-8 h-8 rounded-xl ${activeColor.bg} ${activeColor.text} flex items-center justify-center font-bold text-xs shadow-2xs`}>
+                                                            {currentAssignee.assignee?.name?.charAt(0) || "U"}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-slate-800">{currentAssignee.assignee?.name || "N/A"}</p>
+                                                            <p className="text-[10px] text-slate-400">{currentAssignee.assignee?.user_id || "Employee"}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(currentAssignee.status)}`}>
+                                                            {currentAssignee.status}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">
+                                                            {updates.length}/18 Used
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Work Logs List */}
+                                                {updates.length > 0 ? (
+                                                    <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto pr-1">
+                                                        {updates.map((update, uIdx) => (
+                                                            <div key={uIdx} className="bg-white border border-slate-200/90 p-3 rounded-2xl flex flex-col gap-1.5 shadow-2xs">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                                        Report #{updates.length - uIdx}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                                        {new Date(update.updatedAt).toLocaleString("en-GB", {
+                                                                            day: "2-digit",
+                                                                            month: "short",
+                                                                            hour: "2-digit",
+                                                                            minute: "2-digit",
+                                                                            hour12: true
+                                                                        })}
+                                                                    </span>
+                                                                </div>
+
+                                                                {update.comment && (
+                                                                    <p className="text-xs text-slate-700 font-medium leading-relaxed bg-slate-50/60 p-2.5 rounded-xl border border-slate-100">
+                                                                        {update.comment}
+                                                                    </p>
+                                                                )}
+
+                                                                {update.attachment && update.attachment.fileUrl && (
+                                                                    <a
+                                                                        href={`${import.meta.env.VITE_BACKEND_URL}${update.attachment.fileUrl}`}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                                    >
+                                                                        <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition shrink-0" />
+                                                                        <span className="truncate flex-1 text-[11px] font-bold">{update.attachment.fileName || "View Attachment"}</span>
+                                                                        {update.attachment.fileSize && (
+                                                                            <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                                                                                ({(update.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
+                                                                            </span>
+                                                                        )}
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-2">
+                                                        <Clock className="w-6 h-6 text-slate-300" />
+                                                        <p className="text-xs text-slate-400 font-medium">
+                                                            No work progress reports submitted yet.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()
+                                ) : (
+                                    <div className="p-6 text-center text-xs text-slate-400 italic">
+                                        No assignees found for this task.
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Modal Footer */}
-                        <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+                        <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex justify-end">
                             <button
                                 onClick={() => setSelectedTask(null)}
-                                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 transition shadow-sm cursor-pointer"
+                                className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 transition shadow-2xs cursor-pointer"
                             >
                                 Close
                             </button>
