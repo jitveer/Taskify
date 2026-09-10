@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, Bell, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
+import { Menu, Bell, ShieldAlert, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { getNotifications, toggleNotificationRead, markAllNotificationsAsRead, clearAllNotifications } from "../../utils/notifications";
 
 function Header({ title, role }) {
@@ -44,22 +44,6 @@ function Header({ title, role }) {
         };
     }
 
-    // useEffect(() => {
-    //     const updateNotifications = async () => {
-    //         const data = await getNotifications();
-    //         setNotifications(data);
-    //     };
-    //     updateNotifications();
-    //     window.addEventListener("notificationsUpdated", updateNotifications);
-
-    //     const intervalId = setInterval(updateNotifications, 15000);
-
-    //     return () => {
-    //         window.removeEventListener("notificationsUpdated", updateNotifications);
-    //         clearInterval(intervalId);
-    //     };
-    // }, []);
-
     useEffect(() => {
         const updateNotifications = async () => {
             const data = await getNotifications();
@@ -73,24 +57,36 @@ function Header({ title, role }) {
         };
     }, []);
 
-
     const getNotificationIcon = (type) => {
         switch (type) {
+            case "warning":
+                return {
+                    icon: <AlertTriangle className="text-amber-600 w-5 h-5" />,
+                    bg: "bg-amber-100",
+                    itemBg: "bg-amber-50/90 border-amber-200",
+                    leftBorder: "bg-amber-500"
+                };
             case "alert":
                 return {
                     icon: <ShieldAlert className="text-purple-600 w-5 h-5" />,
-                    bg: "bg-purple-100"
+                    bg: "bg-purple-100",
+                    itemBg: "",
+                    leftBorder: bellTheme.unreadBorder
                 };
             case "success":
                 return {
                     icon: <CheckCircle2 className="text-emerald-600 w-5 h-5" />,
-                    bg: "bg-emerald-100"
+                    bg: "bg-emerald-100",
+                    itemBg: "",
+                    leftBorder: bellTheme.unreadBorder
                 };
             case "info":
             default:
                 return {
                     icon: <Clock className="text-blue-600 w-5 h-5" />,
-                    bg: "bg-blue-100"
+                    bg: "bg-blue-100",
+                    itemBg: "",
+                    leftBorder: bellTheme.unreadBorder
                 };
         }
     };
@@ -230,28 +226,37 @@ function Header({ title, role }) {
                                     ) : (
                                         notifications.map((notif) => {
                                             const config = getNotificationIcon(notif.type);
+                                            const isWarning = notif.type === "warning";
                                             return (
                                                 <div
                                                     key={notif.id}
                                                     onClick={() => handleNotificationClick(notif.id)}
-                                                    className={`p-4 flex gap-3.5 hover:bg-slate-50/80 transition cursor-pointer relative ${!notif.read ? bellTheme.unreadBg : ""
-                                                        }`}
+                                                    className={`p-4 flex gap-3.5 transition cursor-pointer relative ${
+                                                        isWarning 
+                                                            ? "bg-amber-50 hover:bg-amber-100/70 border-b border-amber-100/80" 
+                                                            : !notif.read ? `${bellTheme.unreadBg} hover:bg-slate-50/80` : "hover:bg-slate-50/80"
+                                                    }`}
                                                 >
                                                     {!notif.read && (
-                                                        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-md ${bellTheme.unreadBorder}`}></div>
+                                                        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-md ${config.leftBorder || bellTheme.unreadBorder}`}></div>
                                                     )}
 
-                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${config.bg}`}>
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${config.bg}`}>
                                                         {config.icon}
                                                     </div>
 
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex justify-between items-start gap-2">
                                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                                <p className={`text-xs leading-snug ${notif.read ? "text-slate-600" : "text-slate-800 font-bold"}`}>
+                                                                <p className={`text-xs leading-snug ${isWarning ? "text-amber-900 font-bold" : notif.read ? "text-slate-600" : "text-slate-800 font-bold"}`}>
                                                                     {notif.title}
                                                                 </p>
-                                                                {!notif.read && (
+                                                                {isWarning && (
+                                                                    <span className="bg-amber-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider shadow-xs animate-pulse">
+                                                                        Overdue
+                                                                    </span>
+                                                                )}
+                                                                {!notif.read && !isWarning && (
                                                                     <span className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider shadow-xs">
                                                                         New
                                                                     </span>
@@ -261,7 +266,7 @@ function Header({ title, role }) {
                                                                 {notif.time}
                                                             </span>
                                                         </div>
-                                                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                                        <p className={`text-[11px] mt-1 leading-relaxed ${isWarning ? "text-amber-800 font-medium" : "text-slate-500"}`}>
                                                             {notif.description}
                                                         </p>
                                                     </div>

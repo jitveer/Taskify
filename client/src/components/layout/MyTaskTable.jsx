@@ -326,7 +326,12 @@ function MyTaskTable({ color }) {
                                             </span>
                                         </td>
                                         <td onClick={() => setSelectedTask(task)} className="py-4 px-6 text-sm font-medium text-slate-600 cursor-pointer">
-                                            {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            <div className="flex flex-col">
+                                                <span>{new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                <span className="text-[10px] text-slate-400 font-bold">
+                                                    ⏰ {task.dueTime || "10:00"}
+                                                </span>
+                                            </div>
                                         </td>
                                         <td onClick={() => setSelectedTask(task)} className="py-4 px-6 text-center cursor-pointer">
                                             <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${getStatusColor(task.status)}`}>
@@ -380,163 +385,168 @@ function MyTaskTable({ color }) {
                                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                                             Updated: {task.updatedAt ? new Date(task.updatedAt).toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : task.lastUpdated}
                                         </p>
-                                    )}
-                                    <p className="text-xs text-slate-500 mt-1.5 font-medium">Due: {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                    )}                                    <p className="text-xs text-slate-500 mt-1.5 font-medium flex items-center gap-1.5">
+                                        <span>Due: {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                        <span className="text-[10px] font-bold text-slate-400">({task.dueTime || "10:00"})</span>
+                                    </p>
                                 </div>
 
                                 <div className="mt-3 flex justify-between items-center border-t border-slate-100">
                                     <span className="text-xs text-slate-500 font-medium">Status</span>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(task.status)}`}>
-                                            {task.status}
-                                        </span>
-                                        {task.status !== "Completed" && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(index)}
-                                                className={`px-2.5 py-1 border rounded-lg text-[10px] font-bold transition ${color === "purple"
-                                                    ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-100"
-                                                    : color === "blue"
-                                                        ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100"
-                                                        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100"
-                                                    }`}
-                                            >
-                                                Update
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
+                                             {task.status}
+                                         </span>
+                                         {task.status !== "Completed" && (
+                                             <button
+                                                 onClick={() => handleUpdateStatus(index)}
+                                                 className={`px-2.5 py-1 border rounded-lg text-[10px] font-bold transition ${color === "purple"
+                                                     ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-100"
+                                                     : color === "blue"
+                                                         ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100"
+                                                         : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100"
+                                                     }`}
+                                             >
+                                                 Update
+                                             </button>
+                                         )}
+                                     </div>
+                                 </div>
+                             </div>
+                         ))
+                     )}
+                 </div>
+             </div>
 
-            {/* Task View Modal */}
-            {selectedTask && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300 animate-fadeIn">
-                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[85vh] animate-slideUp">
-                        {/* Modal Header */}
-                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
-                            <div className="flex items-center gap-2">
-                                <span className="px-2.5 py-1 rounded-lg bg-white text-slate-700 font-mono text-xs border border-slate-200 shadow-2xs font-bold">
-                                    My Task Details
-                                </span>
-                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getStatusColor(selectedTask.status)}`}>
-                                    {selectedTask.status}
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setSelectedTask(null)}
-                                className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/60 transition flex justify-center items-center cursor-pointer shadow-2xs"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
+             {/* Task View Modal */}
+             {selectedTask && (
+                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300 animate-fadeIn">
+                     <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[85vh] animate-slideUp">
+                         {/* Modal Header */}
+                         <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
+                             <div className="flex items-center gap-2">
+                                 <span className="px-2.5 py-1 rounded-lg bg-white text-slate-700 font-mono text-xs border border-slate-200 shadow-2xs font-bold">
+                                     My Task Details
+                                 </span>
+                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getStatusColor(selectedTask.status)}`}>
+                                     {selectedTask.status}
+                                 </span>
+                             </div>
+                             <button
+                                 onClick={() => setSelectedTask(null)}
+                                 className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/60 transition flex justify-center items-center cursor-pointer shadow-2xs"
+                             >
+                                 <X className="w-4 h-4" />
+                             </button>
+                         </div>
 
-                        {/* Segmented Navigation Tabs */}
-                        <div className="px-5 pt-3 pb-1 border-b border-slate-100 bg-white">
-                            <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
-                                <button
-                                    onClick={() => setActiveModalTab("overview")}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                                        activeModalTab === "overview"
-                                            ? "bg-white text-slate-800 shadow-sm"
-                                            : "text-slate-500 hover:text-slate-700"
-                                    }`}
-                                >
-                                    <ClipboardList className="w-3.5 h-3.5" />
-                                    <span>Task Overview</span>
-                                </button>
-                                <button
-                                    onClick={() => setActiveModalTab("reports")}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                                        activeModalTab === "reports"
-                                            ? "bg-white text-slate-800 shadow-sm"
-                                            : "text-slate-500 hover:text-slate-700"
-                                    }`}
-                                >
-                                    <FileCheck className="w-3.5 h-3.5" />
-                                    <span>My Work Reports</span>
-                                    {selectedTask.progressUpdates && (
-                                        <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700 font-extrabold">
-                                            {selectedTask.progressUpdates.length}
-                                        </span>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
+                         {/* Segmented Navigation Tabs */}
+                         <div className="px-5 pt-3 pb-1 border-b border-slate-100 bg-white">
+                             <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                                 <button
+                                     onClick={() => setActiveModalTab("overview")}
+                                     className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                                         activeModalTab === "overview"
+                                             ? "bg-white text-slate-800 shadow-sm"
+                                             : "text-slate-500 hover:text-slate-700"
+                                     }`}
+                                 >
+                                     <ClipboardList className="w-3.5 h-3.5" />
+                                     <span>Task Overview</span>
+                                 </button>
+                                 <button
+                                     onClick={() => setActiveModalTab("reports")}
+                                     className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                                         activeModalTab === "reports"
+                                             ? "bg-white text-slate-800 shadow-sm"
+                                             : "text-slate-500 hover:text-slate-700"
+                                     }`}
+                                 >
+                                     <FileCheck className="w-3.5 h-3.5" />
+                                     <span>My Work Reports</span>
+                                     {selectedTask.progressUpdates && (
+                                         <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700 font-extrabold">
+                                             {selectedTask.progressUpdates.length}
+                                         </span>
+                                     )}
+                                 </button>
+                             </div>
+                         </div>
 
-                        {/* Modal Body: Tab 1 - Overview */}
-                        {activeModalTab === "overview" && (
-                            <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
-                                <div className="flex flex-wrap gap-2">
-                                    <span className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider ${getPriorityColor(selectedTask.priority)}`}>
-                                        Priority: {selectedTask.priority}
-                                    </span>
-                                    {selectedTask.department && (
-                                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
-                                            Dept: {selectedTask.department}
-                                        </span>
-                                    )}
-                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 capitalize">
-                                        Type: {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : 'Individual'}
-                                    </span>
-                                </div>
+                         {/* Modal Body: Tab 1 - Overview */}
+                         {activeModalTab === "overview" && (
+                             <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
+                                 <div className="flex flex-wrap gap-2">
+                                     <span className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider ${getPriorityColor(selectedTask.priority)}`}>
+                                         Priority: {selectedTask.priority}
+                                     </span>
+                                     {selectedTask.department && (
+                                         <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
+                                             Dept: {selectedTask.department}
+                                         </span>
+                                     )}
+                                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 capitalize">
+                                         Type: {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : 'Individual'}
+                                     </span>
+                                 </div>
 
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Title</span>
-                                    <h3 className="text-base font-bold text-slate-800 leading-snug">{selectedTask.title}</h3>
-                                </div>
+                                 <div>
+                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Title</span>
+                                     <h3 className="text-base font-bold text-slate-800 leading-snug">{selectedTask.title}</h3>
+                                 </div>
 
-                                {/* Assigned By Info */}
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned By</span>
-                                    <div className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
-                                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex justify-center items-center font-bold text-xs shadow-2xs">
-                                            {selectedTask.assignedBy?.name?.charAt(0) || "A"}
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-800">{selectedTask.assignedBy?.name || "Admin"}</p>
-                                            <p className="text-[10px] text-slate-400 font-medium">
-                                                {selectedTask.assignedBy
-                                                    ? `${selectedTask.assignedBy.department?.toUpperCase() || ""} | ${selectedTask.assignedBy.role === 'superadmin' ? 'Super Admin' : selectedTask.assignedBy.role === 'admin' ? 'Admin' : 'Manager'}`
-                                                    : "Task Creator"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                 {/* Assigned By Info */}
+                                 <div>
+                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Assigned By</span>
+                                     <div className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
+                                         <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex justify-center items-center font-bold text-xs shadow-2xs">
+                                             {selectedTask.assignedBy?.name?.charAt(0) || "A"}
+                                         </div>
+                                         <div>
+                                             <p className="text-xs font-bold text-slate-800">{selectedTask.assignedBy?.name || "Admin"}</p>
+                                             <p className="text-[10px] text-slate-400 font-medium">
+                                                 {selectedTask.assignedBy
+                                                     ? `${selectedTask.assignedBy.department?.toUpperCase() || ""} | ${selectedTask.assignedBy.role === 'superadmin' ? 'Super Admin' : selectedTask.assignedBy.role === 'admin' ? 'Admin' : 'Manager'}`
+                                                     : "Task Creator"}
+                                             </p>
+                                         </div>
+                                     </div>
+                                 </div>
 
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Description</span>
-                                    <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100 whitespace-pre-wrap">
-                                        {selectedTask.description || "No description provided."}
-                                    </p>
-                                </div>
+                                 <div>
+                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Description</span>
+                                     <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100 whitespace-pre-wrap">
+                                         {selectedTask.description || "No description provided."}
+                                     </p>
+                                 </div>
 
-                                {/* Dates Grid */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Assign Date</span>
-                                        <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                            {new Date(selectedTask.createdAt).toLocaleDateString("en-GB", {
-                                                day: "2-digit",
-                                                month: "short",
-                                                year: "numeric"
-                                            })}
-                                        </span>
-                                    </div>
-                                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date</span>
-                                        <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                            {new Date(selectedTask.dueDate).toLocaleDateString("en-GB", {
-                                                day: "2-digit",
-                                                month: "short",
-                                                year: "numeric"
-                                            })}
-                                        </span>
-                                    </div>
+                                 {/* Dates Grid */}
+                                 <div className="grid grid-cols-2 gap-3">
+                                     <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
+                                         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Assign Date</span>
+                                         <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                             {new Date(selectedTask.createdAt).toLocaleDateString("en-GB", {
+                                                 day: "2-digit",
+                                                 month: "short",
+                                                 year: "numeric"
+                                             })}
+                                         </span>
+                                     </div>
+                                     <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
+                                         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date & Time</span>
+                                         <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                             {new Date(selectedTask.dueDate).toLocaleDateString("en-GB", {
+                                                 day: "2-digit",
+                                                 month: "short",
+                                                 year: "numeric"
+                                             })}
+                                         </span>
+                                         <span className="text-[10px] text-slate-400 font-bold ml-5 mt-0.5">
+                                             ⏰ {selectedTask.dueTime || "10:00"}
+                                         </span>
+                                     </div>
                                 </div>
 
                                 {/* Task Attachments by Assigner */}

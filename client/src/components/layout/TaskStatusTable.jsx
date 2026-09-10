@@ -266,9 +266,14 @@ function TaskStatusTable({ color, apiPrefix }) {
                                     </td>
 
                                     <td className="py-4 px-6 text-sm font-medium text-slate-500 whitespace-nowrap">
-                                        <div className="flex items-center gap-1.5 whitespace-nowrap">
-                                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                            <span>{new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                <span>{new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400 font-bold ml-5">
+                                                ⏰ {task.dueTime || "10:00"}
+                                            </span>
                                         </div>
                                     </td>
 
@@ -356,10 +361,10 @@ function TaskStatusTable({ color, apiPrefix }) {
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Due Date</span>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Due Date & Time</span>
                                     <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
                                         <Calendar className="w-3 h-3 text-slate-400" />
-                                        {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })} ({task.dueTime || "10:00"})
                                     </span>
                                 </div>
                             </div>
@@ -474,7 +479,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                                         </span>
                                     </div>
                                     <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date</span>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Due Date & Time</span>
                                         <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                             {new Date(selectedTask.dueDate).toLocaleDateString("en-GB", {
@@ -482,6 +487,9 @@ function TaskStatusTable({ color, apiPrefix }) {
                                                 month: "short",
                                                 year: "numeric"
                                             })}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 font-bold ml-5 mt-0.5">
+                                            ⏰ {selectedTask.dueTime || "10:00"}
                                         </span>
                                     </div>
                                 </div>

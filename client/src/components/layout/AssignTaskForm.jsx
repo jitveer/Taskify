@@ -26,6 +26,7 @@ function AssignTaskForm({ color, apiPrefix }) {
         taskTitle: "",
         description: "",
         dueDate: "",
+        dueTime: "10:00",
         attachment: null
     });
 
@@ -220,6 +221,11 @@ function AssignTaskForm({ color, apiPrefix }) {
                 new Date(formData.dueDate).toISOString()
             );
 
+            payload.append(
+                "dueTime",
+                formData.dueTime && formData.dueTime.trim() ? formData.dueTime.trim() : "10:00"
+            );
+
             if (formData.attachment?.length > 0) {
 
                 formData.attachment.forEach((file) => {
@@ -254,6 +260,7 @@ function AssignTaskForm({ color, apiPrefix }) {
                 taskTitle: "",
                 description: "",
                 dueDate: "",
+                dueTime: "10:00",
                 attachment: null
             });
             setSelectedEmployees([]);
@@ -630,12 +637,12 @@ function AssignTaskForm({ color, apiPrefix }) {
 
 
 
-                        {/* Due Date & Attachment Row */}
+                        {/* Due Date & Due Time Row */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                             {/* Due Date */}
                             <div>
-                                <label className={labelStyle}>Due Date</label>
+                                <label className={labelStyle}>Due Date *</label>
 
                                 <input
                                     type="date"
@@ -658,26 +665,78 @@ function AssignTaskForm({ color, apiPrefix }) {
                                 )}
                             </div>
 
-
-
-                            {/* Attachment */}
+                            {/* Due Time */}
                             <div>
-                                <label className={labelStyle}>Attachments</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-slate-700 font-bold text-[11px] uppercase tracking-wider">
+                                        Due Time (Optional)
+                                    </label>
+                                    <span className="text-[10px] text-slate-400 font-medium">
+                                        Default: 10:00 AM
+                                    </span>
+                                </div>
 
-                                <input
-                                    type="file"
-                                    name="attachments"
-                                    multiple
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            attachment: Array.from(e.target.files)
-                                        })
-                                    }
-                                    className={`${inputStyle} file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0`}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="time"
+                                        name="dueTime"
+                                        value={formData.dueTime}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                dueTime: e.target.value
+                                            })
+                                        }
+                                        className={`${inputStyle} flex-1`}
+                                    />
+                                    {/* Quick Preset Buttons */}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, dueTime: "10:00" })}
+                                            className={`px-2.5 py-2 text-[11px] font-bold rounded-xl border transition cursor-pointer ${
+                                                formData.dueTime === "10:00"
+                                                    ? `${color === "blue" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`
+                                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                            }`}
+                                            title="Set to 10:00 AM"
+                                        >
+                                            10 AM
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, dueTime: "18:00" })}
+                                            className={`px-2.5 py-2 text-[11px] font-bold rounded-xl border transition cursor-pointer ${
+                                                formData.dueTime === "18:00"
+                                                    ? `${color === "blue" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`
+                                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                            }`}
+                                            title="Set to 06:00 PM"
+                                        >
+                                            6 PM
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
+                        </div>
+
+                        {/* Attachment Row */}
+                        <div>
+                            <label className={labelStyle}>Attachments (Optional)</label>
+
+                            <input
+                                type="file"
+                                name="attachments"
+                                multiple
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        attachment: Array.from(e.target.files)
+                                    })
+                                }
+                                className={`${inputStyle} file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0`}
+                            />
                         </div>
 
 

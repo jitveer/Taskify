@@ -37,6 +37,19 @@ const taskAssignmentSchema = new mongoose.Schema(
             type: Date,
             required: true,
         },
+        dueTime: {
+            type: String,
+            default: "10:00",
+            trim: true
+        },
+        overdueNotified: {
+            type: Boolean,
+            default: false
+        },
+        lastOverdueReminderAt: {
+            type: Date,
+            default: null
+        },
         assignedAt: {
             type: Date,
             default: Date.now,

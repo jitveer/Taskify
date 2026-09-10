@@ -94,7 +94,11 @@ const server = http.createServer(app);
 // 4. Initialize Socket Server
 initSocket(server);
 
-// 5. Start server using server.listen instead of app.listen
+// 5. Initialize Task Deadline & Overdue Reminder Scheduler
+const { initTaskDeadlineScheduler } = require('./services/scheduler.service');
+initTaskDeadlineScheduler();
+
+// 6. Start server using server.listen instead of app.listen
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

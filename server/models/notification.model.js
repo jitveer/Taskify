@@ -16,7 +16,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['alert', 'success', 'info'],
+        enum: ['alert', 'success', 'info', 'warning'],
         default: 'info'
     },
     taskTitle: {

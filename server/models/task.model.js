@@ -48,6 +48,17 @@ const taskSchema = new mongoose.Schema(
             required: true,
         },
 
+        dueTime: {
+            type: String,
+            default: "10:00",
+            trim: true
+        },
+
+        overdueNotified: {
+            type: Boolean,
+            default: false
+        },
+
         parentTaskId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Task",

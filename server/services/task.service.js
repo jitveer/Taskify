@@ -51,6 +51,10 @@ class TaskService {
             }
         }
 
+        if (!taskData.dueTime || !taskData.dueTime.trim()) {
+            taskData.dueTime = "10:00";
+        }
+
         const task = await taskRepository.create(taskData);
 
         const assignments = [];
@@ -65,6 +69,7 @@ class TaskService {
                 assignedBy: creator.id,
                 department: dept,
                 dueDate: task.dueDate,
+                dueTime: task.dueTime,
                 status: "Pending"
             });
             assignments.push(assignment);
@@ -207,6 +212,7 @@ class TaskService {
                 comment: a.comment,
                 history: historyMap[a._id.toString()] || [],
                 dueDate: a.dueDate,
+                dueTime: a.dueTime || task.dueTime || "10:00",
                 assignedAt: a.assignedAt,
                 acknowledgedAt: a.acknowledgedAt,
                 startedAt: a.startedAt,
@@ -218,6 +224,7 @@ class TaskService {
             taskObj.status = assignments.length > 0 ? assignments[0].status : "Pending";
             taskObj.comment = assignments.length > 0 ? assignments[0].comment : "";
             taskObj.progressUpdates = assignments.length > 0 ? (assignments[0].progressUpdates || []) : [];
+            taskObj.dueTime = task.dueTime || (assignments.length > 0 ? assignments[0].dueTime : "10:00") || "10:00";
 
             return taskObj;
         });
@@ -235,6 +242,7 @@ class TaskService {
             t.comment = assignment.comment;
             t.completedAt = assignment.completedAt;
             t.assignmentId = assignment._id;
+            t.dueTime = assignment.dueTime || t.dueTime || "10:00";
             t.progressUpdates = assignment.progressUpdates || [];
             return t;
         }).filter(Boolean);
