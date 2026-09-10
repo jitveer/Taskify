@@ -105,8 +105,21 @@ function Notifications() {
         // Mark as read first
         await toggleNotificationRead(notif.id);
 
-        let targetPath = taskListPath;
+        const isDailyReport = (notif.title && notif.title.toLowerCase().includes("daily report")) || 
+                              (notif.description && notif.description.toLowerCase().includes("daily report"));
 
+        if (isDailyReport) {
+            if (role === "superadmin") {
+                navigate("/reports?tab=adminReports");
+            } else if (role === "admin") {
+                navigate("/admin-reports");
+            } else {
+                navigate("/employee-reports");
+            }
+            return;
+        }
+
+        let targetPath = taskListPath;
         const isStatusUpdate = notif.title && notif.title.includes("Status Updated");
 
         if (role === "superadmin") {

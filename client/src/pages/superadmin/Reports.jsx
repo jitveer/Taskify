@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 import ReportsDashboard from "../../components/layout/ReportsDashboard";
@@ -6,7 +7,20 @@ import SuperAdminDailyReportsView from "../../components/layout/SuperAdminDailyR
 import { BarChart3, FileText } from "lucide-react";
 
 function Reports() {
-    const [activeTab, setActiveTab] = useState("adminReports"); // "adminReports" or "taskAnalytics"
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get("tab");
+    const [activeTab, setActiveTab] = useState(tabParam === "taskAnalytics" ? "taskAnalytics" : "adminReports");
+
+    useEffect(() => {
+        if (tabParam === "taskAnalytics" || tabParam === "adminReports") {
+            setActiveTab(tabParam);
+        }
+    }, [tabParam]);
+
+    const handleTabChange = (newTab) => {
+        setActiveTab(newTab);
+        setSearchParams({ tab: newTab });
+    };
 
     const menuItems = [
         { name: "Dashboard", path: "/super-admin-dashboard" },
@@ -32,7 +46,7 @@ function Reports() {
                     {/* Tab Navigation */}
                     <div className="flex items-center gap-2 bg-slate-100/80 p-1.5 rounded-2xl w-fit border border-slate-200/60 shadow-2xs">
                         <button
-                            onClick={() => setActiveTab("adminReports")}
+                            onClick={() => handleTabChange("adminReports")}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                 activeTab === "adminReports"
                                     ? "bg-white text-purple-700 shadow-sm border border-slate-200/60"
@@ -43,7 +57,7 @@ function Reports() {
                             <span>Admin Daily Reports</span>
                         </button>
                         <button
-                            onClick={() => setActiveTab("taskAnalytics")}
+                            onClick={() => handleTabChange("taskAnalytics")}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                 activeTab === "taskAnalytics"
                                     ? "bg-white text-purple-700 shadow-sm border border-slate-200/60"

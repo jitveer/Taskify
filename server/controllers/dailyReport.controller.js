@@ -9,12 +9,15 @@ const submitDailyReport = async (req, res) => {
         const { title, description, department, reportDate } = req.body;
         const loggedInUser = req.user;
 
-        if (!title || !description) {
+        if (!description || !description.trim()) {
             return res.status(400).json({
                 success: false,
-                message: "Title and Description are required."
+                message: "Work details / description is required."
             });
         }
+
+        // Auto-generate title if not provided
+        const reportTitle = title && title.trim() ? title.trim() : `Daily Report - ${new Date(reportDate || Date.now()).toLocaleDateString("en-GB")}`;
 
         // Attachments parsing
         let attachments = [];
@@ -29,8 +32,8 @@ const submitDailyReport = async (req, res) => {
         const newReport = await DailyReport.create({
             reportedBy: loggedInUser.id,
             department: department || loggedInUser.department || "general",
-            title,
-            description,
+            title: reportTitle,
+            description: description.trim(),
             reportDate: reportDate ? new Date(reportDate) : new Date(),
             attachments
         });
@@ -47,17 +50,17 @@ const submitDailyReport = async (req, res) => {
                 await Notification.create({
                     userId: sa._id,
                     title: "Daily Report Submitted 📄",
-                    description: `${loggedInUser.name || 'Admin'} submitted daily report: "${title}"`,
+                    description: `${loggedInUser.name || 'Admin'} submitted daily report: "${reportTitle}"`,
                     type: "info",
-                    taskTitle: title
+                    taskTitle: reportTitle
                 });
 
                 if (io) {
                     io.to(sa._id.toString()).emit("newNotification", {
                         title: "Daily Report Submitted 📄",
-                        description: `${loggedInUser.name || 'Admin'} submitted daily report: "${title}"`,
+                        description: `${loggedInUser.name || 'Admin'} submitted daily report: "${reportTitle}"`,
                         type: "info",
-                        taskTitle: title
+                        taskTitle: reportTitle
                     });
                 }
             }

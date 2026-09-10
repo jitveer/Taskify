@@ -91,10 +91,49 @@ function Header({ title, role }) {
         }
     };
 
-    const handleNotificationClick = (id) => {
-        toggleNotificationRead(id);
-        navigate("/notifications");
+    const handleNotificationClick = (notif) => {
+        toggleNotificationRead(notif.id);
         setShowNotifications(false);
+
+        const isDailyReport = (notif.title && notif.title.toLowerCase().includes("daily report")) || 
+                              (notif.description && notif.description.toLowerCase().includes("daily report"));
+
+        if (isDailyReport) {
+            if (activeRole === "superadmin") {
+                navigate("/reports?tab=adminReports");
+            } else if (activeRole === "admin") {
+                navigate("/admin-reports");
+            } else {
+                navigate("/employee-reports");
+            }
+            return;
+        }
+
+        // Direct routing for tasks
+        if (activeRole === "superadmin") {
+            const queryParams = new URLSearchParams();
+            if (notif.taskTitle) queryParams.set("search", notif.taskTitle);
+            const qs = queryParams.toString();
+            navigate(`/task-status${qs ? `?${qs}` : ''}`);
+        } else if (activeRole === "admin") {
+            const isStatusUpdate = notif.title && notif.title.includes("Status Updated");
+            const targetPath = isStatusUpdate ? "/admin-task-status" : "/admin-my-tasks";
+            const queryParams = new URLSearchParams();
+            if (notif.taskTitle) {
+                queryParams.set("search", notif.taskTitle);
+                if (!isStatusUpdate) queryParams.set("status", "Pending");
+            }
+            const qs = queryParams.toString();
+            navigate(`${targetPath}${qs ? `?${qs}` : ''}`);
+        } else {
+            const queryParams = new URLSearchParams();
+            if (notif.taskTitle) {
+                queryParams.set("search", notif.taskTitle);
+                queryParams.set("status", "Pending");
+            }
+            const qs = queryParams.toString();
+            navigate(`/employee-my-tasks${qs ? `?${qs}` : ''}`);
+        }
     };
 
     const markAllAsRead = () => {
@@ -230,7 +269,7 @@ function Header({ title, role }) {
                                             return (
                                                 <div
                                                     key={notif.id}
-                                                    onClick={() => handleNotificationClick(notif.id)}
+                                                    onClick={() => handleNotificationClick(notif)}
                                                     className={`p-4 flex gap-3.5 transition cursor-pointer relative ${
                                                         isWarning 
                                                             ? "bg-amber-50 hover:bg-amber-100/70 border-b border-amber-100/80" 

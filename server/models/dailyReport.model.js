@@ -14,7 +14,7 @@ const dailyReportSchema = new mongoose.Schema(
         },
         title: {
             type: String,
-            required: true,
+            default: "",
             trim: true,
             maxlength: 200,
         },

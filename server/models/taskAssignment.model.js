@@ -50,6 +50,10 @@ const taskAssignmentSchema = new mongoose.Schema(
             type: Date,
             default: null
         },
+        sentReminders: {
+            type: [String],
+            default: []
+        },
         assignedAt: {
             type: Date,
             default: Date.now,
