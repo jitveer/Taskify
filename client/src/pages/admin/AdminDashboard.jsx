@@ -77,6 +77,8 @@ function AdminDashboard() {
                     });
                 });
 
+                assignmentsList.sort((a, b) => new Date(b.assignedAt || 0) - new Date(a.assignedAt || 0));
+
                 const inProgressCount = assignmentsList.filter(a => (a.status || "").toLowerCase() === "in progress").length;
                 const pendingCount = assignmentsList.filter(a => (a.status || "").toLowerCase() === "pending").length;
                 const completedCount = assignmentsList.filter(a => (a.status || "").toLowerCase() === "completed").length;

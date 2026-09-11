@@ -2,6 +2,7 @@ import { Search, Eye, X, Filter, Calendar, FileText, ChevronDown, ChevronUp, Use
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { taskApi } from "../../services/api";
+import { formatTime12Hour } from "../../utils/timeFormatter";
 
 function TaskStatusTable({ color, apiPrefix }) {
     const location = useLocation();
@@ -37,6 +38,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                             progress
                         };
                     });
+                    mappedTasks.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
                     setTasks(mappedTasks);
                 }
             } catch (error) {
@@ -272,7 +274,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                                                 <span>{new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                             </div>
                                             <span className="text-[10px] text-slate-400 font-bold ml-5">
-                                                ⏰ {task.dueTime || "10:00"}
+                                                ⏰ {formatTime12Hour(task.dueTime)}
                                             </span>
                                         </div>
                                     </td>
@@ -364,7 +366,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Due Date & Time</span>
                                     <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
                                         <Calendar className="w-3 h-3 text-slate-400" />
-                                        {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })} ({task.dueTime || "10:00"})
+                                        {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })} ({formatTime12Hour(task.dueTime)})
                                     </span>
                                 </div>
                             </div>
@@ -489,7 +491,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                                             })}
                                         </span>
                                         <span className="text-[10px] text-slate-400 font-bold ml-5 mt-0.5">
-                                            ⏰ {selectedTask.dueTime || "10:00"}
+                                            ⏰ {formatTime12Hour(selectedTask.dueTime)}
                                         </span>
                                     </div>
                                 </div>

@@ -47,6 +47,11 @@ function EmployeeDashboard() {
                 const response = await taskApi.getMyTasks();
                 if (response && response.success) {
                     const fetchedTasks = response.tasks || [];
+                    fetchedTasks.sort((a, b) => {
+                        const timeA = new Date(a.createdAt || a.assignedAt || a.dueDate || 0).getTime();
+                        const timeB = new Date(b.createdAt || b.assignedAt || b.dueDate || 0).getTime();
+                        return timeB - timeA;
+                    });
                     setTasks(fetchedTasks);
 
                     const totalCount = fetchedTasks.length;

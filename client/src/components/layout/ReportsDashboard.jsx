@@ -39,6 +39,7 @@ function ReportsDashboard({ color }) {
                     }
                 }
 
+                tasks.sort((a, b) => new Date(b.createdAt || b.assignedAt || 0) - new Date(a.createdAt || a.assignedAt || 0));
                 setTaskList(tasks);
 
                 setReportData({

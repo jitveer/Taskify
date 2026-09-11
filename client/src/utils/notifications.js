@@ -22,7 +22,9 @@ export const getNotifications = async () => {
                 time: new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " " + new Date(n.createdAt).toLocaleDateString(),
                 read: n.read,
                 type: n.type,
-                taskTitle: n.taskTitle
+                taskTitle: n.taskTitle,
+                taskId: n.taskId,
+                assignmentId: n.assignmentId
             }));
         }
         return [];

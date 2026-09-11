@@ -85,6 +85,22 @@ class TaskService {
             metadata: { assigneeCount: assigneeIds.length }
         });
 
+        // Resolve creator/assigner's display name
+        let creatorName = creator.name;
+        if (!creatorName) {
+            try {
+                const creatorUser = await userRepository.findById(creator.id);
+                if (creatorUser && creatorUser.name) {
+                    creatorName = creatorUser.name;
+                }
+            } catch (uErr) {
+                console.error("Failed to fetch creator user details:", uErr);
+            }
+        }
+        if (!creatorName) {
+            creatorName = creator.role === "superadmin" ? "Super Admin" : "Admin";
+        }
+
         // Trigger push notifications asynchronously
         try {
             const { sendPushNotification } = require('./push.service');
@@ -92,7 +108,7 @@ class TaskService {
                 const targetUrl = emp.role === "admin" ? "/admin-my-tasks" : "/employee-my-tasks";
                 sendPushNotification(emp._id, {
                     title: "New Task Assigned 📋",
-                    body: `${creator.name} assigned you a task: "${task.title}"`,
+                    body: `${creatorName} assigned you a task: "${task.title}"`,
                     url: targetUrl
                 });
             });
@@ -100,51 +116,37 @@ class TaskService {
             console.error("Failed to trigger task assignment push notifications:", err);
         }
 
-        // Save database notifications for in-app UI display
-        // try {
-        //     const Notification = require('../models/notification.model');
-        //     const notifPromises = assignees.map(emp => {
-        //         return Notification.create({
-        //             userId: emp._id,
-        //             title: "New Task Assigned 📋",
-        //             description: `${creator.name} assigned you a task: "${task.title}"`,
-        //             type: "alert",
-        //             taskTitle: task.title
-        //         });
-        //     });
-        //     await Promise.all(notifPromises);
-        // } catch (err) {
-        //     console.error("Failed to save database notifications:", err);
-        // }
-
-
-
-        // Save database notifications for in-app UI display
+        // Save database notifications for in-app UI display & emit via socket
         try {
             const Notification = require('../models/notification.model');
             const { getIO } = require('../utils/socketHelper'); // <--- Socket helper import kiya
             const io = getIO();
 
-            const notifPromises = assignees.map(async (emp) => {
+            const notifPromises = assignments.map(async (assign) => {
+                const empId = assign.assigneeId;
                 // 1. DB me save karein
                 await Notification.create({
-                    userId: emp._id,
+                    userId: empId,
                     title: "New Task Assigned 📋",
-                    description: `${creator.name} assigned you a task: "${task.title}"`,
+                    description: `${creatorName} assigned you a task: "${task.title}"`,
                     type: "alert",
-                    taskTitle: task.title
+                    taskTitle: task.title,
+                    taskId: task._id,
+                    assignmentId: assign._id
                 });
 
                 // 2. Us employee ke room me real-time emit karein
                 try {
-                    io.to(emp._id.toString()).emit("newNotification", {
+                    io.to(empId.toString()).emit("newNotification", {
                         title: "New Task Assigned 📋",
-                        description: `${creator.name} assigned you a task: "${task.title}"`,
+                        description: `${creatorName} assigned you a task: "${task.title}"`,
                         type: "alert",
-                        taskTitle: task.title
+                        taskTitle: task.title,
+                        taskId: task._id,
+                        assignmentId: assign._id
                     });
                 } catch (socketErr) {
-                    console.error(`Failed to emit task socket notification to ${emp._id}:`, socketErr);
+                    console.error(`Failed to emit task socket notification to ${empId}:`, socketErr);
                 }
             });
 
@@ -229,11 +231,42 @@ class TaskService {
             return taskObj;
         });
 
+        taskLists.sort((a, b) => {
+            const timeA = new Date(a.createdAt || 0).getTime();
+            const timeB = new Date(b.createdAt || 0).getTime();
+            return timeB - timeA;
+        });
+
         return taskLists;
     }
 
     async getMyTasks(loggedInUserId) {
         const assignments = await taskAssignmentRepository.find({ assigneeId: loggedInUserId });
+
+        const taskIds = assignments
+            .map(a => a.taskId?._id)
+            .filter(Boolean);
+
+        // Fetch all assignments for these tasks to identify co-assignees / all assignees
+        const allTaskAssignments = await taskAssignmentRepository.find({ taskId: { $in: taskIds } });
+
+        const assigneesByTaskId = {};
+        for (const a of allTaskAssignments) {
+            if (!a.taskId || !a.assigneeId) continue;
+            const tId = (a.taskId._id || a.taskId).toString();
+            if (!assigneesByTaskId[tId]) {
+                assigneesByTaskId[tId] = [];
+            }
+            assigneesByTaskId[tId].push({
+                _id: a.assigneeId._id,
+                name: a.assigneeId.name,
+                email: a.assigneeId.email,
+                role: a.assigneeId.role,
+                department: a.assigneeId.department,
+                user_id: a.assigneeId.user_id,
+                status: a.status
+            });
+        }
 
         const tasks = assignments.map(assignment => {
             if (!assignment.taskId) return null;
@@ -242,10 +275,19 @@ class TaskService {
             t.comment = assignment.comment;
             t.completedAt = assignment.completedAt;
             t.assignmentId = assignment._id;
+            t.assignedAt = assignment.assignedAt || assignment.createdAt || t.createdAt;
+            t.createdAt = assignment.createdAt || t.createdAt;
             t.dueTime = assignment.dueTime || t.dueTime || "10:00";
             t.progressUpdates = assignment.progressUpdates || [];
+            t.assignees = assigneesByTaskId[t._id.toString()] || [];
             return t;
         }).filter(Boolean);
+
+        tasks.sort((a, b) => {
+            const timeA = new Date(a.createdAt || a.assignedAt || 0).getTime();
+            const timeB = new Date(b.createdAt || b.assignedAt || 0).getTime();
+            return timeB - timeA;
+        });
 
         return tasks;
     }

@@ -125,7 +125,9 @@ class TaskAssignmentService {
                     title: "Task Status Updated 🔄",
                     description: `${assigneeName} updated task "${taskTitle}" to "${newStatus}"`,
                     type: "info",
-                    taskTitle: taskTitle
+                    taskTitle: taskTitle,
+                    taskId: updatedAssignment.taskId?._id || updatedAssignment.taskId,
+                    assignmentId: updatedAssignment._id
                 });
 
                 // 2. Assigner (Admin/Super Admin) ke room me real-time emit karein
@@ -134,7 +136,9 @@ class TaskAssignmentService {
                         title: "Task Status Updated 🔄",
                         description: `${assigneeName} updated task "${taskTitle}" to "${newStatus}"`,
                         type: "info",
-                        taskTitle: taskTitle
+                        taskTitle: taskTitle,
+                        taskId: updatedAssignment.taskId?._id || updatedAssignment.taskId,
+                        assignmentId: updatedAssignment._id
                     });
                 } catch (socketErr) {
                     console.error("Failed to emit status update socket notification:", socketErr);

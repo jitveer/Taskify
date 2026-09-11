@@ -11,7 +11,8 @@ router.use(authorize('admin'));
 
 router.get('/employeeList', employeeController.employeeList);
 router.post('/addEmployee', employeeController.addEmployee);
-router.patch('/updateEmployee/:id', employeeController.employeeUpdate);
+// Employee editing blocked for admin (Postman/API access disabled)
+// router.patch('/updateEmployee/:id', employeeController.employeeUpdate);
 router.delete('/deleteEmployee/:id', employeeController.employeeDelete);
 router.get('/allUser', employeeController.employeeList);
 

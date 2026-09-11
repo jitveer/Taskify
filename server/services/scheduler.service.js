@@ -28,6 +28,22 @@ const { sendPushNotification } = require('./push.service');
  * 4. Overdue Reminders (After deadline passed):
  *    - Sent daily at Morning 10:00 AM to BOTH Assignee and Assigner until marked "Completed".
  */
+const formatTime12Hour = (timeStr) => {
+    if (!timeStr) return "10:00 AM";
+    const str = timeStr.toString().trim();
+    if (str.toUpperCase().includes("AM") || str.toUpperCase().includes("PM")) return str;
+    const parts = str.split(":");
+    if (parts.length < 2) return str;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1].slice(0, 2).padStart(2, "0");
+    if (isNaN(hours)) return str;
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours === 0 ? 12 : hours;
+    const formattedHours = hours < 10 ? `0${hours}` : hours;
+    return `${formattedHours}:${minutes} ${ampm}`;
+};
+
 const checkTaskDeadlines = async () => {
     try {
         const now = new Date();
@@ -52,6 +68,7 @@ const checkTaskDeadlines = async () => {
             const assignedAt = new Date(assignment.assignedAt || assignment.createdAt || now);
             const dueDate = new Date(assignment.dueDate);
             const dueTimeStr = assignment.dueTime || assignment.taskId.dueTime || "10:00";
+            const dueTimeFormatted = formatTime12Hour(dueTimeStr);
             const [hours, minutes] = dueTimeStr.split(":").map(Number);
 
             // Construct exact deadline
@@ -96,7 +113,7 @@ const checkTaskDeadlines = async () => {
                         const assigneeNotif = {
                             userId: assignee._id,
                             title: "⏰ Overdue Task Alert",
-                            description: `Your assigned task "${taskTitle}" is overdue (Deadline was ${dueTimeStr}). Please complete and update your task status.`,
+                            description: `Your assigned task "${taskTitle}" is overdue (Deadline was ${dueTimeFormatted}). Please complete and update your task status.`,
                             type: "warning",
                             taskTitle: taskTitle
                         };
@@ -128,7 +145,7 @@ const checkTaskDeadlines = async () => {
                         const assignerNotif = {
                             userId: assigner._id,
                             title: "⚠️ Overdue Alert: Task Not Completed",
-                            description: `${assignee ? assignee.name : "Assignee"} has not completed the task "${taskTitle}" within the scheduled deadline (${dueTimeStr}).`,
+                            description: `${assignee ? assignee.name : "Assignee"} has not completed the task "${taskTitle}" within the scheduled deadline (${dueTimeFormatted}).`,
                             type: "warning",
                             taskTitle: taskTitle
                         };
@@ -169,12 +186,12 @@ const checkTaskDeadlines = async () => {
                 // DUE TODAY (Final Day Alert)
                 reminderTypeKey = `due_today_${todayDateStr}`;
                 reminderTitle = "⏰ Final Day Task Reminder";
-                reminderBody = `Task "${taskTitle}" is due today by ${dueTimeStr}. Please make sure to submit your work before the deadline.`;
+                reminderBody = `Task "${taskTitle}" is due today by ${dueTimeFormatted}. Please make sure to submit your work before the deadline.`;
             } else if (daysRemaining === 1) {
                 // 1 DAY LEFT / TOMORROW
                 reminderTypeKey = `1_day_left_${todayDateStr}`;
                 reminderTitle = "⏳ Task Due Tomorrow";
-                reminderBody = `Reminder: Task "${taskTitle}" is due tomorrow at ${dueTimeStr}. Please review your progress.`;
+                reminderBody = `Reminder: Task "${taskTitle}" is due tomorrow at ${dueTimeFormatted}. Please review your progress.`;
             } else if (daysRemaining === 2) {
                 // 2 DAYS LEFT
                 reminderTypeKey = `2_days_left_${todayDateStr}`;

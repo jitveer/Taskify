@@ -131,6 +131,8 @@ function Notifications() {
         }
 
         const queryParams = new URLSearchParams();
+        if (notif.taskId) queryParams.set("taskId", notif.taskId);
+        if (notif.assignmentId) queryParams.set("assignmentId", notif.assignmentId);
         if (notif.taskTitle) {
             queryParams.set("search", notif.taskTitle);
             // If it's a new task assignment notification, direct to Pending tab directly

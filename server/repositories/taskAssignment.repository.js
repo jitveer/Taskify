@@ -20,6 +20,7 @@ class TaskAssignmentRepository {
 
     async find(filter) {
         return await TaskAssignment.find(filter)
+            .sort({ createdAt: -1 })
             .populate({
                 path: "taskId",
                 populate: {

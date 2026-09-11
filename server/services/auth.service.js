@@ -37,7 +37,7 @@ const authLoginService = async (email, password, role) => {
 
 
     //generate token
-    const token = generatetoken(user._id, user.role, user.department)
+    const token = generatetoken(user._id, user.role, user.department, user.name);
 
     return {
         token,

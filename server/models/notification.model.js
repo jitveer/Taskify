@@ -23,6 +23,16 @@ const notificationSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    taskId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Task',
+        default: null
+    },
+    assignmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'TaskAssignment',
+        default: null
+    },
     read: {
         type: Boolean,
         default: false

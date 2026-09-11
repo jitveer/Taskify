@@ -112,6 +112,8 @@ function Header({ title, role }) {
         // Direct routing for tasks
         if (activeRole === "superadmin") {
             const queryParams = new URLSearchParams();
+            if (notif.taskId) queryParams.set("taskId", notif.taskId);
+            if (notif.assignmentId) queryParams.set("assignmentId", notif.assignmentId);
             if (notif.taskTitle) queryParams.set("search", notif.taskTitle);
             const qs = queryParams.toString();
             navigate(`/task-status${qs ? `?${qs}` : ''}`);
@@ -119,6 +121,8 @@ function Header({ title, role }) {
             const isStatusUpdate = notif.title && notif.title.includes("Status Updated");
             const targetPath = isStatusUpdate ? "/admin-task-status" : "/admin-my-tasks";
             const queryParams = new URLSearchParams();
+            if (notif.taskId) queryParams.set("taskId", notif.taskId);
+            if (notif.assignmentId) queryParams.set("assignmentId", notif.assignmentId);
             if (notif.taskTitle) {
                 queryParams.set("search", notif.taskTitle);
                 if (!isStatusUpdate) queryParams.set("status", "Pending");
@@ -127,6 +131,8 @@ function Header({ title, role }) {
             navigate(`${targetPath}${qs ? `?${qs}` : ''}`);
         } else {
             const queryParams = new URLSearchParams();
+            if (notif.taskId) queryParams.set("taskId", notif.taskId);
+            if (notif.assignmentId) queryParams.set("assignmentId", notif.assignmentId);
             if (notif.taskTitle) {
                 queryParams.set("search", notif.taskTitle);
                 queryParams.set("status", "Pending");

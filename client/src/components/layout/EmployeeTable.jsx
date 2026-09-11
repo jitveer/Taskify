@@ -280,15 +280,17 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 <td className="py-4 px-6 text-sm font-medium text-slate-600">{employee.department}</td>
                                 <td className="py-4 px-6">
                                     <div className="flex justify-center gap-2">
-                                        <button
-                                            onClick={() => editEmployee(employee)}
-                                            className={`${btnBg} text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm`}
-                                        >
-                                            Edit
-                                        </button>
+                                        {apiPrefix !== "/api/admin" && (
+                                            <button
+                                                onClick={() => editEmployee(employee)}
+                                                className={`${btnBg} text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm cursor-pointer`}
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => deleteEmployee(employee._id)}
-                                            className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition"
+                                            className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
                                         >
                                             Delete
                                         </button>
@@ -332,15 +334,17 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                         </div>
 
                         <div className="flex justify-end gap-2 pt-3 border-t border-slate-50">
-                            <button
-                                onClick={() => editEmployee(employee)}
-                                className={`${btnBg} text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm w-full md:w-auto`}
-                            >
-                                Edit
-                            </button>
+                            {apiPrefix !== "/api/admin" && (
+                                <button
+                                    onClick={() => editEmployee(employee)}
+                                    className={`${btnBg} text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm w-full md:w-auto cursor-pointer`}
+                                >
+                                    Edit
+                                </button>
+                            )}
                             <button
                                 onClick={() => deleteEmployee(employee._id)}
-                                className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold transition w-full md:w-auto"
+                                className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold transition w-full md:w-auto cursor-pointer"
                             >
                                 Delete
                             </button>

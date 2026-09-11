@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import customSwal, { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
 import { taskApi } from "../../services/api";
-import { X, Calendar, FileText, ClipboardList, FileCheck, Clock, Paperclip } from "lucide-react";
+import { formatTime12Hour } from "../../utils/timeFormatter";
+import { X, Calendar, FileText, ClipboardList, FileCheck, Clock, Paperclip, Users } from "lucide-react";
 
 function MyTaskTable({ color }) {
     const location = useLocation();
@@ -38,19 +39,38 @@ function MyTaskTable({ color }) {
                     status: t.status,
                     completedAt: t.completedAt
                 }));
-                setTaskList(normalizedTasks);
 
-                // If arriving from notification with searchFilter (task title), auto open task details and set Pending tab if applicable
-                const searchQ = new URLSearchParams(window.location.search).get("search");
-                if (searchQ) {
-                    const matched = normalizedTasks.find(t => t.title.toLowerCase().trim() === searchQ.toLowerCase().trim());
-                    if (matched) {
-                        setSelectedTask(matched);
-                        // If specific status param wasn't specified, switch to matched task's status tab
-                        const explicitStatus = new URLSearchParams(window.location.search).get("status");
-                        if (!explicitStatus && matched.status) {
-                            setStatusFilter(matched.status);
-                        }
+                // Sort tasks so newest tasks come first (by creation / assignment date and time)
+                const sortedTasks = [...normalizedTasks].sort((a, b) => {
+                    const timeA = new Date(a.createdAt || a.assignedAt || a.dueDate || 0).getTime();
+                    const timeB = new Date(b.createdAt || b.assignedAt || b.dueDate || 0).getTime();
+                    return timeB - timeA;
+                });
+                setTaskList(sortedTasks);
+
+                // If arriving from notification, prioritize exact ID match (taskId or assignmentId), then latest matching title
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetTaskId = urlParams.get("taskId");
+                const targetAssignmentId = urlParams.get("assignmentId");
+                const searchQ = urlParams.get("search");
+
+                let matched = null;
+                if (targetAssignmentId) {
+                    matched = sortedTasks.find(t => (t.assignmentId || t._id)?.toString() === targetAssignmentId);
+                }
+                if (!matched && targetTaskId) {
+                    matched = sortedTasks.find(t => (t._id || t.taskId)?.toString() === targetTaskId);
+                }
+                if (!matched && searchQ) {
+                    matched = sortedTasks.find(t => t.title.toLowerCase().trim() === searchQ.toLowerCase().trim());
+                }
+
+                if (matched) {
+                    setSelectedTask(matched);
+                    // If specific status param wasn't specified, switch to matched task's status tab
+                    const explicitStatus = urlParams.get("status");
+                    if (!explicitStatus && matched.status) {
+                        setStatusFilter(matched.status);
                     }
                 }
             }
@@ -329,7 +349,7 @@ function MyTaskTable({ color }) {
                                             <div className="flex flex-col">
                                                 <span>{new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                 <span className="text-[10px] text-slate-400 font-bold">
-                                                    ⏰ {task.dueTime || "10:00"}
+                                                    ⏰ {formatTime12Hour(task.dueTime)}
                                                 </span>
                                             </div>
                                         </td>
@@ -387,7 +407,7 @@ function MyTaskTable({ color }) {
                                         </p>
                                     )}                                    <p className="text-xs text-slate-500 mt-1.5 font-medium flex items-center gap-1.5">
                                         <span>Due: {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                                        <span className="text-[10px] font-bold text-slate-400">({task.dueTime || "10:00"})</span>
+                                        <span className="text-[10px] font-bold text-slate-400">({formatTime12Hour(task.dueTime)})</span>
                                     </p>
                                 </div>
 
@@ -513,6 +533,53 @@ function MyTaskTable({ color }) {
                                      </div>
                                  </div>
 
+                                 {/* Co-Assignees / Assigned Members Chips (Visible when multiple people are assigned or taskType is group/multi-assigned) */}
+                                 {selectedTask.assignees && selectedTask.assignees.length > 0 && (
+                                     <div>
+                                         <div className="flex items-center justify-between mb-1.5">
+                                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
+                                                 <Users className="w-3 h-3 text-slate-400" />
+                                                 <span>Assigned To ({selectedTask.assignees.length} {selectedTask.assignees.length === 1 ? 'Person' : 'People'})</span>
+                                             </span>
+                                             {selectedTask.assignees.length > 1 && (
+                                                 <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                                     Multi-Assignee Task
+                                                 </span>
+                                             )}
+                                         </div>
+
+                                         <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
+                                             {selectedTask.assignees.map((assignee, idx) => {
+                                                 const isCurrentUser = assignee._id === (JSON.parse(localStorage.getItem("user") || "{}").id || JSON.parse(localStorage.getItem("user") || "{}")._id);
+                                                 return (
+                                                     <div
+                                                         key={idx}
+                                                         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition shadow-2xs ${
+                                                             isCurrentUser
+                                                                 ? "bg-emerald-50 border-emerald-200 text-emerald-800 font-bold"
+                                                                 : "bg-white border-slate-200 text-slate-700 font-medium"
+                                                         }`}
+                                                     >
+                                                         <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold uppercase ${
+                                                             isCurrentUser ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
+                                                         }`}>
+                                                             {(assignee.name || "U").charAt(0)}
+                                                         </div>
+                                                         <span className="truncate max-w-[140px]">
+                                                             {assignee.name} {isCurrentUser && "(You)"}
+                                                         </span>
+                                                         {assignee.department && (
+                                                             <span className="text-[9px] uppercase font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                                 {assignee.department}
+                                                             </span>
+                                                         )}
+                                                     </div>
+                                                 );
+                                             })}
+                                         </div>
+                                     </div>
+                                 )}
+
                                  <div>
                                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Task Description</span>
                                      <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100 whitespace-pre-wrap">
@@ -544,7 +611,7 @@ function MyTaskTable({ color }) {
                                              })}
                                          </span>
                                          <span className="text-[10px] text-slate-400 font-bold ml-5 mt-0.5">
-                                             ⏰ {selectedTask.dueTime || "10:00"}
+                                             ⏰ {formatTime12Hour(selectedTask.dueTime)}
                                          </span>
                                      </div>
                                 </div>

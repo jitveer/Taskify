@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
-import { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
-import { User, Mail, Briefcase, Shield, Edit2, Check, LogOut } from "lucide-react";
-import axios from "axios";
+import { showSuccess, showConfirm } from "../../components/layout/alerts";
+import { User, Mail, Briefcase, Shield, LogOut } from "lucide-react";
 
 function EmployeeProfile() {
     const navigate = useNavigate();
@@ -34,8 +33,7 @@ function EmployeeProfile() {
         }
     };
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentUser, setCurrentUser] = useState(() => {
+    const [currentUser] = useState(() => {
         return JSON.parse(localStorage.getItem("user")) || {};
     });
 
@@ -54,46 +52,6 @@ function EmployeeProfile() {
             department: currentUser.department || "N/A"
         });
     }, [currentUser]);
-
-    const handleSave = async (e) => {
-        e.preventDefault();
-        if (!formData.name.trim() || !formData.email.trim()) {
-            showError("Name and Email cannot be empty!", "Validation Error");
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem("token");
-            const response = await axios.patch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/employee/update-profile`,
-                { name: formData.name, email: formData.email },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-            if (response.data && response.data.success) {
-                const updatedUser = {
-                    ...currentUser,
-                    ...response.data.user
-                };
-
-                localStorage.setItem("user", JSON.stringify(updatedUser));
-                setCurrentUser(updatedUser);
-                setIsEditing(false);
-
-                // Notify other components (like Header)
-                window.dispatchEvent(new Event("profileUpdated"));
-
-                await showSuccess("Your profile has been successfully updated!", "Profile Updated");
-            }
-        } catch (error) {
-            console.error("Update profile error:", error);
-            showError(error.response?.data?.message || "Failed to update profile in database.", "Update Failed");
-        }
-    };
 
     return (
         <div className="flex flex-col md:flex-row bg-[#f8fafc] min-h-screen font-sans text-slate-800">
@@ -123,36 +81,18 @@ function EmployeeProfile() {
                                         {formData.role}
                                     </p>
                                 </div>
-                                {!isEditing && (
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        className="self-center md:self-auto py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-100"
-                                    >
-                                        <Edit2 size={14} /> Edit Profile
-                                    </button>
-                                )}
                             </div>
 
-                            <form onSubmit={handleSave} className="mt-8 space-y-6">
+                            <div className="mt-8 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
                                     {/* Name Field */}
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                             <User size={13} className="text-emerald-500" /> Full Name
                                         </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={formData.name}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition font-medium"
-                                                placeholder="Enter full name"
-                                            />
-                                        ) : (
-                                            <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
-                                                {formData.name}
-                                            </p>
-                                        )}
+                                        <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
+                                            {formData.name}
+                                        </p>
                                     </div>
 
                                     {/* Email Field */}
@@ -160,19 +100,9 @@ function EmployeeProfile() {
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                             <Mail size={13} className="text-emerald-500" /> Email Address
                                         </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition font-medium"
-                                                placeholder="Enter email address"
-                                            />
-                                        ) : (
-                                            <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
-                                                {formData.email}
-                                            </p>
-                                        )}
+                                        <p className="text-sm font-semibold text-slate-700 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
+                                            {formData.email}
+                                        </p>
                                     </div>
 
                                     {/* Department */}
@@ -180,7 +110,7 @@ function EmployeeProfile() {
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                             <Briefcase size={13} className="text-slate-400" /> Department
                                         </label>
-                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-0 rounded-xl border border-slate-100 select-none">
+                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-3 rounded-xl border border-slate-100 select-none uppercase">
                                             {formData.department}
                                         </p>
                                     </div>
@@ -190,30 +120,12 @@ function EmployeeProfile() {
                                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                             <Shield size={13} className="text-slate-400" /> Role
                                         </label>
-                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-0 rounded-xl border border-slate-100 select-none">
+                                        <p className="text-sm font-semibold text-slate-500 bg-slate-50/50 px-4 py-3 rounded-xl border border-slate-100 select-none uppercase">
                                             {formData.role}
                                         </p>
                                     </div>
                                 </div>
-
-                                {isEditing && (
-                                    <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsEditing(false)}
-                                            className="px-5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-200"
-                                        >
-                                            <Check size={14} /> Save Changes
-                                        </button>
-                                    </div>
-                                )}
-                            </form>
+                            </div>
 
 
                             {/* Mobile View Logout Button (Only visible on mobile screens) */}
@@ -226,10 +138,6 @@ function EmployeeProfile() {
                                     <LogOut size={16} /> Logout
                                 </button>
                             </div>
-
-
-
-
                         </div>
                     </div>
                 </div>

@@ -12,6 +12,7 @@ router.use(authMiddleware);
 
 router.get("/my-tasks", authorize('employee', 'admin', 'superadmin'), taskController.getMyTasks);
 router.patch("/update-status/:id", authorize('employee', 'admin', 'superadmin'), upload.single("attachment"), taskController.updateTaskStatus);
-router.patch("/update-profile", authorize('employee'), employeeController.updateSelfProfile);
+// Profile editing blocked for employee (Postman/API access disabled)
+// router.patch("/update-profile", authorize('employee'), employeeController.updateSelfProfile);
 
 module.exports = router;
