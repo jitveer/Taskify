@@ -41,7 +41,7 @@ function AdminList() {
         password: "",
         mobile: "",
         department: "",
-        role: ""
+        role: "admin"
     });
 
     const menuItems = [
@@ -98,9 +98,7 @@ function AdminList() {
             validationErrors.department = "Please select department";
         }
 
-        if (!formData.role) {
-            validationErrors.role = "Please select role";
-        }
+        formData.role = "admin";
 
         setErrors(validationErrors);
 
@@ -110,15 +108,27 @@ function AdminList() {
 
 
         try {
+            const payload = {
+                ...formData,
+                role: "admin",
+                email: formData.email?.trim()?.toLowerCase(),
+                mobile: formData.mobile?.trim(),
+                name: formData.name?.trim(),
+                department: formData.department?.trim()?.toLowerCase()
+            };
+
+            // If editing and password was left blank, do not send empty password field
+            if (editingId && (!payload.password || payload.password.trim() === "")) {
+                delete payload.password;
+            }
+
+            const token = localStorage.getItem("token");
 
             // UPDATE EXISTING ADMIN
             if (editingId) {
-
-                const token = localStorage.getItem("token");
-
                 await axios.patch(
                     `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/adminLists/${editingId}`,
-                    formData,
+                    payload,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -127,17 +137,12 @@ function AdminList() {
                 );
 
                 showSuccess("Admin Updated Successfully");
-
             }
-
             // ADD NEW ADMIN
             else {
-
-                const token = localStorage.getItem("token");
-
                 await axios.post(
                     `${import.meta.env.VITE_BACKEND_URL}/api/superadmin/addadmin`,
-                    formData,
+                    payload,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -161,7 +166,7 @@ function AdminList() {
                 password: "",
                 mobile: "",
                 department: "",
-                role: ""
+                role: "admin"
             });
 
             // REFRESH TABLE
@@ -205,9 +210,11 @@ function AdminList() {
     }, []);
 
     const filteredAdmins = admins.filter((admin) =>
-        admin.name.toLowerCase().includes(search.toLowerCase()) ||
-        admin.email.toLowerCase().includes(search.toLowerCase()) ||
-        admin.department.toLowerCase().includes(search.toLowerCase())
+        (admin.name && admin.name.toLowerCase().includes(search.toLowerCase())) ||
+        (admin.email && admin.email.toLowerCase().includes(search.toLowerCase())) ||
+        (admin.department && admin.department.toLowerCase().includes(search.toLowerCase())) ||
+        (admin.mobile && admin.mobile.toString().toLowerCase().includes(search.toLowerCase())) ||
+        (admin.phone && admin.phone.toString().toLowerCase().includes(search.toLowerCase()))
     );
 
 
@@ -265,11 +272,25 @@ function AdminList() {
             password: "",
             mobile: admin.mobile || "",
             department: admin.department || "",
-            role: admin.role || ""
+            role: admin.role || "admin"
         });
 
         setEditingId(admin._id);
 
+        setShowPopup(true);
+    };
+
+    const handleOpenAddModal = () => {
+        setEditingId(null);
+        setFormData({
+            name: "",
+            email: "",
+            password: "",
+            mobile: "",
+            department: "",
+            role: "admin"
+        });
+        setErrors({});
         setShowPopup(true);
     };
 
@@ -297,14 +318,14 @@ function AdminList() {
                         <div className="relative flex-1 max-w-[350px]">
                             <input
                                 type="text"
-                                placeholder="Search administrators..."
+                                placeholder="Search by name, email, mobile, department..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition shadow-sm font-medium"
                             />
                         </div>
 
-                        <button onClick={() => setShowPopup(true)} className="w-[20%] sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-8 py-3.5 rounded-2xl font-bold transition duration-300 shadow-lg shadow-purple-200 active:scale-[0.98] whitespace-nowrap text-xs sm:text-base text-center flex justify-center items-center">
+                        <button onClick={handleOpenAddModal} className="w-[20%] sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-3 sm:px-8 py-3.5 rounded-2xl font-bold transition duration-300 shadow-lg shadow-purple-200 active:scale-[0.98] whitespace-nowrap text-xs sm:text-base text-center flex justify-center items-center">
                             <span className="block sm:hidden">+ ADD</span>
                             <span className="hidden sm:block">+ Add New Admin</span>
                         </button>
@@ -508,7 +529,7 @@ function AdminList() {
                                         </div>
 
 
-                                        <div className="relative pb-0 sm:pb-6">
+                                        <div className="relative pb-0 sm:pb-6 md:col-span-2">
                                             <select
                                                 name="department"
                                                 value={formData.department}
@@ -540,27 +561,6 @@ function AdminList() {
                                             {errors.department && (
                                                 <p className="absolute bottom-0 left-1 text-red-500 text-xs font-semibold">
                                                     {errors.department}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="relative pb-0 sm:pb-6">
-                                            <select
-                                                name="role"
-                                                value={formData.role}
-                                                onChange={handleChange}
-                                                className={`border p-3 rounded-xl w-full bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition duration-150 ${errors.role ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-slate-200"
-                                                    }`}
-                                            >
-
-                                                <option value="">Select Role</option>
-                                                <option value="superadmin">Super Admin</option>
-                                                <option value="admin">Admin</option>
-                                            </select>
-
-                                            {errors.role && (
-                                                <p className="absolute bottom-0 left-1 text-red-500 text-xs font-semibold">
-                                                    {errors.role}
                                                 </p>
                                             )}
                                         </div>

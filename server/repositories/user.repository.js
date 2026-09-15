@@ -10,6 +10,9 @@ class UserRepository {
         if (options.excludePassword) {
             query = query.select("-password");
         }
+        if (options.sort) {
+            query = query.sort(options.sort);
+        }
         return await query;
     }
 

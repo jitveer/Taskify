@@ -7,6 +7,16 @@ class UserService {
     }
 
     async addAdmin(adminData) {
+        // Enforce role strictly as admin (security protection against privilege escalation)
+        adminData.role = "admin";
+
+        if (adminData.department) {
+            adminData.department = adminData.department.toString().trim().toLowerCase();
+        }
+        if (adminData.name) {
+            adminData.name = adminData.name.toString().trim();
+        }
+
         // Check if email already exists
         if (adminData.email) {
             const existingEmail = await userRepository.findOne({ email: adminData.email.trim().toLowerCase() });
@@ -30,18 +40,30 @@ class UserService {
         }
 
         let nextUserId = 1000;
-        if (adminData.role === "admin") {
-            const lastUser = await userRepository.findOne(
-                { role: "admin", user_id: { $gte: 1000, $lt: 2000 } },
-                { sort: { user_id: -1 } }
-            );
-            nextUserId = lastUser ? Number(lastUser.user_id) + 1 : 1000;
-        }
-        adminData.user_id = nextUserId;
+        const lastUser = await userRepository.findOne(
+            { role: "admin", user_id: { $gte: "1000", $lt: "2000" } },
+            { sort: { user_id: -1 } }
+        );
+        nextUserId = lastUser ? Number(lastUser.user_id) + 1 : 1000;
+
+        adminData.user_id = nextUserId.toString();
         return await userRepository.create(adminData);
     }
 
     async editAdmin(adminId, adminNewData) {
+        // Enforce role strictly as admin
+        adminNewData.role = "admin";
+
+        if (adminNewData.department) {
+            adminNewData.department = adminNewData.department.toString().trim().toLowerCase();
+        }
+        if (adminNewData.name) {
+            adminNewData.name = adminNewData.name.toString().trim();
+        }
+        if (!adminNewData.password || adminNewData.password.trim() === "") {
+            delete adminNewData.password;
+        }
+
         // Check if email already exists on other users
         if (adminNewData.email) {
             const existingEmail = await userRepository.findOne({
@@ -135,7 +157,7 @@ class UserService {
         if (currentUser.role === "admin") {
             filter.department = currentUser.department;
         }
-        return await userRepository.find(filter, { excludePassword: true });
+        return await userRepository.find(filter, { excludePassword: true, sort: { createdAt: -1 } });
     }
 
     async deleteEmployee(employeeId, currentUser) {
@@ -171,6 +193,11 @@ class UserService {
                 throw error;
             }
             employeeUpdateData.email = employeeUpdateData.email.trim().toLowerCase();
+        }
+
+        // If password is not provided or empty string, do not overwrite existing password
+        if (!employeeUpdateData.password || employeeUpdateData.password.trim() === "") {
+            delete employeeUpdateData.password;
         }
 
         // Check duplicate mobile on update

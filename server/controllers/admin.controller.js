@@ -26,9 +26,10 @@ const addAdmin = async (req, res) => {
             data: newUser
         });
     } catch (e) {
-        return res.status(500).json({
+        console.error("addAdmin Error:", e);
+        return res.status(e.statusCode || 400).json({
             success: false,
-            message: e.message
+            message: e.message || "Failed to add admin"
         });
     }
 }

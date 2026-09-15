@@ -19,7 +19,15 @@ export const getNotifications = async () => {
                 id: n._id,
                 title: n.title,
                 description: n.description,
-                time: new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " " + new Date(n.createdAt).toLocaleDateString(),
+                time: (() => {
+                    const d = new Date(n.createdAt);
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    const formattedDate = `${day}/${month}/${year}`;
+                    const formattedTime = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                    return `${formattedTime} ${formattedDate}`;
+                })(),
                 read: n.read,
                 type: n.type,
                 taskTitle: n.taskTitle,

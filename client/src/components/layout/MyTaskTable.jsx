@@ -72,6 +72,14 @@ function MyTaskTable({ color }) {
                     if (!explicitStatus && matched.status) {
                         setStatusFilter(matched.status);
                     }
+                } else {
+                    // If modal is currently open, keep selectedTask in sync with latest fresh data
+                    setSelectedTask(prev => {
+                        if (!prev) return null;
+                        const targetId = (prev.assignmentId || prev._id)?.toString();
+                        const fresh = sortedTasks.find(t => (t.assignmentId || t._id)?.toString() === targetId);
+                        return fresh || prev;
+                    });
                 }
             }
         } catch (error) {
@@ -456,8 +464,8 @@ function MyTaskTable({ color }) {
                                  onClick={() => setSelectedTask(null)}
                                  className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200/60 transition flex justify-center items-center cursor-pointer shadow-2xs"
                              >
-                                 <X className="w-4 h-4" />
-                             </button>
+                                    <X className="w-4 h-4" />
+                                </button>
                          </div>
 
                          {/* Segmented Navigation Tabs */}
@@ -726,8 +734,27 @@ function MyTaskTable({ color }) {
                         )}
 
                         {/* Modal Footer */}
-                        <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex justify-end">
+                        <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex justify-end items-center gap-2">
                             <button
+                                type="button"
+                                disabled={selectedTask.status === "Completed"}
+                                onClick={() => {
+                                    const origIndex = filteredTasks.findIndex(t => (t.assignmentId || t._id) === (selectedTask.assignmentId || selectedTask._id));
+                                    if (origIndex !== -1) {
+                                        handleUpdateStatus(origIndex);
+                                    }
+                                }}
+                                className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition shadow-sm flex items-center gap-1.5 cursor-pointer ${
+                                    selectedTask.status === "Completed"
+                                        ? "bg-slate-400 cursor-not-allowed opacity-60"
+                                        : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
+                                }`}
+                            >
+                                <span>Update Status</span>
+                            </button>
+
+                            <button
+                                type="button"
                                 onClick={() => setSelectedTask(null)}
                                 className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 transition shadow-2xs cursor-pointer"
                             >

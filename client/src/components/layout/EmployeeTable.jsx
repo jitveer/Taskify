@@ -65,7 +65,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
             employee_id: employee.user_id || "",
             name: employee.name || "",
             email: employee.email || "",
-            password: employee.password || "",
+            password: "",
             mobile: employee.mobile || "",
             department: employee.department || "",
             role: employee.role || ""
@@ -130,9 +130,18 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
             validationErrors.mobile = "Enter valid 10 digit mobile number";
         }
 
-        if (!passwordRegex.test(formData.password)) {
-            validationErrors.password =
-                "Password must contain uppercase, lowercase, number and special character";
+        if (!editingId) {
+            if (!formData.password) {
+                validationErrors.password = "Password is required";
+            } else if (!passwordRegex.test(formData.password)) {
+                validationErrors.password =
+                    "Password must contain uppercase, lowercase, number and special character";
+            }
+        } else {
+            if (formData.password && !passwordRegex.test(formData.password)) {
+                validationErrors.password =
+                    "Password must contain uppercase, lowercase, number and special character";
+            }
         }
 
         if (!formData.department) {
@@ -151,6 +160,11 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
 
 
         try {
+            const payload = { ...formData };
+            if (editingId && (!payload.password || payload.password.trim() === "")) {
+                delete payload.password;
+            }
+
             if (editingId) {
                 // update employee
                 const token = localStorage.getItem("token");
@@ -160,7 +174,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
 
                 await axios.patch(
                     updateUrl,
-                    formData,
+                    payload,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -175,7 +189,7 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
 
                 await axios.post(
                     `${import.meta.env.VITE_BACKEND_URL}${apiPrefix}/addEmployee`,
-                    formData,
+                    payload,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -202,12 +216,35 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
         }
     };
 
-    const filteredEmployees = employees.filter((emp) => {
+
+    const formatCreatedDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return "N/A";
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+        const formattedTime = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        return { date: formattedDate, time: formattedTime };
+    };
+
+    // Sort newest employees first by createdAt / _id
+    const sortedEmployees = [...employees].sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return (b._id || "").localeCompare(a._id || "");
+    });
+
+    const filteredEmployees = sortedEmployees.filter((emp) => {
         const matchesSearch =
-            (emp.name || "").toLowerCase().includes(search.toLowerCase()) ||
-            (emp.email || "").toLowerCase().includes(search.toLowerCase()) ||
-            (emp.department || "").toLowerCase().includes(search.toLowerCase()) ||
-            String(emp.user_id || "").toLowerCase().includes(search.toLowerCase());
+            (emp.name && emp.name.toLowerCase().includes(search.toLowerCase())) ||
+            (emp.email && emp.email.toLowerCase().includes(search.toLowerCase())) ||
+            (emp.department && emp.department.toLowerCase().includes(search.toLowerCase())) ||
+            (emp.mobile && emp.mobile.toString().toLowerCase().includes(search.toLowerCase())) ||
+            (emp.phone && emp.phone.toString().toLowerCase().includes(search.toLowerCase())) ||
+            (emp.user_id && String(emp.user_id).toLowerCase().includes(search.toLowerCase()));
 
         const matchesDepartment = selectedDepartment === "" ||
             (emp.department || "").toLowerCase() === selectedDepartment.toLowerCase();
@@ -219,22 +256,22 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
     const btnBg = color === "blue" ? "bg-blue-600 hover:bg-blue-700" : "bg-purple-600 hover:bg-purple-700";
 
     return (
-        <div className="p-4 lg:p-8">
+        <div className="p-3 sm:p-4 lg:p-8 max-w-7xl mx-auto">
             {/* Top Section - Sticky below header */}
-            <div className="sticky top-[73px] z-30 bg-[#f8fafc]/90 backdrop-blur-md py-3 -mt-3 mb-4 flex flex-col lg:flex-row justify-between items-center gap-4">
-                <div className="flex flex-row gap-2 sm:gap-4 w-full lg:w-auto">
+            <div className="sticky top-[73px] z-30 bg-[#f8fafc]/95 backdrop-blur-md py-3 -mt-3 mb-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <div className="flex flex-row gap-2 sm:gap-4 w-full sm:w-auto flex-1 max-w-2xl">
                     <input
                         type="text"
-                        placeholder="Search..."
+                        placeholder="Search by name, email, mobile..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className={`w-[65%] sm:w-[320px] bg-white border border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:ring-2 shadow-xs ${focusRing}`}
+                        className={`w-[60%] sm:w-72 md:w-80 bg-white border border-gray-300 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:ring-2 shadow-xs ${focusRing}`}
                     />
 
                     <select
                         value={selectedDepartment}
                         onChange={(e) => setSelectedDepartment(e.target.value)}
-                        className={`w-[35%] sm:w-[200px] border border-gray-300 bg-white rounded-xl px-2 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:ring-2 truncate shadow-xs ${focusRing}`}
+                        className={`w-[40%] sm:w-44 border border-gray-300 bg-white rounded-xl px-2 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:ring-2 truncate shadow-xs ${focusRing}`}
                     >
                         <option value="">All Depts</option>
                         <option value="csr">CSR</option>
@@ -260,97 +297,133 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                     <thead className="bg-slate-50">
                         <tr>
                             <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Sl.No</th>
-                            <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Employee ID</th>
-                            <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Name</th>
-                            <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Email</th>
-                            <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Phone</th>
+                            <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Employee</th>
+                            <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Contact Details</th>
                             <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Department</th>
+                            <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100">Created Date & Time</th>
                             <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
 
-                        {filteredEmployees.map((employee, index) => (
-                            <tr key={index} className="border-b border-slate-50 hover:bg-slate-50 transition last:border-none">
-                                <td className="py-4 px-6 text-sm text-slate-500 font-medium">{index + 1}</td>
-                                <td className="py-4 px-6 text-sm text-slate-500">{employee.user_id}</td>
-                                <td className="py-4 px-6 text-sm font-bold text-slate-800">{employee.name}</td>
-                                <td className="py-4 px-6 text-sm text-slate-500">{employee.email}</td>
-                                <td className="py-4 px-6 text-sm text-slate-500">Mobile: {employee.mobile || "N/A"}</td>
-                                <td className="py-4 px-6 text-sm font-medium text-slate-600">{employee.department}</td>
-                                <td className="py-4 px-6">
-                                    <div className="flex justify-center gap-2">
-                                        {apiPrefix !== "/api/admin" && (
-                                            <button
-                                                onClick={() => editEmployee(employee)}
-                                                className={`${btnBg} text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm cursor-pointer`}
-                                            >
-                                                Edit
-                                            </button>
+                        {filteredEmployees.map((employee, index) => {
+                            const createdInfo = formatCreatedDate(employee.createdAt);
+                            return (
+                                <tr key={employee._id || index} className="border-b border-slate-50 hover:bg-slate-50 transition last:border-none">
+                                    <td className="py-4 px-6 text-sm text-slate-500 font-medium">{index + 1}</td>
+                                    <td className="py-4 px-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-full bg-${color === 'blue' ? 'blue' : 'purple'}-100 text-${color === 'blue' ? 'blue' : 'purple'}-600 flex items-center justify-center font-bold text-sm shrink-0`}>
+                                                {(employee.name || "E").charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-800">{employee.name}</p>
+                                                <p className="text-xs text-slate-400 font-semibold">{employee.user_id}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <p className="text-sm text-slate-700 font-medium">{employee.email}</p>
+                                        <p className="text-xs text-slate-500 font-normal mt-0.5">Mobile: {employee.mobile || employee.phone || "N/A"}</p>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-semibold uppercase tracking-wider rounded-md">
+                                            {employee.department}
+                                        </span>
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        {createdInfo !== "N/A" ? (
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-700">{createdInfo.date}</p>
+                                                <p className="text-xs text-slate-400 font-medium">{createdInfo.time}</p>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-slate-400">N/A</span>
                                         )}
-                                        <button
-                                            onClick={() => deleteEmployee(employee._id)}
-                                            className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="py-4 px-6">
+                                        <div className="flex justify-center gap-2">
+                                            {apiPrefix !== "/api/admin" && (
+                                                <button
+                                                    onClick={() => editEmployee(employee)}
+                                                    className={`${btnBg} text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm cursor-pointer`}
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => deleteEmployee(employee._id)}
+                                                className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
 
             {/* Mobile Cards */}
-            <div className="lg:hidden flex flex-col gap-4 bg-slate-50/50 p-2 -mx-4 lg:mx-0">
-                {filteredEmployees.map((employee, index) => (
-                    <div key={index} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-2 relative">
-                        <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full bg-${color === 'blue' ? 'blue' : 'purple'}-100 text-${color === 'blue' ? 'blue' : 'purple'}-600 flex justify-center items-center font-bold text-sm`}>
-                                    {(employee.name || "E").charAt(0)}
+            <div className="lg:hidden flex flex-col gap-3.5">
+                {filteredEmployees.map((employee, index) => {
+                    const createdInfo = formatCreatedDate(employee.createdAt);
+                    return (
+                        <div key={employee._id || index} className="bg-white p-4 sm:p-5 rounded-2xl shadow-xs border border-slate-100 flex flex-col gap-3 relative">
+                            <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full bg-${color === 'blue' ? 'blue' : 'purple'}-100 text-${color === 'blue' ? 'blue' : 'purple'}-600 flex justify-center items-center font-bold text-sm shrink-0`}>
+                                        {(employee.name || "E").charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 leading-tight">{employee.name}</h3>
+                                        <p className="text-xs text-slate-500 font-medium">{employee.user_id}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Department</span>
+                                    <span className="font-semibold text-slate-700 uppercase text-xs">{employee.department}</span>
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800 leading-tight">{employee.name}</h3>
-                                    <p className="text-xs text-slate-500 font-medium">{employee.user_id}</p>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Mobile</span>
+                                    <span className="font-semibold text-slate-700 text-xs sm:text-sm">{employee.mobile || employee.phone || "N/A"}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Email</span>
+                                    <span className="font-medium text-slate-700 truncate block text-xs sm:text-sm" title={employee.email}>{employee.email}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Created On</span>
+                                    <span className="font-medium text-slate-700 text-xs sm:text-sm block">
+                                        {createdInfo !== "N/A" ? `${createdInfo.date} • ${createdInfo.time}` : "N/A"}
+                                    </span>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Department</span>
-                                <span className="font-medium text-slate-700">{employee.department}</span>
-                            </div>
-                            <div>
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Mobile</span>
-                                <span className="font-medium text-slate-700">{employee.mobile || "N/A"}</span>
-                            </div>
-                            <div className="col-span-2">
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Email</span>
-                                <span className="font-medium text-slate-700 truncate block">{employee.email}</span>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-3 border-t border-slate-50">
-                            {apiPrefix !== "/api/admin" && (
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-50">
+                                {apiPrefix !== "/api/admin" && (
+                                    <button
+                                        onClick={() => editEmployee(employee)}
+                                        className={`${btnBg} text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm flex-1 sm:flex-initial cursor-pointer`}
+                                    >
+                                        Edit
+                                    </button>
+                                )}
                                 <button
-                                    onClick={() => editEmployee(employee)}
-                                    className={`${btnBg} text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm w-full md:w-auto cursor-pointer`}
+                                    onClick={() => deleteEmployee(employee._id)}
+                                    className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-xs font-bold transition flex-1 sm:flex-initial cursor-pointer"
                                 >
-                                    Edit
+                                    Delete
                                 </button>
-                            )}
-                            <button
-                                onClick={() => deleteEmployee(employee._id)}
-                                className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold transition w-full md:w-auto cursor-pointer"
-                            >
-                                Delete
-                            </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {showModal && (
@@ -436,13 +509,13 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 {/* Password */}
                                 <div className="relative pb-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Password
+                                        Password {editingId && <span className="text-xs font-normal text-slate-400">(leave blank to keep unchanged)</span>}
                                     </label>
 
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
-                                        placeholder="Enter Password"
+                                        placeholder={editingId ? "Leave blank to keep unchanged" : "Enter Password"}
                                         value={formData.password}
                                         onChange={handleChange}
                                         className={`w-full border bg-slate-50 p-3 rounded-xl
