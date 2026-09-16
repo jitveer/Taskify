@@ -394,8 +394,8 @@ function TaskStatusTable({ color, apiPrefix }) {
 
     const activeColor = colorClasses[color] || colorClasses.purple;
 
-    // Filter tasks based on all criteria
-    const filteredTasks = useMemo(() => {
+    // Base filtered tasks without status filter (used for top metric cards and status counts)
+    const baseFilteredTasks = useMemo(() => {
         return tasks.filter((task) => {
             // 1. Search Query
             const q = searchQuery.toLowerCase().trim();
@@ -422,20 +422,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                 matchesAssignee = task.assignments?.some(a => (a.assignee?._id || a.assignee)?.toString() === assigneeFilter);
             }
 
-            // 4. Status Filter
-            let matchesStatus = true;
-            if (statusFilter !== "All") {
-                if (assigneeFilter !== "All") {
-                    // Check status for that specific assignee
-                    const userAssign = task.assignments?.find(a => (a.assignee?._id || a.assignee)?.toString() === assigneeFilter);
-                    matchesStatus = userAssign ? (userAssign.status || "").toLowerCase() === statusFilter.toLowerCase() : false;
-                } else {
-                    const hasStatus = task.assignments?.some(a => (a.status || "").toLowerCase() === statusFilter.toLowerCase()) || (task.status || "").toLowerCase() === statusFilter.toLowerCase();
-                    matchesStatus = hasStatus;
-                }
-            }
-
-            // 5. Date-wise Calendar Filter
+            // 4. Date-wise Calendar Filter
             let matchesDate = true;
             if (startDate || endDate) {
                 const rawDate = dateBasis === "due"
@@ -457,13 +444,43 @@ function TaskStatusTable({ color, apiPrefix }) {
                 }
             }
 
-            return matchesSearch && matchesType && matchesAssignee && matchesStatus && matchesDate;
+            return matchesSearch && matchesType && matchesAssignee && matchesDate;
+        });
+    }, [tasks, searchQuery, taskTypeFilter, assigneeFilter, dateBasis, startDate, endDate]);
+
+    // Filter tasks based on all criteria including status filter (for table rows)
+    const filteredTasks = useMemo(() => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        return baseFilteredTasks.filter((task) => {
+            if (statusFilter === "All") return true;
+
+            if (statusFilter.toLowerCase() === "overdue") {
+                if (assigneeFilter !== "All") {
+                    const userAssign = task.assignments?.find(a => (a.assignee?._id || a.assignee)?.toString() === assigneeFilter);
+                    const isCompleted = (userAssign?.status || "").toLowerCase() === "completed";
+                    return !isCompleted && task.dueDate && new Date(task.dueDate) < now;
+                } else {
+                    const isCompleted = task.assignments?.length > 0 && task.assignments.every(a => (a.status || "").toLowerCase() === "completed");
+                    return !isCompleted && task.dueDate && new Date(task.dueDate) < now;
+                }
+            }
+
+            if (assigneeFilter !== "All") {
+                // Check status for that specific assignee
+                const userAssign = task.assignments?.find(a => (a.assignee?._id || a.assignee)?.toString() === assigneeFilter);
+                return userAssign ? (userAssign.status || "").toLowerCase() === statusFilter.toLowerCase() : false;
+            } else {
+                const hasStatus = task.assignments?.some(a => (a.status || "").toLowerCase() === statusFilter.toLowerCase()) || (task.status || "").toLowerCase() === statusFilter.toLowerCase();
+                return hasStatus;
+            }
         }).sort((a, b) => {
             const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
             const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
             return timeB - timeA;
         });
-    }, [tasks, searchQuery, taskTypeFilter, assigneeFilter, statusFilter, dateBasis, startDate, endDate]);
+    }, [baseFilteredTasks, statusFilter, assigneeFilter]);
 
     // Selected Assignee Info
     const selectedAssigneeData = useMemo(() => {
@@ -482,7 +499,7 @@ function TaskStatusTable({ color, apiPrefix }) {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
 
-        filteredTasks.forEach(t => {
+        baseFilteredTasks.forEach(t => {
             if (assigneeFilter !== "All") {
                 const a = t.assignments?.find(asg => (asg.assignee?._id || asg.assignee)?.toString() === assigneeFilter);
                 if (a) {
@@ -533,7 +550,7 @@ function TaskStatusTable({ color, apiPrefix }) {
             overdue,
             rate
         };
-    }, [filteredTasks, assigneeFilter]);
+    }, [baseFilteredTasks, assigneeFilter]);
 
     return (
         <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8 space-y-6">
@@ -623,7 +640,11 @@ function TaskStatusTable({ color, apiPrefix }) {
 
                 {/* Overdue */}
                 <div
-                    className="min-w-[130px] sm:min-w-0 flex-1 bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-slate-100 hover:border-red-200 transition-all duration-200 flex flex-col justify-between group shrink-0"
+                    onClick={() => setStatusFilter(statusFilter === "Overdue" ? "All" : "Overdue")}
+                    className={`min-w-[130px] sm:min-w-0 flex-1 relative overflow-hidden bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border transition-all duration-200 cursor-pointer flex flex-col justify-between group shrink-0 ${statusFilter === "Overdue"
+                        ? "border-red-500 shadow-xs ring-2 ring-red-500/20 bg-red-50/20"
+                        : "border-slate-100 hover:border-red-200 hover:shadow-xs"
+                        }`}
                 >
                     <div className="flex items-center justify-between">
                         <span className="text-[10px] sm:text-[11px] font-bold text-red-600 uppercase tracking-wider">Overdue</span>
@@ -1581,7 +1602,12 @@ function TaskStatusTable({ color, apiPrefix }) {
                                     {/* Selected Assignee Progress Timeline */}
                                     {currentAssignee ? (
                                         (() => {
-                                            const updates = currentAssignee.progressUpdates || [];
+                                            const rawUpdates = currentAssignee.progressUpdates || [];
+                                            const updatesWithNumber = rawUpdates.map((update, idx) => ({
+                                                ...update,
+                                                reportNumber: idx + 1
+                                            }));
+                                            const sortedUpdates = [...updatesWithNumber].reverse();
 
                                             return (
                                                 <div className="flex flex-col gap-3">
@@ -1601,22 +1627,22 @@ function TaskStatusTable({ color, apiPrefix }) {
                                                                 {currentAssignee.status}
                                                             </span>
                                                             <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">
-                                                                {updates.length}/18 Used
+                                                                {rawUpdates.length}/18 Used
                                                             </span>
                                                         </div>
                                                     </div>
 
                                                     {/* Work Logs List */}
-                                                    {updates.length > 0 ? (
+                                                    {sortedUpdates.length > 0 ? (
                                                         <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto pr-1">
-                                                            {updates.map((update, uIdx) => (
+                                                            {sortedUpdates.map((update, uIdx) => (
                                                                 <div key={uIdx} className="bg-white border border-slate-200/90 p-3 rounded-2xl flex flex-col gap-1.5 shadow-2xs">
                                                                     <div className="flex items-center justify-between">
                                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                                            Report #{updates.length - uIdx}
+                                                                            Report #{update.reportNumber}
                                                                         </span>
                                                                         <span className="text-[10px] text-slate-400 font-medium">
-                                                                            {new Date(update.updatedAt).toLocaleString("en-GB", {
+                                                                            {new Date(update.updatedAt || update.createdAt).toLocaleString("en-GB", {
                                                                                 day: "2-digit",
                                                                                 month: "short",
                                                                                 hour: "2-digit",

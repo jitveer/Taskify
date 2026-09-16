@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar";
 import { getNotifications, toggleNotificationRead, markAllNotificationsAsRead, clearAllNotifications } from "../../utils/notifications";
 import { ShieldAlert, CheckCircle2, Clock, Bell, Trash2, CheckSquare, AlertTriangle } from "lucide-react";
 
+
 function Notifications() {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
@@ -15,7 +16,7 @@ function Notifications() {
 
     // Set configuration based on role
     let displayRole = "Employee";
-    let sidebarColor = "emerald"; // default employee color
+    let sidebarColor = "emerald";
     let taskListPath = "/employee-my-tasks";
 
     if (role === "superadmin") {
@@ -105,8 +106,8 @@ function Notifications() {
         // Mark as read first
         await toggleNotificationRead(notif.id);
 
-        const isDailyReport = (notif.title && notif.title.toLowerCase().includes("daily report")) || 
-                              (notif.description && notif.description.toLowerCase().includes("daily report"));
+        const isDailyReport = (notif.title && notif.title.toLowerCase().includes("daily report")) ||
+            (notif.description && notif.description.toLowerCase().includes("daily report"));
 
         if (isDailyReport) {
             if (role === "superadmin") {
@@ -211,70 +212,66 @@ function Notifications() {
                                 notifications.map((notif) => {
                                     const isWarning = notif.type === "warning";
                                     return (
-                                     <div
-                                         key={notif.id}
-                                         onClick={() => handleNotificationClick(notif)}
-                                         className={`p-6 flex gap-4 transition-all cursor-pointer relative ${
-                                             isWarning
-                                                 ? "bg-amber-50/90 hover:bg-amber-100/60 border-b border-amber-200/70"
-                                                 : !notif.read ? "bg-slate-50/30 hover:bg-slate-50/80" : "hover:bg-slate-50/80"
-                                         }`}
-                                     >
-                                         {/* Unread / Warning Left Border Line */}
-                                         {isWarning ? (
-                                             <div className="hidden sm:block absolute left-0 top-0 bottom-0 w-1.5 rounded-r-md bg-amber-500"></div>
-                                         ) : !notif.read ? (
-                                             <div className="hidden sm:block absolute left-0 top-0 bottom-0 w-1 rounded-r-md bg-red-500"></div>
-                                         ) : null}
+                                        <div
+                                            key={notif.id}
+                                            onClick={() => handleNotificationClick(notif)}
+                                            className={`p-6 flex gap-4 transition-all cursor-pointer relative ${isWarning
+                                                ? "bg-amber-50/90 hover:bg-amber-100/60 border-b border-amber-200/70"
+                                                : !notif.read ? "bg-slate-50/30 hover:bg-slate-50/80" : "hover:bg-slate-50/80"
+                                                }`}
+                                        >
+                                            {/* Unread / Warning Left Border Line */}
+                                            {isWarning ? (
+                                                <div className="hidden sm:block absolute left-0 top-0 bottom-0 w-1.5 rounded-r-md bg-amber-500"></div>
+                                            ) : !notif.read ? (
+                                                <div className="hidden sm:block absolute left-0 top-0 bottom-0 w-1 rounded-r-md bg-red-500"></div>
+                                            ) : null}
 
-                                         {/* Icon */}
-                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${getIconBg(notif.type)}`}>
-                                             {getIcon(notif.type)}
-                                         </div>
+                                            {/* Icon */}
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${getIconBg(notif.type)}`}>
+                                                {getIcon(notif.type)}
+                                            </div>
 
-                                         {/* Body */}
-                                         <div className="flex-1 min-w-0">
-                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
-                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                     <h3 className={`text-sm lg:text-base leading-snug ${
-                                                         isWarning ? "text-amber-950 font-bold" : notif.read ? "text-slate-700 font-medium" : "text-slate-900 font-bold"
-                                                     }`}>
-                                                         {notif.title}
-                                                     </h3>
-                                                     {isWarning && (
-                                                         <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs animate-pulse">
-                                                             Overdue Alert
-                                                         </span>
-                                                     )}
-                                                     {!notif.read && !isWarning && (
-                                                         <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs animate-pulse">
-                                                             New
-                                                         </span>
-                                                     )}
-                                                 </div>
-                                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap self-start sm:self-auto">
-                                                     {notif.time}
-                                                 </span>
-                                             </div>
+                                            {/* Body */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h3 className={`text-sm lg:text-base leading-snug ${isWarning ? "text-amber-950 font-bold" : notif.read ? "text-slate-700 font-medium" : "text-slate-900 font-bold"
+                                                            }`}>
+                                                            {notif.title}
+                                                        </h3>
+                                                        {isWarning && (
+                                                            <span className="bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs animate-pulse">
+                                                                Overdue Alert
+                                                            </span>
+                                                        )}
+                                                        {!notif.read && !isWarning && (
+                                                            <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs animate-pulse">
+                                                                New
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap self-start sm:self-auto">
+                                                        {notif.time}
+                                                    </span>
+                                                </div>
 
-                                             <p className={`text-xs lg:text-sm mt-1.5 leading-relaxed ${
-                                                 isWarning ? "text-amber-900/90 font-medium" : "text-slate-500"
-                                             }`}>
-                                                 {notif.description}
-                                             </p>
+                                                <p className={`text-xs lg:text-sm mt-1.5 leading-relaxed ${isWarning ? "text-amber-900/90 font-medium" : "text-slate-500"
+                                                    }`}>
+                                                    {notif.description}
+                                                </p>
 
-                                             {notif.taskTitle && (
-                                                 <div className="mt-3 flex items-center gap-1.5">
-                                                     <span className={`inline-block w-1.5 h-1.5 rounded-full ${
-                                                         isWarning ? "bg-amber-500" : sidebarColor === "purple" ? "bg-purple-600" : sidebarColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
-                                                     }`}></span>
-                                                     <span className={`text-[10px] font-bold uppercase tracking-wider ${isWarning ? "text-amber-700" : "text-slate-400"}`}>
-                                                         Linked Task: {notif.taskTitle}
-                                                     </span>
-                                                 </div>
-                                             )}
-                                         </div>
-                                     </div>
+                                                {notif.taskTitle && (
+                                                    <div className="mt-3 flex items-center gap-1.5">
+                                                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${isWarning ? "bg-amber-500" : sidebarColor === "purple" ? "bg-purple-600" : sidebarColor === "blue" ? "bg-blue-600" : "bg-emerald-600"
+                                                            }`}></span>
+                                                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isWarning ? "text-amber-700" : "text-slate-400"}`}>
+                                                            Linked Task: {notif.taskTitle}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     );
                                 })
                             )}
