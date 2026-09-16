@@ -3,7 +3,7 @@ const userService = require('../services/user.service');
 
 const adminLoginSuccess = async (req, res) => {
     try {
-        const stats = await superAdminService.getDashboardStats();
+        const stats = await superAdminService.getDashboardStats(req.user.id);
 
         return res.status(200).json({
             success: true,

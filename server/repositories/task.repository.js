@@ -16,6 +16,10 @@ class TaskRepository {
     async deleteById(taskId) {
         return await Task.findByIdAndDelete(taskId);
     }
+
+    async countDocuments(filter = {}) {
+        return await Task.countDocuments(filter);
+    }
 }
 
 module.exports = new TaskRepository();
