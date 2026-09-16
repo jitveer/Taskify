@@ -114,8 +114,9 @@ function MyTaskTable({ color }) {
         return "text-green-600 bg-green-50";
     };
 
-    const handleUpdateStatus = (originalIndex) => {
-        const taskToUpdate = filteredTasks[originalIndex];
+    const handleUpdateStatus = (taskOrIndex) => {
+        const taskToUpdate = typeof taskOrIndex === "number" ? filteredTasks[taskOrIndex] : taskOrIndex;
+        if (!taskToUpdate) return;
 
         // Do not allow status changes if Completed
         if (taskToUpdate.status === "Completed") {
@@ -738,12 +739,7 @@ function MyTaskTable({ color }) {
                             <button
                                 type="button"
                                 disabled={selectedTask.status === "Completed"}
-                                onClick={() => {
-                                    const origIndex = filteredTasks.findIndex(t => (t.assignmentId || t._id) === (selectedTask.assignmentId || selectedTask._id));
-                                    if (origIndex !== -1) {
-                                        handleUpdateStatus(origIndex);
-                                    }
-                                }}
+                                onClick={() => handleUpdateStatus(selectedTask)}
                                 className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition shadow-sm flex items-center gap-1.5 cursor-pointer ${
                                     selectedTask.status === "Completed"
                                         ? "bg-slate-400 cursor-not-allowed opacity-60"

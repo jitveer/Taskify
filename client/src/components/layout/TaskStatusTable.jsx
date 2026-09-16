@@ -1,13 +1,14 @@
 import {
     Search, Eye, X, Filter, Calendar, FileText, ChevronDown, ChevronUp,
     User, FileCheck, ClipboardList, Clock, Users, CheckCircle2, AlertCircle,
-    RotateCcw, TrendingUp, Sparkles, ArrowUpDown
+    RotateCcw, TrendingUp, Sparkles, ArrowUpDown, SlidersHorizontal
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import customSwal, { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
 import { taskApi } from "../../services/api";
 import { formatTime12Hour } from "../../utils/timeFormatter";
+
 
 function TaskStatusTable({ color, apiPrefix }) {
     const location = useLocation();
@@ -19,12 +20,19 @@ function TaskStatusTable({ color, apiPrefix }) {
     const [datePreset, setDatePreset] = useState("all"); // "all" | "today" | "yesterday" | "last7days" | "last30days" | "thisMonth" | "custom"
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
     const [selectedTask, setSelectedTask] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeModalTab, setActiveModalTab] = useState("overview"); // "overview" | "reports"
-    const [selectedAssigneeIndex, setSelectedAssigneeIndex] = useState(0);
+    const [selectedAssigneeId, setSelectedAssigneeId] = useState(null);
+
+    const chipsScrollRef = useRef(null);
+    const [isDraggingChips, setIsDraggingChips] = useState(false);
+    const [dragStartX, setDragStartX] = useState(0);
+    const [dragScrollLeft, setDragScrollLeft] = useState(0);
+    const hasDraggedRef = useRef(false);
 
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
     const currentUserId = currentUser._id || currentUser.id || "";
@@ -325,6 +333,16 @@ function TaskStatusTable({ color, apiPrefix }) {
 
     const hasActiveFilters = searchQuery !== "" || statusFilter !== "All" || taskTypeFilter !== "All" || assigneeFilter !== "All" || datePreset !== "all" || startDate !== "" || endDate !== "";
 
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (searchQuery) count++;
+        if (statusFilter !== "All") count++;
+        if (taskTypeFilter !== "All") count++;
+        if (assigneeFilter !== "All") count++;
+        if (datePreset !== "all" || startDate || endDate) count++;
+        return count;
+    }, [searchQuery, statusFilter, taskTypeFilter, assigneeFilter, datePreset, startDate, endDate]);
+
     const getStatusColor = (status) => {
         if (status === "Completed") return "bg-green-100 text-green-700 border border-green-200/50";
         if (status === "In Progress") return "bg-blue-100 text-blue-700 border border-blue-200/50";
@@ -519,362 +537,616 @@ function TaskStatusTable({ color, apiPrefix }) {
 
     return (
         <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8 space-y-6">
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideUp {
-                    from { transform: translateY(12px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-                .animate-fadeIn {
-                    animation: fadeIn 0.2s ease-out forwards;
-                }
-                .animate-slideUp {
-                    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                }
-            `}} />
-
-            {/* Performance & Work Analytics Summary Banner */}
-            <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 transition-all">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-11 h-11 rounded-2xl ${activeColor.bg} ${activeColor.text} flex items-center justify-center font-bold text-base shadow-sm shrink-0`}>
-                            {selectedAssigneeData ? (
-                                selectedAssigneeData.name.charAt(0).toUpperCase()
-                            ) : (
-                                <TrendingUp className="w-5 h-5" />
-                            )}
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <h2 className="text-base sm:text-lg font-bold text-slate-800">
-                                    {selectedAssigneeData ? `${selectedAssigneeData.name}'s Work Performance` : "Tasks & Work Overview"}
-                                </h2>
-                                {selectedAssigneeData && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                                        {selectedAssigneeData.role.toUpperCase()} • {selectedAssigneeData.department || "General"}
-                                    </span>
-                                )}
-                                {hasActiveFilters && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                        Filtered Results ({filteredTasks.length})
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-xs text-slate-400 font-medium mt-0.5">
-                                {selectedAssigneeData
-                                    ? `Showing real-time progress and completion track record (${selectedAssigneeData.user_id || "ID: N/A"})`
-                                    : "Summary of tasks matching your current filter & date criteria"}
-                            </p>
+            {/* Metrics & Performance Overview Cards */}
+            <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+                {/* Total Tasks */}
+                <div
+                    onClick={() => setStatusFilter("All")}
+                    className={`min-w-[130px] sm:min-w-0 flex-1 relative overflow-hidden bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border transition-all duration-200 cursor-pointer flex flex-col justify-between group shrink-0 ${statusFilter === "All"
+                        ? "border-slate-800 shadow-xs ring-2 ring-slate-800/10"
+                        : "border-slate-100 hover:border-slate-300 hover:shadow-xs"
+                        }`}
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total</span>
+                        <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-slate-100 group-hover:bg-slate-800 group-hover:text-white text-slate-600 transition-colors flex items-center justify-center">
+                            <ClipboardList className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </div>
                     </div>
-
-                    {/* Quick Reset Button if filters active */}
-                    {hasActiveFilters && (
-                        <button
-                            onClick={resetAllFilters}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition cursor-pointer self-start md:self-auto shrink-0"
-                            title="Reset all applied filters"
-                        >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            <span>Reset Filters</span>
-                        </button>
-                    )}
-                </div>
-
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 pt-5">
-                    {/* Total Tasks */}
-                    <div className="bg-slate-50/80 rounded-2xl p-3.5 sm:p-4 border border-slate-100 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-slate-400 mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider">Total Tasks</span>
-                            <ClipboardList className="w-4 h-4 text-slate-500" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-slate-800">{analytics.total}</span>
-                            <span className="text-[11px] text-slate-400 font-medium">assigned</span>
-                        </div>
-                    </div>
-
-                    {/* Completed */}
-                    <div className="bg-emerald-50/40 rounded-2xl p-3.5 sm:p-4 border border-emerald-100 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-emerald-600 mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider">Completed</span>
-                            <CheckCircle2 className="w-4 h-4" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-emerald-700">{analytics.completed}</span>
-                            <span className="text-[11px] text-emerald-600 font-bold">({analytics.rate}%)</span>
-                        </div>
-                    </div>
-
-                    {/* In Progress */}
-                    <div className="bg-blue-50/40 rounded-2xl p-3.5 sm:p-4 border border-blue-100 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-blue-600 mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider">In Progress</span>
-                            <Clock className="w-4 h-4" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-blue-700">{analytics.inProgress}</span>
-                            <span className="text-[11px] text-blue-500 font-medium">active</span>
-                        </div>
-                    </div>
-
-                    {/* Pending */}
-                    <div className="bg-amber-50/40 rounded-2xl p-3.5 sm:p-4 border border-amber-100 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-amber-600 mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider">Pending</span>
-                            <AlertCircle className="w-4 h-4" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-amber-700">{analytics.pending}</span>
-                            <span className="text-[11px] text-amber-500 font-medium">waiting</span>
-                        </div>
-                    </div>
-
-                    {/* Overdue */}
-                    <div className="col-span-2 sm:col-span-1 bg-red-50/40 rounded-2xl p-3.5 sm:p-4 border border-red-100 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-red-600 mb-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider">Overdue</span>
-                            <AlertCircle className="w-4 h-4" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-black text-red-700">{analytics.overdue}</span>
-                            <span className="text-[11px] text-red-500 font-medium">delayed</span>
-                        </div>
+                    <div className="mt-2 sm:mt-3 flex items-baseline justify-between">
+                        <span className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">{analytics.total}</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 px-1.5 py-0.5 rounded">all</span>
                     </div>
                 </div>
 
-                {/* Completion Progress Bar */}
-                {analytics.total > 0 && (
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center text-xs font-bold text-slate-600">
-                            <span>Work Completion Rate</span>
-                            <span className={analytics.rate >= 75 ? "text-emerald-600" : analytics.rate >= 40 ? "text-blue-600" : "text-amber-600"}>
-                                {analytics.rate}% Finished
-                            </span>
-                        </div>
-                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
-                            <div
-                                style={{ width: `${(analytics.completed / analytics.total) * 100}%` }}
-                                className="bg-emerald-500 h-full transition-all duration-500"
-                                title={`Completed: ${analytics.completed}`}
-                            />
-                            <div
-                                style={{ width: `${(analytics.inProgress / analytics.total) * 100}%` }}
-                                className="bg-blue-500 h-full transition-all duration-500"
-                                title={`In Progress: ${analytics.inProgress}`}
-                            />
-                            <div
-                                style={{ width: `${(analytics.pending / analytics.total) * 100}%` }}
-                                className="bg-amber-400 h-full transition-all duration-500"
-                                title={`Pending: ${analytics.pending}`}
-                            />
+                {/* Completed */}
+                <div
+                    onClick={() => setStatusFilter(statusFilter === "Completed" ? "All" : "Completed")}
+                    className={`min-w-[130px] sm:min-w-0 flex-1 relative overflow-hidden bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border transition-all duration-200 cursor-pointer flex flex-col justify-between group shrink-0 ${statusFilter === "Completed"
+                        ? "border-emerald-500 shadow-xs ring-2 ring-emerald-500/20 bg-emerald-50/20"
+                        : "border-slate-100 hover:border-emerald-200 hover:shadow-xs"
+                        }`}
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Done</span>
+                        <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 transition-colors flex items-center justify-center">
+                            <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </div>
                     </div>
-                )}
+                    <div className="mt-2 sm:mt-3 flex items-baseline justify-between">
+                        <span className="text-xl sm:text-2xl font-black text-emerald-700 tracking-tight">{analytics.completed}</span>
+                        <span className="text-[9px] sm:text-[10px] font-extrabold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-full">
+                            {analytics.rate}%
+                        </span>
+                    </div>
+                </div>
+
+                {/* In Progress */}
+                <div
+                    onClick={() => setStatusFilter(statusFilter === "In Progress" ? "All" : "In Progress")}
+                    className={`min-w-[130px] sm:min-w-0 flex-1 relative overflow-hidden bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border transition-all duration-200 cursor-pointer flex flex-col justify-between group shrink-0 ${statusFilter === "In Progress"
+                        ? "border-blue-500 shadow-xs ring-2 ring-blue-500/20 bg-blue-50/20"
+                        : "border-slate-100 hover:border-blue-200 hover:shadow-xs"
+                        }`}
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-blue-700 uppercase tracking-wider">Progress</span>
+                        <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-600 transition-colors flex items-center justify-center">
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </div>
+                    </div>
+                    <div className="mt-2 sm:mt-3 flex items-baseline justify-between">
+                        <span className="text-xl sm:text-2xl font-black text-blue-700 tracking-tight">{analytics.inProgress}</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">active</span>
+                    </div>
+                </div>
+
+                {/* Pending */}
+                <div
+                    onClick={() => setStatusFilter(statusFilter === "Pending" ? "All" : "Pending")}
+                    className={`min-w-[130px] sm:min-w-0 flex-1 relative overflow-hidden bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border transition-all duration-200 cursor-pointer flex flex-col justify-between group shrink-0 ${statusFilter === "Pending"
+                        ? "border-amber-500 shadow-xs ring-2 ring-amber-500/20 bg-amber-50/20"
+                        : "border-slate-100 hover:border-amber-200 hover:shadow-xs"
+                        }`}
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-amber-700 uppercase tracking-wider">Pending</span>
+                        <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-amber-50 group-hover:bg-amber-600 group-hover:text-white text-amber-600 transition-colors flex items-center justify-center">
+                            <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </div>
+                    </div>
+                    <div className="mt-2 sm:mt-3 flex items-baseline justify-between">
+                        <span className="text-xl sm:text-2xl font-black text-amber-700 tracking-tight">{analytics.pending}</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">waiting</span>
+                    </div>
+                </div>
+
+                {/* Overdue */}
+                <div
+                    className="min-w-[130px] sm:min-w-0 flex-1 bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 border border-slate-100 hover:border-red-200 transition-all duration-200 flex flex-col justify-between group shrink-0"
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-red-600 uppercase tracking-wider">Overdue</span>
+                        <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-red-50 group-hover:bg-red-600 group-hover:text-white text-red-600 transition-colors flex items-center justify-center">
+                            <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </div>
+                    </div>
+                    <div className="mt-2 sm:mt-3 flex items-baseline justify-between">
+                        <span className="text-xl sm:text-2xl font-black text-red-700 tracking-tight">{analytics.overdue}</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">delayed</span>
+                    </div>
+                </div>
             </div>
 
-            {/* Advanced Filters & Search Container */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 sm:p-6 space-y-4">
-                {/* Row 1: Search, Task Type, Member, Status */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {/* Search Input */}
-                    <div className="relative">
+            {/* Responsive Search & Filters Bar */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xs border border-slate-100 p-3.5 sm:p-5">
+                {/* Mobile / Tablet Header: Search + Filter Trigger Button */}
+                <div className="flex lg:hidden items-center gap-2">
+                    <div className="relative flex-1">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                             <Search className="w-4 h-4" />
                         </span>
                         <input
                             type="text"
-                            placeholder="Search by title, dept, person..."
+                            placeholder="Search tasks, dept, member..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className={`w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition font-medium`}
+                            className={`w-full pl-9 pr-8 py-2.5 text-xs bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition font-medium text-slate-800 placeholder-slate-400`}
                         />
                         {searchQuery && (
                             <button
                                 onClick={() => setSearchQuery("")}
-                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
                             >
                                 <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                     </div>
 
-                    {/* Task Type Filter (Group vs Individual) */}
-                    <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                            <Users className="w-4 h-4" />
-                        </span>
-                        <select
-                            value={taskTypeFilter}
-                            onChange={(e) => setTaskTypeFilter(e.target.value)}
-                            className={`w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer font-medium text-slate-700`}
-                        >
-                            <option value="All">All Task Types</option>
-                            <option value="group_task">👥 Group Tasks Only</option>
-                            <option value="individual">👤 Individual Tasks Only</option>
-                        </select>
-                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-                            <ChevronDown className="w-4 h-4" />
-                        </span>
-                    </div>
+                    {/* Filter Button with Badge */}
+                    <button
+                        type="button"
+                        onClick={() => setIsMobileFilterOpen(true)}
+                        className={`relative flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 border ${activeFilterCount > 0
+                            ? `${activeColor.accentBg} text-white border-transparent shadow-xs`
+                            : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/80"
+                            }`}
+                    >
+                        <SlidersHorizontal className="w-4 h-4" />
+                        <span className="hidden sm:inline">Filters</span>
+                        {activeFilterCount > 0 && (
+                            <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black ${activeFilterCount > 0 ? "bg-white text-slate-900" : "bg-purple-600 text-white"
+                                }`}>
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </button>
 
-                    {/* Member / Person Filter */}
-                    <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                            <User className="w-4 h-4" />
-                        </span>
-                        <select
-                            value={assigneeFilter}
-                            onChange={(e) => setAssigneeFilter(e.target.value)}
-                            className={`w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer font-medium text-slate-700 truncate`}
+                    {/* Quick Reset Button if active */}
+                    {hasActiveFilters && (
+                        <button
+                            type="button"
+                            onClick={resetAllFilters}
+                            className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200/70 transition cursor-pointer shrink-0"
+                            title="Reset all filters"
                         >
-                            <option value="All">All Members / Team</option>
-                            {allAssignees.map(member => (
-                                <option key={member._id} value={member._id}>
-                                    {member.name} {member.department ? `(${member.department})` : ""}
-                                </option>
-                            ))}
-                        </select>
-                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-                            <ChevronDown className="w-4 h-4" />
-                        </span>
-                    </div>
-
-                    {/* Status Filter */}
-                    <div className="relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                            <Filter className="w-4 h-4" />
-                        </span>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className={`w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer font-medium text-slate-700`}
-                        >
-                            <option value="All">All Status</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-                            <ChevronDown className="w-4 h-4" />
-                        </span>
-                    </div>
+                            <RotateCcw className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
 
-                {/* Row 2: Date & Calendar Filters */}
-                <div className="pt-3 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                    {/* Date Presets Chips */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0 flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" /> Date:
-                        </span>
-                        {[
-                            { id: "all", label: "All Time" },
-                            { id: "today", label: "Today" },
-                            { id: "yesterday", label: "Yesterday" },
-                            { id: "last7days", label: "Last 7 Days" },
-                            { id: "last30days", label: "Last 30 Days" },
-                            { id: "thisMonth", label: "This Month" },
-                            { id: "custom", label: "Custom Range" }
-                        ].map((preset) => (
-                            <button
-                                key={preset.id}
-                                type="button"
-                                onClick={() => handleDatePresetChange(preset.id)}
-                                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer border ${datePreset === preset.id
-                                    ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-2xs`
-                                    : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
-                                    }`}
+                {/* Mobile Active Filter Chips (Quick removal on mobile) */}
+                {hasActiveFilters && (
+                    <div className="flex lg:hidden flex-wrap items-center gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Active:</span>
+                        {statusFilter !== "All" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200/60 text-[11px] font-bold">
+                                Status: {statusFilter}
+                                <button onClick={() => setStatusFilter("All")} className="hover:opacity-75"><X className="w-3 h-3" /></button>
+                            </span>
+                        )}
+                        {taskTypeFilter !== "All" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-sky-50 text-sky-700 border border-sky-200/60 text-[11px] font-bold">
+                                Type: {taskTypeFilter === "group_task" ? "Group" : "Individual"}
+                                <button onClick={() => setTaskTypeFilter("All")} className="hover:opacity-75"><X className="w-3 h-3" /></button>
+                            </span>
+                        )}
+                        {assigneeFilter !== "All" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[11px] font-bold">
+                                Member: {allAssignees.find(a => a._id === assigneeFilter)?.name || "1 Member"}
+                                <button onClick={() => setAssigneeFilter("All")} className="hover:opacity-75"><X className="w-3 h-3" /></button>
+                            </span>
+                        )}
+                        {datePreset !== "all" && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200/60 text-[11px] font-bold">
+                                Date: {datePreset === "custom" ? `${startDate || '...'} to ${endDate || '...'}` : datePreset}
+                                <button onClick={() => { setDatePreset("all"); setStartDate(""); setEndDate(""); }} className="hover:opacity-75"><X className="w-3 h-3" /></button>
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {/* Desktop Unified Filter Controls (Hidden on mobile/tablet) */}
+                <div className="hidden lg:block space-y-3.5">
+                    {/* Main Filter Controls Grid */}
+                    <div className="grid grid-cols-12 gap-2.5 items-center">
+                        {/* Search Input (4 Cols) */}
+                        <div className="col-span-4 relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                                <Search className="w-4 h-4" />
+                            </span>
+                            <input
+                                type="text"
+                                placeholder="Search tasks, dept, or member..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={`w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition font-medium text-slate-800 placeholder-slate-400`}
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Task Type Filter (2 Cols) */}
+                        <div className="col-span-2 relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <Users className="w-3.5 h-3.5" />
+                            </span>
+                            <select
+                                value={taskTypeFilter}
+                                onChange={(e) => setTaskTypeFilter(e.target.value)}
+                                className={`w-full pl-8 pr-7 py-2.5 text-xs bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer font-bold text-slate-700`}
                             >
-                                {preset.label}
-                            </button>
-                        ))}
+                                <option value="All">All Types</option>
+                                <option value="group_task">👥 Group</option>
+                                <option value="individual">👤 Individual</option>
+                            </select>
+                            <span className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                                <ChevronDown className="w-3.5 h-3.5" />
+                            </span>
+                        </div>
+
+                        {/* Member / Person Filter (3 Cols) */}
+                        <div className="col-span-3 relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <User className="w-3.5 h-3.5" />
+                            </span>
+                            <select
+                                value={assigneeFilter}
+                                onChange={(e) => setAssigneeFilter(e.target.value)}
+                                className={`w-full pl-8 pr-7 py-2.5 text-xs bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer font-bold text-slate-700 truncate`}
+                            >
+                                <option value="All">All Members ({allAssignees.length})</option>
+                                {allAssignees.map(member => (
+                                    <option key={member._id} value={member._id}>
+                                        {member.name} {member.department ? `(${member.department})` : ""}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                                <ChevronDown className="w-3.5 h-3.5" />
+                            </span>
+                        </div>
+
+                        {/* Status Filter (3 Cols) */}
+                        <div className="col-span-3 relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <Filter className="w-3.5 h-3.5" />
+                            </span>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className={`w-full pl-8 pr-7 py-2.5 text-xs bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer font-bold text-slate-700`}
+                            >
+                                <option value="All">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                            <span className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                                <ChevronDown className="w-3.5 h-3.5" />
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Date Inputs & Basis Switcher */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        {/* Date Basis Switcher */}
-                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-bold shrink-0">
-                            <button
-                                type="button"
-                                onClick={() => setDateBasis("due")}
-                                className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${dateBasis === "due" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500 hover:text-slate-800"}`}
-                            >
-                                Due Date
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setDateBasis("assigned")}
-                                className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${dateBasis === "assigned" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500 hover:text-slate-800"}`}
-                            >
-                                Assign Date
-                            </button>
+                    {/* Sub-bar: Compact Date Presets & Custom Pickers */}
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+                        {/* Date Quick Presets */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full no-scrollbar">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0 flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-slate-400" /> Date:
+                            </span>
+                            {[
+                                { id: "all", label: "All Time" },
+                                { id: "today", label: "Today" },
+                                { id: "yesterday", label: "Yesterday" },
+                                { id: "last7days", label: "7 Days" },
+                                { id: "last30days", label: "30 Days" },
+                                { id: "thisMonth", label: "This Month" },
+                                { id: "custom", label: "Custom" }
+                            ].map((preset) => (
+                                <button
+                                    key={preset.id}
+                                    type="button"
+                                    onClick={() => handleDatePresetChange(preset.id)}
+                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition shrink-0 cursor-pointer border ${datePreset === preset.id
+                                        ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-2xs`
+                                        : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200/80"
+                                        }`}
+                                >
+                                    {preset.label}
+                                </button>
+                            ))}
                         </div>
 
-                        {/* Start Date */}
-                        <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 text-xs">
-                            <span className="text-slate-400 font-medium">From:</span>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => {
-                                    setStartDate(e.target.value);
-                                    setDatePreset("custom");
-                                }}
-                                className="bg-transparent focus:outline-none text-slate-700 font-semibold cursor-pointer"
-                            />
-                        </div>
+                        {/* Date Inputs & Basis Switcher */}
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            {/* Basis Switcher */}
+                            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200/80 text-[11px] font-bold shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setDateBasis("due")}
+                                    className={`px-2 py-1 rounded-md transition cursor-pointer ${dateBasis === "due" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500 hover:text-slate-800"}`}
+                                >
+                                    Due Date
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setDateBasis("assigned")}
+                                    className={`px-2 py-1 rounded-md transition cursor-pointer ${dateBasis === "assigned" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500 hover:text-slate-800"}`}
+                                >
+                                    Assign Date
+                                </button>
+                            </div>
 
-                        {/* End Date */}
-                        <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 text-xs">
-                            <span className="text-slate-400 font-medium">To:</span>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => {
-                                    setEndDate(e.target.value);
-                                    setDatePreset("custom");
-                                }}
-                                className="bg-transparent focus:outline-none text-slate-700 font-semibold cursor-pointer"
-                            />
+                            {/* From Date */}
+                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1 text-xs">
+                                <span className="text-slate-400 font-medium text-[11px]">From:</span>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => {
+                                        setStartDate(e.target.value);
+                                        setDatePreset("custom");
+                                    }}
+                                    className="bg-transparent focus:outline-none text-slate-700 font-semibold cursor-pointer text-xs"
+                                />
+                            </div>
+
+                            {/* To Date */}
+                            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1 text-xs">
+                                <span className="text-slate-400 font-medium text-[11px]">To:</span>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => {
+                                        setEndDate(e.target.value);
+                                        setDatePreset("custom");
+                                    }}
+                                    className="bg-transparent focus:outline-none text-slate-700 font-semibold cursor-pointer text-xs"
+                                />
+                            </div>
+
+                            {/* Reset Filters */}
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={resetAllFilters}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200/70 transition cursor-pointer shrink-0"
+                                    title="Reset all applied filters"
+                                >
+                                    <RotateCcw className="w-3 h-3" />
+                                    <span>Reset</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* Mobile / Tablet Filter Bottom Sheet / Modal */}
+            {isMobileFilterOpen && (
+                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4 animate-fadeIn">
+                    <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-slideUp">
+                        {/* Header */}
+                        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-700">
+                                    <SlidersHorizontal className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-sm">Filter Tasks</h3>
+                                    <p className="text-[11px] text-slate-400 font-medium">Refine task list by criteria</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsMobileFilterOpen(false)}
+                                className="w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-800 border border-slate-200/70 flex items-center justify-center cursor-pointer shadow-2xs"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto max-h-[65vh]">
+                            {/* Task Type Filter */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Task Type</span>
+                                </label>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                    {[
+                                        { id: "All", label: "All" },
+                                        { id: "group_task", label: "Group" },
+                                        { id: "individual", label: "Individual" }
+                                    ].map(item => (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() => setTaskTypeFilter(item.id)}
+                                            className={`py-2 px-2 rounded-xl text-xs font-bold transition border cursor-pointer ${taskTypeFilter === item.id
+                                                ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-2xs`
+                                                : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200/80"
+                                                }`}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Status Filter */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <Filter className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Status</span>
+                                </label>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {[
+                                        { id: "All", label: "All Statuses" },
+                                        { id: "Pending", label: "Pending" },
+                                        { id: "In Progress", label: "In Progress" },
+                                        { id: "Completed", label: "Completed" }
+                                    ].map(item => (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            onClick={() => setStatusFilter(item.id)}
+                                            className={`py-2 px-2 rounded-xl text-xs font-bold transition border cursor-pointer ${statusFilter === item.id
+                                                ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-2xs`
+                                                : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200/80"
+                                                }`}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Member / Assignee Filter */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <User className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Assigned Member</span>
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={assigneeFilter}
+                                        onChange={(e) => setAssigneeFilter(e.target.value)}
+                                        className={`w-full pl-3 pr-8 py-2.5 text-xs bg-slate-50 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 ${activeColor.ring} ${activeColor.focusBorder} transition appearance-none cursor-pointer font-bold text-slate-700`}
+                                    >
+                                        <option value="All">All Members ({allAssignees.length})</option>
+                                        {allAssignees.map(member => (
+                                            <option key={member._id} value={member._id}>
+                                                {member.name} {member.department ? `(${member.department})` : ""}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                                        <ChevronDown className="w-3.5 h-3.5" />
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Date Filter & Presets */}
+                            <div className="space-y-2 pt-2 border-t border-slate-100">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                        <span>Date Range</span>
+                                    </label>
+
+                                    {/* Due vs Assign Toggle */}
+                                    <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200/80 text-[10px] font-bold">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDateBasis("due")}
+                                            className={`px-2 py-0.5 rounded-md transition cursor-pointer ${dateBasis === "due" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500"}`}
+                                        >
+                                            Due Date
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDateBasis("assigned")}
+                                            className={`px-2 py-0.5 rounded-md transition cursor-pointer ${dateBasis === "assigned" ? "bg-white text-slate-800 shadow-2xs" : "text-slate-500"}`}
+                                        >
+                                            Assign Date
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Preset Pills */}
+                                <div className="grid grid-cols-3 gap-1.5">
+                                    {[
+                                        { id: "all", label: "All Time" },
+                                        { id: "today", label: "Today" },
+                                        { id: "yesterday", label: "Yesterday" },
+                                        { id: "last7days", label: "7 Days" },
+                                        { id: "last30days", label: "30 Days" },
+                                        { id: "thisMonth", label: "This Month" }
+                                    ].map(preset => (
+                                        <button
+                                            key={preset.id}
+                                            type="button"
+                                            onClick={() => handleDatePresetChange(preset.id)}
+                                            className={`py-1.5 px-2 rounded-xl text-[11px] font-bold transition border cursor-pointer ${datePreset === preset.id
+                                                ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-2xs`
+                                                : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200/80"
+                                                }`}
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Custom Date Inputs */}
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase">From Date</span>
+                                        <input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => {
+                                                setStartDate(e.target.value);
+                                                setDatePreset("custom");
+                                            }}
+                                            className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase">To Date</span>
+                                        <input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => {
+                                                setEndDate(e.target.value);
+                                                setDatePreset("custom");
+                                            }}
+                                            className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer Actions */}
+                        <div className="p-4 border-t border-slate-100 bg-slate-50/60 flex items-center gap-2">
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={resetAllFilters}
+                                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200/70 transition cursor-pointer flex items-center justify-center gap-1"
+                                >
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                    <span>Reset All</span>
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setIsMobileFilterOpen(false)}
+                                className={`flex-1 py-2.5 rounded-xl text-xs font-bold text-white ${activeColor.accentBg} hover:opacity-90 transition cursor-pointer shadow-xs`}
+                            >
+                                Apply Filters ({filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'})
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Tasks List Container */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xs border border-slate-100 overflow-hidden">
                 {/* Desktop Table View */}
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50/80">
+                        <thead className="bg-slate-50/70 border-b border-slate-100">
                             <tr>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">ID</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Task Title</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Type</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Assign Date</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Due Date & Time</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 whitespace-nowrap">Assignees & Progress</th>
-                                <th className="py-4 px-6 text-xs uppercase tracking-wider font-bold text-slate-500 border-b border-slate-100 text-center whitespace-nowrap">Action</th>
+                                <th className="py-3.5 px-5 text-[11px] uppercase tracking-wider font-extrabold text-slate-400 whitespace-nowrap">#</th>
+                                <th className="py-3.5 px-5 text-[11px] uppercase tracking-wider font-extrabold text-slate-400 whitespace-nowrap">Task Title</th>
+                                <th className="py-3.5 px-5 text-[11px] uppercase tracking-wider font-extrabold text-slate-400 whitespace-nowrap">Type</th>
+                                <th className="py-3.5 px-5 text-[11px] uppercase tracking-wider font-extrabold text-slate-400 whitespace-nowrap">Assign Date</th>
+                                <th className="py-3.5 px-5 text-[11px] uppercase tracking-wider font-extrabold text-slate-400 whitespace-nowrap">Due Date & Time</th>
+                                <th className="py-3.5 px-5 text-[11px] uppercase tracking-wider font-extrabold text-slate-400 whitespace-nowrap">Assignees & Progress</th>
+                                <th className="py-3.5 px-5 text-[11px] uppercase tracking-wider font-extrabold text-slate-400 text-center whitespace-nowrap">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-100">
                             {filteredTasks.map((task, index) => {
                                 const isGroup = task.taskType === "group_task";
                                 return (
-                                    <tr key={task._id} className="hover:bg-slate-50/70 transition border-b border-slate-50 last:border-none">
-                                        <td className="py-4 px-6 text-sm font-bold text-slate-700 whitespace-nowrap">
+                                    <tr key={task._id} className="hover:bg-slate-50/70 transition-colors">
+                                        <td className="py-3.5 px-5 text-xs font-bold text-slate-400 whitespace-nowrap">
                                             {index + 1}
                                         </td>
 
-                                        <td className="py-4 px-6 text-sm font-semibold text-slate-800 min-w-[220px]">
+                                        <td className="py-3.5 px-5 text-sm font-semibold text-slate-800 min-w-[220px]">
                                             <div className="flex flex-col">
-                                                <span className="whitespace-nowrap font-bold text-slate-800">{task.title}</span>
+                                                <span className="whitespace-nowrap font-bold text-slate-800 hover:text-purple-600 transition-colors">{task.title}</span>
                                                 <span className="text-[11px] text-slate-400 font-medium mt-0.5 whitespace-nowrap">
                                                     Dept: <strong className="text-slate-600">{task.department || "General"}</strong>
                                                     {task.priority && ` • Priority: ${task.priority}`}
@@ -882,20 +1154,20 @@ function TaskStatusTable({ color, apiPrefix }) {
                                             </div>
                                         </td>
 
-                                        <td className="py-4 px-6 text-xs font-semibold whitespace-nowrap">
+                                        <td className="py-3.5 px-5 text-xs font-semibold whitespace-nowrap">
                                             {isGroup ? (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-bold">
-                                                    <Users className="w-3 h-3" /> Group Task
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-bold text-[11px]">
+                                                    <Users className="w-3 h-3" /> Group
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-50 text-sky-700 border border-sky-200/60 font-bold">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200/60 font-bold text-[11px]">
                                                     <User className="w-3 h-3" /> Individual
                                                 </span>
                                             )}
                                         </td>
 
-                                        <td className="py-4 px-6 text-sm font-medium text-slate-500 whitespace-nowrap">
-                                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                        <td className="py-3.5 px-5 text-xs font-medium text-slate-600 whitespace-nowrap">
+                                            <div className="flex items-center gap-1.5">
                                                 <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                                 <span>
                                                     {new Date(task.createdAt || task.assignedAt || Date.now()).toLocaleDateString("en-GB", {
@@ -907,9 +1179,9 @@ function TaskStatusTable({ color, apiPrefix }) {
                                             </div>
                                         </td>
 
-                                        <td className="py-4 px-6 text-sm font-medium text-slate-500 whitespace-nowrap">
+                                        <td className="py-3.5 px-5 text-xs font-medium text-slate-600 whitespace-nowrap">
                                             <div className="flex flex-col">
-                                                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5">
                                                     <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                                     <span className="font-semibold text-slate-700">
                                                         {new Date(task.dueDate).toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -921,20 +1193,23 @@ function TaskStatusTable({ color, apiPrefix }) {
                                             </div>
                                         </td>
 
-                                        <td className="py-4 px-6 text-sm">
-                                            <div className="flex flex-col gap-1.5">
+                                        <td className="py-3.5 px-5 text-sm">
+                                            <div className="flex flex-wrap gap-1.5 max-w-xs">
                                                 {task.assignments && task.assignments.length > 0 ? (
                                                     task.assignments.map((assignment, aIdx) => {
                                                         const isHighlight = assigneeFilter !== "All" && (assignment.assignee?._id || assignment.assignee)?.toString() === assigneeFilter;
                                                         return (
                                                             <div
                                                                 key={aIdx}
-                                                                className={`flex items-center gap-2 px-2 py-1 rounded-lg ${isHighlight ? "bg-purple-50 border border-purple-200 font-bold" : ""}`}
+                                                                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs ${isHighlight
+                                                                    ? "bg-purple-50 border-purple-200 font-bold"
+                                                                    : "bg-slate-50 border-slate-100"
+                                                                    }`}
                                                             >
-                                                                <span className="font-semibold text-slate-700 text-xs">
+                                                                <span className="font-semibold text-slate-700 text-[11px]">
                                                                     {assignment.assignee?.name || "N/A"}
                                                                 </span>
-                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${getStatusColor(assignment.status)}`}>
                                                                     {assignment.status}
                                                                 </span>
                                                             </div>
@@ -946,10 +1221,10 @@ function TaskStatusTable({ color, apiPrefix }) {
                                             </div>
                                         </td>
 
-                                        <td className="py-4 px-6 text-center whitespace-nowrap">
+                                        <td className="py-3.5 px-5 text-center whitespace-nowrap">
                                             <button
                                                 onClick={() => setSelectedTask(task)}
-                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-500 ${activeColor.hoverText} ${activeColor.hoverBg} transition cursor-pointer whitespace-nowrap`}
+                                                className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-500 ${activeColor.hoverText} ${activeColor.hoverBg} border border-slate-200/60 hover:border-slate-300 transition cursor-pointer shadow-2xs`}
                                                 title="View Task Details"
                                             >
                                                 <Eye className="w-4 h-4" />
@@ -960,17 +1235,20 @@ function TaskStatusTable({ color, apiPrefix }) {
                             })}
                             {filteredTasks.length === 0 && (
                                 <tr>
-                                    <td colSpan="7" className="py-16 text-center text-slate-400 text-sm">
+                                    <td colSpan="7" className="py-14 text-center text-slate-400 text-sm">
                                         <div className="flex flex-col items-center justify-center gap-2">
-                                            <ClipboardList className="w-8 h-8 text-slate-300" />
-                                            <p className="font-semibold text-slate-600">No tasks found matching your filter criteria.</p>
-                                            <p className="text-xs text-slate-400">Try adjusting your search, date range, or member filter.</p>
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+                                                <ClipboardList className="w-6 h-6" />
+                                            </div>
+                                            <p className="font-bold text-slate-700 text-sm">No tasks matching your current filter.</p>
+                                            <p className="text-xs text-slate-400 max-w-sm">Try clearing filters or changing search keywords to view assigned tasks.</p>
                                             {hasActiveFilters && (
                                                 <button
                                                     onClick={resetAllFilters}
-                                                    className="mt-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 transition cursor-pointer shadow-sm"
+                                                    className="mt-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 transition cursor-pointer shadow-xs flex items-center gap-1.5"
                                                 >
-                                                    Clear All Filters
+                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                    <span>Clear All Filters</span>
                                                 </button>
                                             )}
                                         </div>
@@ -1180,17 +1458,29 @@ function TaskStatusTable({ color, apiPrefix }) {
                                     </span>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedTask.assignments && selectedTask.assignments.length > 0 ? (
-                                            selectedTask.assignments.map((assignment, aIdx) => (
-                                                <div key={aIdx} className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-2.5 py-1.5 rounded-xl">
-                                                    <div className={`w-5 h-5 rounded-full ${activeColor.bg} ${activeColor.text} flex items-center justify-center font-bold text-[9px]`}>
-                                                        {assignment.assignee?.name?.charAt(0) || "U"}
+                                            [...selectedTask.assignments]
+                                                .sort((a, b) => {
+                                                    const getLatestUpdateTimestamp = (assignment) => {
+                                                        const updates = assignment?.progressUpdates || [];
+                                                        if (updates.length > 0) {
+                                                            const lastUpdate = updates[updates.length - 1];
+                                                            return new Date(lastUpdate.updatedAt || lastUpdate.createdAt || 0).getTime();
+                                                        }
+                                                        return new Date(assignment?.updatedAt || assignment?.assignedAt || 0).getTime();
+                                                    };
+                                                    return getLatestUpdateTimestamp(b) - getLatestUpdateTimestamp(a);
+                                                })
+                                                .map((assignment, aIdx) => (
+                                                    <div key={aIdx} className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-2.5 py-1.5 rounded-xl">
+                                                        <div className={`w-5 h-5 rounded-full ${activeColor.bg} ${activeColor.text} flex items-center justify-center font-bold text-[9px]`}>
+                                                            {assignment.assignee?.name?.charAt(0) || "U"}
+                                                        </div>
+                                                        <span className="text-xs font-semibold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
+                                                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${getStatusColor(assignment.status)}`}>
+                                                            {assignment.status}
+                                                        </span>
                                                     </div>
-                                                    <span className="text-xs font-semibold text-slate-700">{assignment.assignee?.name || "N/A"}</span>
-                                                    <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${getStatusColor(assignment.status)}`}>
-                                                        {assignment.status}
-                                                    </span>
-                                                </div>
-                                            ))
+                                                ))
                                         ) : (
                                             <span className="text-xs text-slate-400 italic">No assignees</span>
                                         )}
@@ -1200,130 +1490,186 @@ function TaskStatusTable({ color, apiPrefix }) {
                         )}
 
                         {/* Modal Body: Tab 2 - Work Reports */}
-                        {activeModalTab === "reports" && (
-                            <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
-                                {/* Horizontal Employee Switcher (Chips) */}
-                                {selectedTask.assignments && selectedTask.assignments.length > 1 && (
-                                    <div>
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
-                                            Select Assignee
-                                        </span>
-                                        <div className="flex gap-2 overflow-x-auto pb-1">
-                                            {selectedTask.assignments.map((assignment, aIdx) => {
-                                                const isSelected = selectedAssigneeIndex === aIdx;
-                                                const pCount = assignment.progressUpdates?.length || 0;
-                                                return (
-                                                    <button
-                                                        key={aIdx}
-                                                        onClick={() => setSelectedAssigneeIndex(aIdx)}
-                                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 cursor-pointer border ${isSelected
-                                                            ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-xs`
-                                                            : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
-                                                            }`}
-                                                    >
-                                                        <span>{assignment.assignee?.name || `Employee ${aIdx + 1}`}</span>
-                                                        <span className={`px-1.5 py-0.2 rounded-full text-[9px] ${isSelected ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"}`}>
-                                                            {pCount}
-                                                        </span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
+                        {activeModalTab === "reports" && (() => {
+                            // Sort assignments by latest progress update timestamp in descending order (newest update first)
+                            const getLatestUpdateTimestamp = (assignment) => {
+                                const updates = assignment?.progressUpdates || [];
+                                if (updates.length > 0) {
+                                    const lastUpdate = updates[updates.length - 1];
+                                    return new Date(lastUpdate.updatedAt || lastUpdate.createdAt || 0).getTime();
+                                }
+                                return new Date(assignment?.updatedAt || assignment?.assignedAt || 0).getTime();
+                            };
 
-                                {/* Selected Assignee Progress Timeline */}
-                                {selectedTask.assignments && selectedTask.assignments[selectedAssigneeIndex] ? (
-                                    (() => {
-                                        const currentAssignee = selectedTask.assignments[selectedAssigneeIndex];
-                                        const updates = currentAssignee.progressUpdates || [];
+                            const sortedModalAssignments = [...(selectedTask.assignments || [])].sort((a, b) => {
+                                return getLatestUpdateTimestamp(b) - getLatestUpdateTimestamp(a);
+                            });
 
-                                        return (
-                                            <div className="flex flex-col gap-3">
-                                                {/* Assignee Mini Profile Header */}
-                                                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className={`w-8 h-8 rounded-xl ${activeColor.bg} ${activeColor.text} flex items-center justify-center font-bold text-xs shadow-2xs`}>
-                                                            {currentAssignee.assignee?.name?.charAt(0) || "U"}
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-bold text-slate-800">{currentAssignee.assignee?.name || "N/A"}</p>
-                                                            <p className="text-[10px] text-slate-400">{currentAssignee.assignee?.user_id || "Employee"}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(currentAssignee.status)}`}>
-                                                            {currentAssignee.status}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">
-                                                            {updates.length}/18 Used
-                                                        </span>
-                                                    </div>
-                                                </div>
+                            // Determine active assignment by selectedAssigneeId or fallback to the first (most recently updated)
+                            const currentAssignee = sortedModalAssignments.find(a => {
+                                const aId = (a.assignee?._id || a.assignee || "").toString();
+                                return aId && aId === selectedAssigneeId?.toString();
+                            }) || sortedModalAssignments[0];
 
-                                                {/* Work Logs List */}
-                                                {updates.length > 0 ? (
-                                                    <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto pr-1">
-                                                        {updates.map((update, uIdx) => (
-                                                            <div key={uIdx} className="bg-white border border-slate-200/90 p-3 rounded-2xl flex flex-col gap-1.5 shadow-2xs">
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                                        Report #{updates.length - uIdx}
-                                                                    </span>
-                                                                    <span className="text-[10px] text-slate-400 font-medium">
-                                                                        {new Date(update.updatedAt).toLocaleString("en-GB", {
-                                                                            day: "2-digit",
-                                                                            month: "short",
-                                                                            hour: "2-digit",
-                                                                            minute: "2-digit",
-                                                                            hour12: true
-                                                                        })}
-                                                                    </span>
-                                                                </div>
+                            const currentAssigneeId = (currentAssignee?.assignee?._id || currentAssignee?.assignee || "").toString();
 
-                                                                {update.comment && (
-                                                                    <p className="text-xs text-slate-700 font-medium leading-relaxed bg-slate-50/60 p-2.5 rounded-xl border border-slate-100">
-                                                                        {update.comment}
-                                                                    </p>
-                                                                )}
-
-                                                                {update.attachment && update.attachment.fileUrl && (
-                                                                    <a
-                                                                        href={`${import.meta.env.VITE_BACKEND_URL}${update.attachment.fileUrl}`}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group"
-                                                                    >
-                                                                        <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition shrink-0" />
-                                                                        <span className="truncate flex-1 text-[11px] font-bold">{update.attachment.fileName || "View Attachment"}</span>
-                                                                        {update.attachment.fileSize && (
-                                                                            <span className="text-[10px] text-slate-400 font-normal shrink-0">
-                                                                                ({(update.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
-                                                                            </span>
-                                                                        )}
-                                                                    </a>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-2">
-                                                        <Clock className="w-6 h-6 text-slate-300" />
-                                                        <p className="text-xs text-slate-400 font-medium">
-                                                            No work progress reports submitted yet.
-                                                        </p>
-                                                    </div>
-                                                )}
+                            return (
+                                <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
+                                    {/* Horizontal Employee Switcher (Chips with smooth mouse drag-to-scroll & hidden scrollbar) */}
+                                    {sortedModalAssignments.length > 1 && (
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
+                                                Select Assignee
+                                            </span>
+                                            <div
+                                                ref={chipsScrollRef}
+                                                onMouseDown={(e) => {
+                                                    if (!chipsScrollRef.current) return;
+                                                    setIsDraggingChips(true);
+                                                    hasDraggedRef.current = false;
+                                                    setDragStartX(e.pageX - chipsScrollRef.current.offsetLeft);
+                                                    setDragScrollLeft(chipsScrollRef.current.scrollLeft);
+                                                }}
+                                                onMouseLeave={() => {
+                                                    setIsDraggingChips(false);
+                                                }}
+                                                onMouseUp={() => {
+                                                    setIsDraggingChips(false);
+                                                }}
+                                                onMouseMove={(e) => {
+                                                    if (!isDraggingChips || !chipsScrollRef.current) return;
+                                                    e.preventDefault();
+                                                    const x = e.pageX - chipsScrollRef.current.offsetLeft;
+                                                    const walk = (x - dragStartX) * 1.5; // Drag scroll sensitivity
+                                                    if (Math.abs(walk) > 3) {
+                                                        hasDraggedRef.current = true;
+                                                    }
+                                                    chipsScrollRef.current.scrollLeft = dragScrollLeft - walk;
+                                                }}
+                                                className={`flex gap-2 overflow-x-auto pb-1 no-scrollbar select-none ${isDraggingChips ? "cursor-grabbing" : "cursor-grab"
+                                                    }`}
+                                                style={{ scrollBehavior: isDraggingChips ? "auto" : "smooth" }}
+                                            >
+                                                {sortedModalAssignments.map((assignment, aIdx) => {
+                                                    const aId = (assignment.assignee?._id || assignment.assignee || `assignee-${aIdx}`).toString();
+                                                    const isSelected = currentAssigneeId ? currentAssigneeId === aId : aIdx === 0;
+                                                    const pCount = assignment.progressUpdates?.length || 0;
+                                                    return (
+                                                        <button
+                                                            key={aId || aIdx}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (hasDraggedRef.current) return;
+                                                                setSelectedAssigneeId(aId);
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 cursor-pointer border ${isSelected
+                                                                ? `${activeColor.bg} ${activeColor.text} border-transparent shadow-xs`
+                                                                : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
+                                                                }`}
+                                                        >
+                                                            <span>{assignment.assignee?.name || `Employee ${aIdx + 1}`}</span>
+                                                            <span className={`px-1.5 py-0.2 rounded-full text-[9px] ${isSelected ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"}`}>
+                                                                {pCount}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
-                                        );
-                                    })()
-                                ) : (
-                                    <div className="p-6 text-center text-xs text-slate-400 italic">
-                                        No assignees found for this task.
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                        </div>
+                                    )}
+
+                                    {/* Selected Assignee Progress Timeline */}
+                                    {currentAssignee ? (
+                                        (() => {
+                                            const updates = currentAssignee.progressUpdates || [];
+
+                                            return (
+                                                <div className="flex flex-col gap-3">
+                                                    {/* Assignee Mini Profile Header */}
+                                                    <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/70 rounded-2xl">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className={`w-8 h-8 rounded-xl ${activeColor.bg} ${activeColor.text} flex items-center justify-center font-bold text-xs shadow-2xs`}>
+                                                                {currentAssignee.assignee?.name?.charAt(0) || "U"}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-slate-800">{currentAssignee.assignee?.name || "N/A"}</p>
+                                                                <p className="text-[10px] text-slate-400">{currentAssignee.assignee?.user_id || "Employee"}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(currentAssignee.status)}`}>
+                                                                {currentAssignee.status}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg">
+                                                                {updates.length}/18 Used
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Work Logs List */}
+                                                    {updates.length > 0 ? (
+                                                        <div className="flex flex-col gap-2.5 max-h-64 overflow-y-auto pr-1">
+                                                            {updates.map((update, uIdx) => (
+                                                                <div key={uIdx} className="bg-white border border-slate-200/90 p-3 rounded-2xl flex flex-col gap-1.5 shadow-2xs">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                                            Report #{updates.length - uIdx}
+                                                                        </span>
+                                                                        <span className="text-[10px] text-slate-400 font-medium">
+                                                                            {new Date(update.updatedAt).toLocaleString("en-GB", {
+                                                                                day: "2-digit",
+                                                                                month: "short",
+                                                                                hour: "2-digit",
+                                                                                minute: "2-digit",
+                                                                                hour12: true
+                                                                            })}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    {update.comment && (
+                                                                        <p className="text-xs text-slate-700 font-medium leading-relaxed bg-slate-50/60 p-2.5 rounded-xl border border-slate-100">
+                                                                            {update.comment}
+                                                                        </p>
+                                                                    )}
+
+                                                                    {update.attachment && update.attachment.fileUrl && (
+                                                                        <a
+                                                                            href={`${import.meta.env.VITE_BACKEND_URL}${update.attachment.fileUrl}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                                        >
+                                                                            <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition shrink-0" />
+                                                                            <span className="truncate flex-1 text-[11px] font-bold">{update.attachment.fileName || "View Attachment"}</span>
+                                                                            {update.attachment.fileSize && (
+                                                                                <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                                                                                    ({(update.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
+                                                                                </span>
+                                                                            )}
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-2">
+                                                            <Clock className="w-6 h-6 text-slate-300" />
+                                                            <p className="text-xs text-slate-400 font-medium">
+                                                                No work progress reports submitted yet.
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()
+                                    ) : (
+                                        <div className="p-6 text-center text-xs text-slate-400 italic">
+                                            No assignees found for this task.
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
 
                         {/* Modal Footer */}
                         <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex justify-end items-center gap-2">
