@@ -11,16 +11,21 @@ const getNotifications = async (req, res) => {
     }
 };
 
-// 2. Mark single notification as read
+// 2. Mark single notification as read (Strictly user-scoped to prevent IDOR)
 const toggleRead = async (req, res) => {
     try {
         const { id } = req.params;
-        const notif = await Notification.findById(id);
-        if (notif) {
-            notif.read = true;
-            await notif.save();
+        const userId = req.user.id;
+        const notif = await Notification.findOne({ _id: id, userId });
+        if (!notif) {
+            return res.status(404).json({
+                success: false,
+                message: "Notification not found or access denied."
+            });
         }
-        return res.status(200).json({ success: true });
+        notif.read = true;
+        await notif.save();
+        return res.status(200).json({ success: true, notification: notif });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

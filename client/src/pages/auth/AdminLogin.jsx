@@ -115,9 +115,14 @@ function AdminLogin() {
                         <input
                             type="email"
                             placeholder="Enter your Email"
+                            maxLength={100}
 
                             {...register("email", {
                                 required: "Email is required",
+                                maxLength: {
+                                    value: 100,
+                                    message: "Email cannot exceed 100 characters"
+                                },
                                 pattern: {
                                     value: /^[a-zA-Z0-9._%+-]+@gmail\.com$/,
                                     message: "Only Gmail addresses are allowed"
@@ -148,11 +153,16 @@ function AdminLogin() {
 
                             <input
                                 type={showPassword ? "text" : "password"}
+                                maxLength={100}
 
                                 placeholder="Enter your password"
 
                                 {...register("password", {
                                     required: "password is required",
+                                    maxLength: {
+                                        value: 100,
+                                        message: "Password cannot exceed 100 characters"
+                                    },
                                     pattern: {
                                         value:
                                             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,

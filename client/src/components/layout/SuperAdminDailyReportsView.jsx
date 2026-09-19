@@ -16,6 +16,7 @@ import {
     Download
 } from "lucide-react";
 import { dailyReportApi } from "../../services/api";
+import { openSecureFile } from "../../utils/fileUrl";
 
 function SuperAdminDailyReportsView({ color = "purple" }) {
     const [searchParams] = useSearchParams();
@@ -308,12 +309,11 @@ function SuperAdminDailyReportsView({ color = "purple" }) {
                                         </span>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                             {selectedReport.attachments.map((file, idx) => (
-                                                <a
+                                                <button
                                                     key={idx}
-                                                    href={`${import.meta.env.VITE_BACKEND_URL}${file.fileUrl}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="flex items-center gap-2.5 p-3 bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 rounded-xl transition text-xs font-bold text-purple-700 group"
+                                                    type="button"
+                                                    onClick={() => openSecureFile(file.fileUrl, file.fileName)}
+                                                    className="flex items-center gap-2.5 p-3 bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 rounded-xl transition text-xs font-bold text-purple-700 group w-full text-left cursor-pointer"
                                                 >
                                                     <FileText className="w-4 h-4 text-purple-600 group-hover:scale-110 transition shrink-0" />
                                                     <span className="truncate flex-1 text-[11px]">{file.fileName || "Download Attached File"}</span>
@@ -323,7 +323,7 @@ function SuperAdminDailyReportsView({ color = "purple" }) {
                                                         </span>
                                                     )}
                                                     <Download className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-700 shrink-0" />
-                                                </a>
+                                                </button>
                                             ))}
                                         </div>
                                     </div>

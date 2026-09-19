@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Send, FileText, Paperclip, Calendar, Eye, X, Plus, Clock, Search, Building2 } from "lucide-react";
 import { dailyReportApi } from "../../services/api";
 import { showSuccess, showError } from "./alerts";
+import { openSecureFile } from "../../utils/fileUrl";
 
 function AdminDailyReportsSection({ color = "blue" }) {
     const activeColor = {
@@ -78,7 +79,7 @@ function AdminDailyReportsSection({ color = "blue" }) {
                 if (fileInput) fileInput.value = "";
                 const modalFileInput = document.getElementById("modal-report-file-input");
                 if (modalFileInput) modalFileInput.value = "";
-                
+
                 setIsSubmitModalOpen(false);
                 // Refresh list
                 fetchMyReports();
@@ -224,6 +225,7 @@ function AdminDailyReportsSection({ color = "blue" }) {
                                 <textarea
                                     rows="5"
                                     placeholder="Write your day's work summary, tasks completed, operational updates..."
+                                    maxLength={5000}
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     className={`w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-3 text-xs outline-none ${activeColor.ring} transition resize-none font-medium`}
@@ -325,12 +327,11 @@ function AdminDailyReportsSection({ color = "blue" }) {
                                     </span>
                                     <div className="flex flex-col gap-1.5">
                                         {selectedReport.attachments.map((file, fIdx) => (
-                                            <a
+                                            <button
                                                 key={fIdx}
-                                                href={`${import.meta.env.VITE_BACKEND_URL}${file.fileUrl}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 rounded-xl transition text-xs font-semibold text-blue-700 group"
+                                                type="button"
+                                                onClick={() => openSecureFile(file.fileUrl, file.fileName)}
+                                                className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 rounded-xl transition text-xs font-semibold text-blue-700 group w-full text-left cursor-pointer"
                                             >
                                                 <FileText className="w-4 h-4 text-blue-600 group-hover:scale-110 transition shrink-0" />
                                                 <span className="truncate flex-1 text-[11px] font-bold">{file.fileName || "View Attached File"}</span>
@@ -339,7 +340,7 @@ function AdminDailyReportsSection({ color = "blue" }) {
                                                         ({(file.fileSize / (1024 * 1024)).toFixed(2)} MB)
                                                     </span>
                                                 )}
-                                            </a>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>

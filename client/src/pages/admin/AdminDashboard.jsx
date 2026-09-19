@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { taskApi } from "../../services/api";
+import { openSecureFile } from "../../utils/fileUrl";
 import Header from "../../components/layout/Header";
 import Sidebar from "../../components/layout/Sidebar";
 import { Users, Clock, CheckCircle2, AlertCircle, FileText, ClipboardList, Sparkles, Activity, ArrowRight } from "lucide-react";
@@ -389,16 +390,15 @@ function AdminDashboard() {
                                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">Attachments</span>
                                     <div className="flex flex-col gap-1.5 mt-1">
                                         {selectedAssignment.attachments.map((file, fIdx) => (
-                                            <a
+                                            <button
                                                 key={fIdx}
-                                                href={`${import.meta.env.VITE_BACKEND_URL}${file.fileUrl}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl transition text-xs font-bold text-slate-700"
+                                                type="button"
+                                                onClick={() => openSecureFile(file.fileUrl, file.fileName)}
+                                                className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl transition text-xs font-bold text-slate-700 w-full text-left cursor-pointer"
                                             >
                                                 <FileText className="w-4 h-4 text-blue-600" />
                                                 <span className="truncate flex-1">{file.fileName || "View Attachment"}</span>
-                                            </a>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>

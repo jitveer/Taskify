@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import customSwal, { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
 import { taskApi } from "../../services/api";
 import { formatTime12Hour } from "../../utils/timeFormatter";
+import { openSecureFile } from "../../utils/fileUrl";
 import { X, Calendar, FileText, ClipboardList, FileCheck, Clock, Paperclip, Users } from "lucide-react";
 
 function MyTaskTable({ color }) {
@@ -22,6 +23,7 @@ function MyTaskTable({ color }) {
         const queryParams = new URLSearchParams(location.search);
         const currentStatus = queryParams.get("status");
         if (currentStatus) {
+
             setStatusFilter(currentStatus);
         }
     }, [location.search]);
@@ -173,7 +175,7 @@ function MyTaskTable({ color }) {
                     </div>
                     
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Comment / Progress Notes</label>
-                    <textarea id="swal-comment" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 h-20 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none mb-3" placeholder="Add progress report or notes..."></textarea>
+                    <textarea id="swal-comment" maxlength="5000" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 h-20 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none mb-3" placeholder="Add progress report or notes (max 5000 chars)..."></textarea>
 
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Attach File / Report (Max 10MB)</label>
                     <div class="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-3 text-center hover:bg-slate-100 transition cursor-pointer relative">
@@ -629,16 +631,15 @@ function MyTaskTable({ color }) {
                                         </span>
                                         <div className="flex flex-col gap-1.5">
                                             {selectedTask.attachments.map((file, fIdx) => (
-                                                <a
+                                                <button
                                                     key={fIdx}
-                                                    href={`${import.meta.env.VITE_BACKEND_URL}${file.fileUrl}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                    type="button"
+                                                    onClick={() => openSecureFile(file.fileUrl, file.fileName)}
+                                                    className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded-xl transition text-xs font-semibold text-emerald-700 group w-full text-left cursor-pointer"
                                                 >
                                                     <Paperclip className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition shrink-0" />
                                                     <span className="truncate flex-1 text-[11px] font-bold">{file.fileName || "View Attached File"}</span>
-                                                </a>
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
@@ -710,11 +711,10 @@ function MyTaskTable({ color }) {
                                                     )}
 
                                                     {update.attachment && update.attachment.fileUrl && (
-                                                        <a
-                                                            href={`${import.meta.env.VITE_BACKEND_URL}${update.attachment.fileUrl}`}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openSecureFile(update.attachment.fileUrl, update.attachment.fileName)}
+                                                            className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group w-full text-left cursor-pointer"
                                                         >
                                                             <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition shrink-0" />
                                                             <span className="truncate flex-1 text-[11px] font-bold">{update.attachment.fileName || "View Attachment"}</span>
@@ -723,7 +723,7 @@ function MyTaskTable({ color }) {
                                                                     ({(update.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
                                                                 </span>
                                                             )}
-                                                        </a>
+                                                        </button>
                                                     )}
                                                 </div>
                                             ))}

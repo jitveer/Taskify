@@ -73,6 +73,7 @@ const taskAssignmentSchema = new mongoose.Schema(
         comment: {
             type: String,
             default: "",
+            maxlength: 5000,
         },
         progressUpdates: [
             {
@@ -83,6 +84,7 @@ const taskAssignmentSchema = new mongoose.Schema(
                 comment: {
                     type: String,
                     default: "",
+                    maxlength: 5000,
                 },
                 attachment: {
                     fileName: { type: String },

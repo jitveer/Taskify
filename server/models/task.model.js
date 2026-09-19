@@ -41,6 +41,7 @@ const taskSchema = new mongoose.Schema(
         description: {
             type: String,
             required: true,
+            maxlength: 5000,
         },
 
         dueDate: {

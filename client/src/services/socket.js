@@ -3,20 +3,32 @@ import { io } from 'socket.io-client';
 let socket;
 
 export const initiateSocketConnection = (userId) => {
-    if (socket) return socket;
+    if (socket && socket.connected) return socket;
 
     // Vite env file se backend server URL read kiya (default to port 5000)
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-    socket = io(backendUrl);
+    const token = localStorage.getItem("token");
 
-    console.log('Connecting socket...');
+    socket = io(backendUrl, {
+        auth: {
+            token: token
+        },
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
+    });
+
+    console.log('Connecting authenticated socket...');
 
     socket.on('connect', () => {
         console.log('Connected to socket server successfully');
-        // Connection success hone par backend me apni userId wale room me enter karein
         if (userId) {
             socket.emit('join_room', userId);
         }
+    });
+
+    socket.on('connect_error', (err) => {
+        console.warn('Socket connection authentication warning:', err.message);
     });
 
     return socket;

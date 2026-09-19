@@ -441,7 +441,6 @@ function EmployeeTable({ color, employees = [], apiPrefix }) {
                                 <h2 className="text-3xl font-bold text-slate-800">
                                     {editingId ? "Edit Employee" : "Add Employee"}
                                 </h2>
-
                             </div>
 
                             <button

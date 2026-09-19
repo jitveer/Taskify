@@ -65,6 +65,8 @@ const employeeRoutes = require('./routes/employee.routes');
 const router = require('./routes.js')
 const path = require('path');
 
+const helmet = require('helmet');
+
 // Server Port
 const PORT = process.env.PORT || 5000;
 // Load environment variables
@@ -72,19 +74,50 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
-// MIDDLEWARE
-app.use(cors());
-app.use(express.json());
-// Serve uploads folder as static
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Security: Disable express fingerprint header
+app.disable('x-powered-by');
+
+// Security: Helmet for HTTP header protection (Clickjacking, XSS, MIME sniffing)
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+const secureUploadsHandler = require('./middlewares/fileAuth.middleware');
+const { apiLimiter } = require('./middlewares/rateLimiter.middleware');
+
+// Strict CORS Configuration
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173"
+].filter(Boolean);
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error("CORS Policy: Access denied from this origin"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Protected uploads access (requires JWT authentication strictly via Authorization Header)
+app.get("/uploads/:filename", secureUploadsHandler);
 
 // Test Route
 app.get("/", (req, res) => {
     res.send("Taskify Backend Running 🚀");
 });
 
-// MAIN ROUTES
-app.use("/api", router);
+// MAIN ROUTES (with DoS / Spam Protection Rate Limiter)
+app.use("/api", apiLimiter, router);
 
 connectDB();
 

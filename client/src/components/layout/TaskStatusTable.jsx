@@ -1,13 +1,14 @@
 import {
     Search, Eye, X, Filter, Calendar, FileText, ChevronDown, ChevronUp,
     User, FileCheck, ClipboardList, Clock, Users, CheckCircle2, AlertCircle,
-    RotateCcw, TrendingUp, Sparkles, ArrowUpDown, SlidersHorizontal
+    RotateCcw, TrendingUp, Sparkles, ArrowUpDown, SlidersHorizontal, Paperclip
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import customSwal, { showSuccess, showError, showConfirm } from "../../components/layout/alerts";
 import { taskApi } from "../../services/api";
 import { formatTime12Hour } from "../../utils/timeFormatter";
+import { openSecureFile } from "../../utils/fileUrl";
 
 
 function TaskStatusTable({ color, apiPrefix }) {
@@ -134,7 +135,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                     </div>
                     
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Comment / Progress Notes</label>
-                    <textarea id="swal-comment" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 h-20 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none mb-3" placeholder="Add progress report or notes..."></textarea>
+                    <textarea id="swal-comment" maxlength="5000" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-3.5 h-20 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition resize-none mb-3" placeholder="Add progress report or notes (max 5000 chars)..."></textarea>
 
                     <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Attach File / Report (Max 10MB)</label>
                     <div class="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-3 text-center hover:bg-slate-100 transition cursor-pointer relative">
@@ -1422,13 +1423,24 @@ function TaskStatusTable({ color, apiPrefix }) {
                         {/* Modal Body: Tab 1 - Overview */}
                         {activeModalTab === "overview" && (
                             <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[60vh]">
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase">
                                         Dept: {selectedTask.department}
                                     </span>
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold ${activeColor.badgeBg} ${activeColor.badgeText} border ${activeColor.badgeBorder} capitalize`}>
                                         Type: {selectedTask.taskType ? selectedTask.taskType.replace('_', ' ') : 'N/A'}
                                     </span>
+                                    {selectedTask.assignedBy && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                            <span className="text-slate-400 font-medium">Assigned by:</span>
+                                            <span className="font-bold">{selectedTask.assignedBy.name || (typeof selectedTask.assignedBy === 'string' ? selectedTask.assignedBy : 'Admin')}</span>
+                                            {selectedTask.assignedBy.role && (
+                                                <span className="text-[9px] uppercase px-1 py-0.2 bg-indigo-200/60 rounded text-indigo-800 font-bold">
+                                                    {selectedTask.assignedBy.role}
+                                                </span>
+                                            )}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div>
@@ -1507,6 +1519,28 @@ function TaskStatusTable({ color, apiPrefix }) {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Task Attachments by Assigner */}
+                                {selectedTask.attachments && selectedTask.attachments.length > 0 && (
+                                    <div>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
+                                            Task Attachments ({selectedTask.attachments.length})
+                                        </span>
+                                        <div className="flex flex-col gap-1.5">
+                                            {selectedTask.attachments.map((file, fIdx) => (
+                                                <button
+                                                    key={fIdx}
+                                                    type="button"
+                                                    onClick={() => openSecureFile(file.fileUrl, file.fileName)}
+                                                    className="flex items-center gap-2 p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition text-xs font-semibold text-slate-700 hover:text-slate-900 group w-full text-left cursor-pointer"
+                                                >
+                                                    <Paperclip className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition shrink-0" />
+                                                    <span className="truncate flex-1 text-[11px] font-bold">{file.fileName || "View Attached File"}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -1659,11 +1693,10 @@ function TaskStatusTable({ color, apiPrefix }) {
                                                                     )}
 
                                                                     {update.attachment && update.attachment.fileUrl && (
-                                                                        <a
-                                                                            href={`${import.meta.env.VITE_BACKEND_URL}${update.attachment.fileUrl}`}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group"
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => openSecureFile(update.attachment.fileUrl, update.attachment.fileName)}
+                                                                            className="flex items-center gap-2 p-2 bg-emerald-50/40 hover:bg-emerald-50 border border-emerald-100 rounded-xl transition text-xs font-semibold text-emerald-700 group w-full text-left cursor-pointer"
                                                                         >
                                                                             <FileText className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition shrink-0" />
                                                                             <span className="truncate flex-1 text-[11px] font-bold">{update.attachment.fileName || "View Attachment"}</span>
@@ -1672,7 +1705,7 @@ function TaskStatusTable({ color, apiPrefix }) {
                                                                                     ({(update.attachment.fileSize / (1024 * 1024)).toFixed(2)} MB)
                                                                                 </span>
                                                                             )}
-                                                                        </a>
+                                                                        </button>
                                                                     )}
                                                                 </div>
                                                             ))}

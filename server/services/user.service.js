@@ -1,4 +1,5 @@
 const userRepository = require('../repositories/user.repository');
+const bcrypt = require('bcryptjs');
 
 class UserService {
     // --- ADMIN LOGIC ---
@@ -39,6 +40,12 @@ class UserService {
             adminData.mobile = adminData.mobile.trim();
         }
 
+        // Secure password hashing
+        if (adminData.password) {
+            const salt = await bcrypt.genSalt(10);
+            adminData.password = await bcrypt.hash(adminData.password, salt);
+        }
+
         let nextUserId = 1000;
         const lastUser = await userRepository.findOne(
             { role: "admin", user_id: { $gte: "1000", $lt: "2000" } },
@@ -62,6 +69,9 @@ class UserService {
         }
         if (!adminNewData.password || adminNewData.password.trim() === "") {
             delete adminNewData.password;
+        } else {
+            const salt = await bcrypt.genSalt(10);
+            adminNewData.password = await bcrypt.hash(adminNewData.password.trim(), salt);
         }
 
         // Check if email already exists on other users
@@ -139,6 +149,12 @@ class UserService {
             employeeData.mobile = employeeData.mobile.trim();
         }
 
+        // Secure password hashing
+        if (employeeData.password) {
+            const salt = await bcrypt.genSalt(10);
+            employeeData.password = await bcrypt.hash(employeeData.password, salt);
+        }
+
         let nextUserId = 2000;
         if (employeeData.role === "employee") {
             const lastUser = await userRepository.findOne(
@@ -198,6 +214,9 @@ class UserService {
         // If password is not provided or empty string, do not overwrite existing password
         if (!employeeUpdateData.password || employeeUpdateData.password.trim() === "") {
             delete employeeUpdateData.password;
+        } else {
+            const salt = await bcrypt.genSalt(10);
+            employeeUpdateData.password = await bcrypt.hash(employeeUpdateData.password.trim(), salt);
         }
 
         // Check duplicate mobile on update

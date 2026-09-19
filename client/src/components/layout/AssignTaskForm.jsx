@@ -71,6 +71,7 @@ function AssignTaskForm({ color, apiPrefix }) {
     const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false);
     const employeeDropdownRef = useRef(null);
 
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -591,6 +592,7 @@ function AssignTaskForm({ color, apiPrefix }) {
                             <input
                                 type="text"
                                 name="taskTitle"
+                                maxLength={200}
                                 value={formData.taskTitle}
                                 onChange={(e) =>
                                     setFormData({
@@ -618,6 +620,7 @@ function AssignTaskForm({ color, apiPrefix }) {
                             <textarea
                                 rows="3"
                                 name="description"
+                                maxLength={5000}
                                 value={formData.description}
                                 onChange={(e) =>
                                     setFormData({
@@ -694,11 +697,10 @@ function AssignTaskForm({ color, apiPrefix }) {
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, dueTime: "10:00" })}
-                                            className={`px-2.5 py-2 text-[11px] font-bold rounded-xl border transition cursor-pointer ${
-                                                formData.dueTime === "10:00"
-                                                    ? `${color === "blue" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`
-                                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                                            }`}
+                                            className={`px-2.5 py-2 text-[11px] font-bold rounded-xl border transition cursor-pointer ${formData.dueTime === "10:00"
+                                                ? `${color === "blue" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`
+                                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                                }`}
                                             title="Set to 10:00 AM"
                                         >
                                             10 AM
@@ -706,11 +708,10 @@ function AssignTaskForm({ color, apiPrefix }) {
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, dueTime: "18:00" })}
-                                            className={`px-2.5 py-2 text-[11px] font-bold rounded-xl border transition cursor-pointer ${
-                                                formData.dueTime === "18:00"
-                                                    ? `${color === "blue" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`
-                                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                                            }`}
+                                            className={`px-2.5 py-2 text-[11px] font-bold rounded-xl border transition cursor-pointer ${formData.dueTime === "18:00"
+                                                ? `${color === "blue" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"}`
+                                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                                                }`}
                                             title="Set to 06:00 PM"
                                         >
                                             6 PM

@@ -25,14 +25,14 @@ function Home() {
     }, [navigate]);
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4 md:px-8 py-12 font-sans relative overflow-hidden">
-            
+
             {/* Subtle Background Elements */}
             <div className="absolute top-[-20%] left-[-10%] w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-40"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-40"></div>
             <div className="absolute top-[20%] left-[50%] w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-[100px] opacity-40"></div>
 
             <div className="z-10 w-full max-w-6xl">
-                
+
                 {/* Header */}
                 <div className="text-center mb-16 space-y-4">
                     <div className="inline-flex items-center justify-center p-3 mb-4 rounded-2xl bg-white shadow-sm border border-slate-100">
@@ -50,7 +50,7 @@ function Home() {
 
                 {/* Cards Container */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10">
-                    
+
                     {/* Super Admin - Purple */}
                     <div className="group bg-white rounded-3xl p-8 text-center shadow-xl shadow-purple-900/5 hover:shadow-2xl hover:shadow-purple-900/10 transition-all duration-300 border border-slate-100 hover:border-purple-100 flex flex-col items-center hover:-translate-y-1">
                         <div className="w-20 h-20 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition duration-300">

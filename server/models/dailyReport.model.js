@@ -21,6 +21,7 @@ const dailyReportSchema = new mongoose.Schema(
         description: {
             type: String,
             required: true,
+            maxlength: 5000,
         },
         reportDate: {
             type: Date,
