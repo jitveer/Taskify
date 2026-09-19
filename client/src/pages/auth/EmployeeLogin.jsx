@@ -38,9 +38,9 @@ function EmployeeLogin() {
     const onSubmit = async (data) => {
         try {
             console.log("Employee Data:", data);
-
+            const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/+$/, "");
             const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/auth/employee/login`,
+                `${backendUrl}/api/auth/employee/login`,
                 {
                     email: data.email,
                     password: data.password,

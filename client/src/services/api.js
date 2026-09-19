@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Reusable Axios instance with base URL resolution
 const api = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:5000",
+    baseURL: (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/+$/, ""),
 });
 
 // Centralized interceptor to automatically attach authorization tokens

@@ -87,23 +87,32 @@ const { apiLimiter } = require('./middlewares/rateLimiter.middleware');
 
 // Strict CORS Configuration
 const allowedOrigins = [
-    process.env.CLIENT_URL,
+    ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map(url => url.trim().replace(/\/+$/, '')) : []),
+    "https://taskify.globesproperties.in",
+    "http://taskify.globesproperties.in",
+    "https://www.taskify.globesproperties.in",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:5173"
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin) return callback(null, true);
+        const normalizedOrigin = origin.replace(/\/+$/, '');
+        if (allowedOrigins.includes(normalizedOrigin)) {
             return callback(null, true);
         }
         return callback(new Error("CORS Policy: Access denied from this origin"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+    allowedHeaders: ["Content-Type", "Authorization"],
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));

@@ -40,8 +40,9 @@ function SuperAdminLogin() {
 
         try {
             console.log("SuperAdmin Data:", data);
+            const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/+$/, "");
             const response = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/auth/super-admin/login`,
+                `${backendUrl}/api/auth/super-admin/login`,
                 {
                     email: data.email,
                     password: data.password,
