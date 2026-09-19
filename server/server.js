@@ -112,12 +112,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-// Protected uploads access (requires JWT authentication strictly via Authorization Header)
+// Protected uploads access (requires JWT authentication strictly via Authorization Header) 
 app.get("/uploads/:filename", secureUploadsHandler);
 
 // Test Route
